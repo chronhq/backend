@@ -19,11 +19,11 @@
 
 set -e
 
-dbname="postgres"
+dbname=$POSTGRES_DB
 host="db"
 port="5432"
-user="postgres"
-passwd="postgres"
+user=$POSTGRES_USER
+passwd=$POSTGRES_PASSWORD
 cmd="$@"
 
 >&2 echo "Waiting for Postgres..."
