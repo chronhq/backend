@@ -31,4 +31,5 @@ services:
       - '8006:81'
     env_file:
       - django.env
+      - postgres.env
     restart: always
