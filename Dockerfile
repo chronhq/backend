@@ -4,17 +4,25 @@ LABEL maintainer="whirish <lpoflynn@protonmail.ch>"
 
 ENV PYTHONUNBUFFERED 1
 
-RUN sed -i -e 's/v3\.7/edge/g' /etc/apk/repositories && \
-    apk upgrade --update-cache --available
+ENV ALPINE_MIRROR "http://dl-cdn.alpinelinux.org/alpine"
+RUN echo "${ALPINE_MIRROR}/edge/main" >> /etc/apk/repositories
+RUN apk add --update libressl2.7-libcrypto
 
-RUN apk update && \
-    apk add --virtual build-deps gcc python3-dev musl-dev libffi-dev && \
-    apk add postgresql-dev && \
-    apk add --no-cache --virtual .build-deps-testing \
+RUN set -ex \
+    && apk add --no-cache alpine-sdk \
+    && apk add --no-cache --virtual .build-deps-testing \
     --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
     gdal-dev \
     geos-dev \
-    proj4-dev
+    proj4-dev \
+    && apk add --no-cache --virtual .build-deps \
+    gcc \
+    libc-dev \
+    musl-dev \
+    postgresql-dev \
+    linux-headers \
+    pcre-dev \
+    && apk add --virtual .python-rundeps $runDeps
 
 RUN mkdir /config
 COPY /config/requirements.txt /config/
