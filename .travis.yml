@@ -3,7 +3,7 @@ language: python
 sudo: required
 
 python:
-  - "3.6"
+  - '3.6'
 
 services:
   - docker
@@ -15,5 +15,5 @@ install:
 
 script:
   - docker-compose run web black . --exclude /migrations/ --diff --check
-  - echo "Testing skipped for now"
-#  - docker-compose run --service-ports web ash init.sh python -m coverage run --source=APP manage.py test
+  - docker-compose run web pylint . --ignore=/migrations/
+  - docker-compose run web ash init.sh python --source=api manage.py test

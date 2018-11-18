@@ -1,0 +1,5 @@
+{
+  "python.formatting.blackPath": "./.black.py",
+  "python.formatting.provider": "black",
+  "python.linting.pylintPath": "./.pylint.py"
+}
