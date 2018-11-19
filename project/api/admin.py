@@ -19,4 +19,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
+from .models import PoliticalEntity, DirectPoliticalRelation, IndirectPoliticalRelation
+
 # Register your models here.
+admin.site.register(PoliticalEntity)
+admin.site.register(DirectPoliticalRelation)
+admin.site.register(IndirectPoliticalRelation)

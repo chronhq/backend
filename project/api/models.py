@@ -20,6 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from django.db import models
 from polymorphic.models import PolymorphicModel
 
+from .ltree import LtreeField
+
 # Create your models here.
 class PoliticalEntity(models.Model):
     """
@@ -27,12 +29,10 @@ class PoliticalEntity(models.Model):
     Holds an additional color information.
     """
 
-    wikidata_id = models.IntegerField()  # Excluding the Q
+    wikidata_id = models.IntegerField(unique=True)  # Excluding the Q
     color = models.IntegerField()
     admin_level = models.IntegerField()
-    predecessor = models.ForeignKey(
-        "self", null=True, blank=True, on_delete=models.SET_NULL
-    )
+    predecessors = models.ManyToManyField("self", blank=True, related_name="successors")
 
 
 class PoliticalRelation(PolymorphicModel):
@@ -52,8 +52,12 @@ class DirectPoliticalRelation(PoliticalRelation):
         https://www.wikidata.org/wiki/Property:P131
     """
 
-    parent = models.ForeignKey(PoliticalEntity, on_delete=models.CASCADE)
-    child = models.ForeignKey(PoliticalEntity, on_delete=models.CASCADE)
+    parent = models.ForeignKey(
+        "self", blank=True, null=True, related_name="children", on_delete=models.CASCADE
+    )
+    path = LtreeField()
+
+    entity = models.OneToOneField(PoliticalEntity, on_delete = models.CASCADE)
 
 
 class IndirectPoliticalRelation(PoliticalRelation):
@@ -63,8 +67,11 @@ class IndirectPoliticalRelation(PoliticalRelation):
         https://www.wikidata.org/wiki/Q1151405
     """
 
-    parent = models.ForeignKey(PoliticalEntity, on_delete=models.CASCADE)
-    child = models.ForeignKey(PoliticalEntity, on_delete=models.CASCADE)
-    relation_type = (
-        models.IntegerField()
-    )  # Wikidata ID of relation type, excluding the Q
+    parent = models.ForeignKey(
+        "self", blank=True, null=True, related_name="children", on_delete=models.CASCADE
+    )
+    path = LtreeField()
+    relation_type = models.IntegerField() # Wikidata ID of relation type, excluding the Q
+    # TODO should be limited to a set of choices
+
+    entity = models.OneToOneField(PoliticalEntity, on_delete = models.CASCADE)
