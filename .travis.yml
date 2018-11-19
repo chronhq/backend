@@ -16,4 +16,4 @@ install:
 script:
   - docker-compose run web black . --exclude /migrations/ --diff --check
   - docker-compose run web pylint ./api/
-  - docker-compose run web ash init.sh python --source=api manage.py test
+  - docker-compose run web ash init.sh python manage.py test
