@@ -44,7 +44,7 @@ exec_testk: ## Executes django tests in a running container, keeping the databas
 
 lint: ## Lints python files to pass CI
 	docker-compose exec web black . --exclude /migrations/
-	docker-compose exec web pylint .
+	docker-compose exec web pylint ./api/
 
 bash: ## SSH into the docker container
 	docker-compose exec web sh

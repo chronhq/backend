@@ -45,7 +45,7 @@ class Ancestor(models.Lookup):
 
     lookup_name = "ancestor"
 
-    def as_sql(self, qn, connection):
+    def as_sql(self, qn, connection):  # pylint: disable=W0221
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params
@@ -59,7 +59,7 @@ class Descendant(models.Lookup):
 
     lookup_name = "descendant"
 
-    def as_sql(self, qn, connection):
+    def as_sql(self, qn, connection):  # pylint: disable=W0221
         lhs, lhs_params = self.process_lhs(qn, connection)
         rhs, rhs_params = self.process_rhs(qn, connection)
         params = lhs_params + rhs_params

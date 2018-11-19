@@ -21,4 +21,8 @@ from django.apps import AppConfig
 
 
 class ApiConfig(AppConfig):
+    """
+    AppConfig for the `api` app
+    """
+
     name = "api"

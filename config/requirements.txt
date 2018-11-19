@@ -7,3 +7,4 @@ psycopg2==2.7.4
 pylint-django==2.0.2
 pylint==2.1.1
 django_polymorphic==2.0.3
+factory-boy==2.11.1

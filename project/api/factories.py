@@ -17,6 +17,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-# from django.shortcuts import render
+import factory
 
-# Create your views here.
+from .models import PoliticalEntity
+
+
+class PoliticalEntityFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for the PoliticalEntity model
+    """
+
+    class Meta:  # pylint: disable=C0111
+        model = PoliticalEntity

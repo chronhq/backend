@@ -19,23 +19,32 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.test import TestCase
 
-from .models import DirectPoliticalRelation, IndirectPoliticalRelation
+from .factories import PoliticalEntityFactory
+from .models import DirectPoliticalRelation
 
 # Create your tests here.
 class ModelTest(TestCase):
+    """
+    Tests model constraints directly
+    """
+
     @classmethod
     def setUpTestData(cls):
         """
         Create basic model instances
         """
-        pass
+        cls.new_nation = PoliticalEntityFactory(wikidata_id=1, color=1, admin_level=1)
 
     def test_model_can_create_directpoliticalrelation(self):
-        polrel = DirectPoliticalRelation.objects.create(
-            start_date="0004-01-02", end_date="0006-12-31"
+        """
+        Test if DPR can be created
+        """
+        dpr = DirectPoliticalRelation.objects.create(
+            start_date="0004-01-02", end_date="0006-12-31", entity=self.new_nation
         )
         # we need to do a full refresh to get the value of the path
-        polrel.refresh_from_db()
-        print(polrel.path)
+        dpr.refresh_from_db()
 
-        assert polrel.id > 0
+        self.assertTrue(dpr.id > 0)
+        self.assertEqual(dpr.entity, self.new_nation)
+        self.assertTrue(dpr.path)
