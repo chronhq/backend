@@ -23,7 +23,6 @@ from .models import DirectPoliticalRelation, IndirectPoliticalRelation
 
 # Create your tests here.
 class ModelTest(TestCase):
-
     @classmethod
     def setUpTestData(cls):
         """
@@ -32,11 +31,11 @@ class ModelTest(TestCase):
         pass
 
     def test_model_can_create_directpoliticalrelation(self):
-        polrel = DirectPoliticalRelation.objects.create(start_date="0004-01-02", end_date="0006-12-31")
+        polrel = DirectPoliticalRelation.objects.create(
+            start_date="0004-01-02", end_date="0006-12-31"
+        )
         # we need to do a full refresh to get the value of the path
         polrel.refresh_from_db()
         print(polrel.path)
 
         assert polrel.id > 0
-
-

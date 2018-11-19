@@ -57,7 +57,7 @@ class DirectPoliticalRelation(PoliticalRelation):
     )
     path = LtreeField()
 
-    entity = models.OneToOneField(PoliticalEntity, on_delete = models.CASCADE)
+    entity = models.OneToOneField(PoliticalEntity, on_delete=models.CASCADE)
 
 
 class IndirectPoliticalRelation(PoliticalRelation):
@@ -71,7 +71,9 @@ class IndirectPoliticalRelation(PoliticalRelation):
         "self", blank=True, null=True, related_name="children", on_delete=models.CASCADE
     )
     path = LtreeField()
-    relation_type = models.IntegerField() # Wikidata ID of relation type, excluding the Q
+    relation_type = (
+        models.IntegerField()
+    )  # Wikidata ID of relation type, excluding the Q
     # TODO should be limited to a set of choices
 
-    entity = models.OneToOneField(PoliticalEntity, on_delete = models.CASCADE)
+    entity = models.OneToOneField(PoliticalEntity, on_delete=models.CASCADE)
