@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.db import models
 from polymorphic.models import PolymorphicModel
+from colorfield.fields import ColorField
 
 from .ltree import LtreeField
 
@@ -29,9 +30,9 @@ class PoliticalEntity(models.Model):
     Holds an additional color information.
     """
 
-    wikidata_id = models.IntegerField(unique=True)  # Excluding the Q
-    color = models.IntegerField()
-    admin_level = models.IntegerField()
+    wikidata_id = models.PositiveIntegerField(unique=True)  # Excluding the Q
+    color = ColorField()
+    admin_level = models.PositiveIntegerField()
     predecessors = models.ManyToManyField("self", blank=True, related_name="successors")
 
 
@@ -72,7 +73,7 @@ class IndirectPoliticalRelation(PoliticalRelation):
     )
     path = LtreeField()
     relation_type = (
-        models.IntegerField()
+        models.PositiveIntegerField()
     )  # Wikidata ID of relation type, excluding the Q
     # TODO should be limited to a set of choices
 
