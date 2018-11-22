@@ -78,3 +78,18 @@ class IndirectPoliticalRelation(PoliticalRelation):
     # TODO should be limited to a set of choices
 
     entity = models.OneToOneField(PoliticalEntity, on_delete=models.CASCADE)
+
+
+class GroupRelation(PoliticalRelation):
+    """
+    Member of https://www.wikidata.org/wiki/Property:P463
+    """
+
+    parent = models.OneToOneField(
+        PoliticalEntity, on_delete=models.CASCADE, related_name="child_relations"
+    )
+    children = models.ManyToManyField(PoliticalEntity, related_name="parent_relation")
+    relation_type = (
+        models.PositiveIntegerField()
+    )  # Wikidata ID of relation type, excluding the Q
+    # TODO should be limited to a set of choices
