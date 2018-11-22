@@ -38,12 +38,12 @@ class LtreeField(models.TextField):
         return "ltree"
 
 
-class Ancestor(models.Lookup):
+class AncestorOrEqual(models.Lookup):
     """
     Lookup for ancestors of the tree
     """
 
-    lookup_name = "ancestor"
+    lookup_name = "ancestor_or_equal"
 
     def as_sql(self, qn, connection):  # pylint: disable=W0221
         lhs, lhs_params = self.process_lhs(qn, connection)
@@ -52,12 +52,12 @@ class Ancestor(models.Lookup):
         return "%s @> %s" % (lhs, rhs), params
 
 
-class Descendant(models.Lookup):
+class DescendantOrEqual(models.Lookup):
     """
     Lookup for descendants of the tree
     """
 
-    lookup_name = "descendant"
+    lookup_name = "descendant_or_equal"
 
     def as_sql(self, qn, connection):  # pylint: disable=W0221
         lhs, lhs_params = self.process_lhs(qn, connection)
@@ -66,5 +66,5 @@ class Descendant(models.Lookup):
         return "%s <@ %s" % (lhs, rhs), params
 
 
-LtreeField.register_lookup(Ancestor)
-LtreeField.register_lookup(Descendant)
+LtreeField.register_lookup(AncestorOrEqual)
+LtreeField.register_lookup(DescendantOrEqual)
