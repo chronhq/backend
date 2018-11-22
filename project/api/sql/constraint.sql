@@ -3,3 +3,8 @@
 ALTER TABLE api_DirectPoliticalRelation
         ADD CONSTRAINT check_no_recursion
             CHECK(index(path, entity_id::text::ltree) = (nlevel(path) - 1));
+
+ALTER TABLE api_IndirectPoliticalRelation
+        ADD CONSTRAINT check_no_recursion
+            CHECK(index(path, entity_id::text::ltree) = (nlevel(path) - 1));
+
