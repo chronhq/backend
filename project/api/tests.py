@@ -709,13 +709,14 @@ class ModelTest(TestCase):
         ipr_parent_after = IndirectPoliticalRelation.objects.create(
             start_date="0006-01-01",
             end_date="0007-01-01",
-            entity=self.new_nation,
+            entity=self.new_child_nation,
             relation_type=1,
         )
         ipr_child_after = IndirectPoliticalRelation.objects.create(
             start_date="0006-01-01",
             end_date="0007-01-01",
-            entity=self.new_child_nation,
+            entity=self.new_nation,
+            parent=ipr_parent_after,
             relation_type=1,
         )
 
