@@ -636,9 +636,7 @@ class ModelTest(TestCase):
         )
 
         dpr_parent = DirectPoliticalRelation.objects.create(
-            start_date="0001-01-01",
-            end_date="0005-01-01",
-            entity=self.new_nation,
+            start_date="0001-01-01", end_date="0005-01-01", entity=self.new_nation
         )
         dpr_child = DirectPoliticalRelation.objects.create(
             start_date="0001-01-01",
