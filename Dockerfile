@@ -21,8 +21,7 @@ RUN set -ex \
     musl-dev \
     postgresql-dev \
     linux-headers \
-    pcre-dev \
-    && apk add --virtual .python-rundeps $runDeps
+    pcre-dev 
 
 RUN mkdir /config
 COPY /config/requirements.txt /config/

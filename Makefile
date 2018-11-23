@@ -13,6 +13,8 @@ help: ## Displays this message
 
 # Docker tasks
 
+CONTAINERS := $(shell docker ps -q)
+
 build: ## Builds and tags containers
 	docker-compose build
 
@@ -21,6 +23,10 @@ run: ## Builds, starts, and runs containers
 
 stop: ## Stops running containers
 	docker-compose stop
+
+rm: ## Stops and removes all running containers
+	docker kill $(CONTAINERS)
+	docker rm $(CONTAINERS)
 
 clean: ## Stop and remove containers, networks, volmes, and images
 	docker-compose down
