@@ -23,7 +23,7 @@ $$
 BEGIN
     UPDATE api_DirectPoliticalRelation
        SET path = NEW.path || subpath(api_DirectPoliticalRelation.path, nlevel(OLD.path))
-     WHERE api_DirectPoliticalRelation.path <@ OLD.path AND politicalrelation_ptr_id != NEW.id;
+     WHERE api_DirectPoliticalRelation.path <@ OLD.path AND politicalrelation_ptr_id != NEW.politicalrelation_ptr_id;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -80,7 +80,7 @@ $$
 BEGIN
     UPDATE api_IndirectPoliticalRelation
        SET path = NEW.path || subpath(api_IndirectPoliticalRelation.path, nlevel(OLD.path))
-     WHERE api_IndirectPoliticalRelation.path <@ OLD.path AND politicalrelation_ptr_id != NEW.id;
+     WHERE api_IndirectPoliticalRelation.path <@ OLD.path AND politicalrelation_ptr_id != NEW.politicalrelation_ptr_id;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
