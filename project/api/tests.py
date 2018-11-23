@@ -657,3 +657,66 @@ class ModelTest(TestCase):
         with self.assertRaises(IntegrityError):
             ipr_parent.save()
             dpr_parent.save()
+
+    def test_model_directpoliticalrelation_direct_children(self):
+        """
+        Test if a child can change parent over time
+        """
+
+        dpr_parent_1 = DirectPoliticalRelation.objects.create(
+            start_date="0001-01-01", end_date="0005-01-01", entity=self.new_nation
+        )
+        dpr_parent_2 = DirectPoliticalRelation.objects.create(
+            start_date="0006-01-01", end_date="0007-01-01", entity=self.new_nation
+        )
+        dpr_parent.refresh_from_db()
+
+        dpr_child1 = DirectPoliticalRelation.objects.create(
+            start_date="0001-01-01",
+            end_date="0005-01-01",
+            entity=self.new_child_nation,
+            parent=dpr_parent_1,
+        )
+        dpr_child2 = DirectPoliticalRelation.objects.create(
+            start_date="0001-01-01",
+            end_date="0005-01-01",
+            entity=self.new_child_nation,
+            parent=dpr_parent_2,
+        )
+
+        self.assertTrue(1)
+
+    def test_model_nested_recursion(self):
+        """
+        A polent can be parent during one period, and child in the following
+        period
+        """
+
+        ipr_parent_before = IndirectPoliticalRelation.objects.create(
+            start_date="0001-01-01",
+            end_date="0005-01-01",
+            entity=self.new_nation,
+            relation_type=1,
+        )
+        ipr_child_before = IndirectPoliticalRelation.objects.create(
+            start_date="0001-01-01",
+            end_date="0005-01-01",
+            entity=self.new_child_nation,
+            parent=ipr_parent_before,
+            relation_type=1,
+        )
+
+        ipr_parent_after = IndirectPoliticalRelation.objects.create(
+            start_date="0006-01-01",
+            end_date="0007-01-01",
+            entity=self.new_nation,
+            relation_type=1,
+        )
+        ipr_child_after = IndirectPoliticalRelation.objects.create(
+            start_date="0006-01-01",
+            end_date="0007-01-01",
+            entity=self.new_child_nation,
+            relation_type=1,
+        )
+
+        self.assertTrue(1)
