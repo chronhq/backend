@@ -22,9 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import sys
 
-# Remote Debugging
-import socket
-
 if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "chron.settings")
     try:
