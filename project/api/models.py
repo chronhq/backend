@@ -24,7 +24,7 @@ from colorfield.fields import ColorField
 from .ltree import LtreeField
 
 # Create your models here.
-class PoliticalEntity(models.Model):
+class TerritorialEntity(models.Model):
     """
     A 1-1 mapping between a https://www.wikidata.org/wiki/Q56061, and a PK in our db.
     Holds an additional color information.
@@ -36,60 +36,23 @@ class PoliticalEntity(models.Model):
     predecessors = models.ManyToManyField("self", blank=True, related_name="successors")
 
 
-class PoliticalRelation(PolymorphicModel):
+class PoliticalRelation(models.Model):
     """
-    Abstract class for various political relations
+    Stores various political relations
     """
 
     start_date = models.DateField()
     end_date = models.DateField()
-
-
-class DirectPoliticalRelation(PoliticalRelation):
-    """
-    Contains administrative territorial entity:
-        https://www.wikidata.org/wiki/Property:P150
-    and its reverse:
-        https://www.wikidata.org/wiki/Property:P131
-    """
-
     parent = models.ForeignKey(
-        "self", blank=True, null=True, related_name="children", on_delete=models.CASCADE
+        TerritorialEntity, blank=True, null=True, related_name="children", on_delete=models.CASCADE
     )
-    path = LtreeField()
-
     entity = models.OneToOneField(PoliticalEntity, on_delete=models.CASCADE)
 
-
-class IndirectPoliticalRelation(PoliticalRelation):
-    """
-    Dependant territory and client state
-        https://www.wikidata.org/wiki/Q161243
-        https://www.wikidata.org/wiki/Q1151405
-    """
-
-    parent = models.ForeignKey(
-        "self", blank=True, null=True, related_name="children", on_delete=models.CASCADE
+    CONTROL_TYPES = (
+    
     )
-    path = LtreeField()
-    relation_type = (
-        models.PositiveIntegerField()
-    )  # Wikidata ID of relation type, excluding the Q
-    # TODO should be limited to a set of choices
-
-    entity = models.OneToOneField(PoliticalEntity, on_delete=models.CASCADE)
-
-
-class GroupRelation(PoliticalRelation):
-    """
-    Member of https://www.wikidata.org/wiki/Property:P463
-    """
-
-    parent = models.OneToOneField(
-        PoliticalEntity, on_delete=models.CASCADE, related_name="child_relations"
+    control_type = models.PositiveIntegerField(choices=CONTROL_TYPES)
+    CONTROL_DEGREES = (
+        
     )
-    children = models.ManyToManyField(PoliticalEntity, related_name="parent_relation")
-    relation_type = (
-        models.PositiveIntegerField()
-    )  # Wikidata ID of relation type, excluding the Q
-    # TODO should be limited to a set of choices
+    control_degree = models.PositiveIntegerField(blank=True, null=True, choices=CONTROL_DEGREES)
