@@ -18,10 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from polymorphic.models import PolymorphicModel
 from colorfield.fields import ColorField
-
-from .ltree import LtreeField
 
 # Create your models here.
 class TerritorialEntity(models.Model):
@@ -44,15 +41,27 @@ class PoliticalRelation(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     parent = models.ForeignKey(
-        TerritorialEntity, blank=True, null=True, related_name="children", on_delete=models.CASCADE
+        TerritorialEntity,
+        blank=True,
+        null=True,
+        related_name="children",
+        on_delete=models.CASCADE,
     )
-    entity = models.OneToOneField(PoliticalEntity, on_delete=models.CASCADE)
+    entity = models.OneToOneField(TerritorialEntity, on_delete=models.CASCADE)
 
     CONTROL_TYPES = (
-    
+        (0, 'direct'),
+        (1, 'indirect'),
+        (2, 'group')
     )
     control_type = models.PositiveIntegerField(choices=CONTROL_TYPES)
+
+    DISPUTED = 15239622
+    OCCUPIED = 44107133
     CONTROL_DEGREES = (
-        
+        (DISPUTED, 'disputed'),
+        (OCCUPIED, 'occupied')
     )
-    control_degree = models.PositiveIntegerField(blank=True, null=True, choices=CONTROL_DEGREES)
+    control_degree = models.PositiveIntegerField(
+        blank=True, null=True, choices=CONTROL_DEGREES
+    )
