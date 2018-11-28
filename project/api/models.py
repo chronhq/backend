@@ -32,7 +32,7 @@ class TerritorialEntity(models.Model):
     admin_level = models.PositiveIntegerField()
     predecessors = models.ManyToManyField("self", blank=True, related_name="successors")
     relations = models.ManyToManyField(
-        "self", blank=True, symmetrical=False, through=PoliticalRelation
+        "self", blank=True, symmetrical=False, through=PoliticalRelation, related_name="political_relations"
     )
 
 
@@ -41,14 +41,24 @@ class PoliticalRelation(models.Model):
     Stores various political relations
     """
 
-    parents = models.ForeignKey(TerritorialEntity)
-    children = models.ForeignKey(TerritorialEntity)
+    parent = models.ForeignKey(TerritorialEntity, related_name="children")
+    child = models.ForeignKey(TerritorialEntity, related_name="parents")
 
     start_date = models.DateField()
     end_date = models.DateField()
 
-    DIRECT = 0
-    INDIRECT = 1
-    GROUP = 2
-    CONTROL_TYPES = ((DIRECT, "direct"), (INDIRECT, "indirect"), (GROUP, "group"))
+    DIRECT = 10
+    DIRECT_OCCUPED = 11
+    DIRECT_DISPUTED = 12
+    INDIRECT = 20
+    INDIRECT_DISPUTED = 21
+    GROUP = 30
+    CONTROL_TYPES = (
+        (DIRECT, "direct"), 
+        (DIRECT_OCCUPED, "direct_occupied"), 
+        (DIRECT_DISPUTED, "direct_disputed"), 
+        (INDIRECT, "indirect"), 
+        (INDIRECT_DISPUTED, "indirect_disputed"), 
+        (GROUP, "group")
+    )
     control_type = models.PositiveIntegerField(choices=CONTROL_TYPES)
