@@ -19,13 +19,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from .models import PoliticalEntity
+from .models import TerritorialEntity
 
 
-class PoliticalEntityFactory(factory.django.DjangoModelFactory):
+class TerritorialEntityFactory(factory.django.DjangoModelFactory):
     """
-    Factory for the PoliticalEntity model
+    Factory for the TerritorialEntity model
     """
 
     class Meta:  # pylint: disable=C0111
-        model = PoliticalEntity
+        model = TerritorialEntity

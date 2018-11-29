@@ -17,11 +17,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.db.utils import IntegrityError
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from .factories import PoliticalEntityFactory
-from .models import DirectPoliticalRelation, IndirectPoliticalRelation, PoliticalEntity
+from .factories import TerritorialEntityFactory
+from .models import PoliticalRelation
 
 # Create your tests here.
 class ModelTest(TestCase):
@@ -35,16 +35,24 @@ class ModelTest(TestCase):
         Create basic model instances
         """
 
-        cls.european_union = PoliticalEntityFactory(wikidata_id=1, color=1, admin_level=1)
-        cls.germany = PoliticalEntityFactory(
-            wikidata_id=2, color=1, admin_level=2
+        cls.european_union = TerritorialEntityFactory(
+            wikidata_id=1, color=1, admin_level=1
         )
-        cls.france = PoliticalEntityFactory(
-            wikidata_id=3, color=1, admin_level=2
-        )
-        cls.spain = PoliticalEntityFactory(
-            wikidata_id=4, color=1, admin_level=2
-        )
-        cls.italy = PoliticalEntityFactory(
-            wikidata_id=5, color=1, admin_level=2
-        )
+        cls.germany = TerritorialEntityFactory(wikidata_id=2, color=1, admin_level=2)
+        cls.france = TerritorialEntityFactory(wikidata_id=3, color=1, admin_level=2)
+        cls.spain = TerritorialEntityFactory(wikidata_id=4, color=1, admin_level=2)
+        cls.italy = TerritorialEntityFactory(wikidata_id=5, color=1, admin_level=2)
+
+    def test_model_can_not_create_polrel(self):
+        """
+        Ensure date checks work
+        """
+
+        with self.assertRaises(ValidationError):
+            PoliticalRelation.objects.create(
+                start_date="0005-01-01",
+                end_date="0002-01-01",
+                parent=self.european_union,
+                child=self.germany,
+                control_type=PoliticalRelation.GROUP,
+            )
