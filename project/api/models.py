@@ -19,8 +19,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.db import models
 from colorfield.fields import ColorField
+from simple_history.models import HistoricalRecords
 
-# Create your models here.
+
 class TerritorialEntity(models.Model):
     """
     A 1-1 mapping between a https://www.wikidata.org/wiki/Q56061, and a PK in our db.
@@ -32,8 +33,14 @@ class TerritorialEntity(models.Model):
     admin_level = models.PositiveIntegerField()
     predecessors = models.ManyToManyField("self", blank=True, related_name="successors")
     relations = models.ManyToManyField(
-        "self", blank=True, symmetrical=False, through=PoliticalRelation, related_name="political_relations"
+        "self",
+        blank=True,
+        symmetrical=False,
+        through="PoliticalRelation",
+        related_name="political_relations",
     )
+
+    history = HistoricalRecords()
 
 
 class PoliticalRelation(models.Model):
@@ -41,8 +48,12 @@ class PoliticalRelation(models.Model):
     Stores various political relations
     """
 
-    parent = models.ForeignKey(TerritorialEntity, related_name="children")
-    child = models.ForeignKey(TerritorialEntity, related_name="parents")
+    parent = models.ForeignKey(
+        TerritorialEntity, related_name="children", on_delete=models.CASCADE
+    )
+    child = models.ForeignKey(
+        TerritorialEntity, related_name="parents", on_delete=models.CASCADE
+    )
 
     start_date = models.DateField()
     end_date = models.DateField()
@@ -54,11 +65,23 @@ class PoliticalRelation(models.Model):
     INDIRECT_DISPUTED = 21
     GROUP = 30
     CONTROL_TYPES = (
-        (DIRECT, "direct"), 
-        (DIRECT_OCCUPED, "direct_occupied"), 
-        (DIRECT_DISPUTED, "direct_disputed"), 
-        (INDIRECT, "indirect"), 
-        (INDIRECT_DISPUTED, "indirect_disputed"), 
-        (GROUP, "group")
+        (DIRECT, "direct"),
+        (DIRECT_OCCUPED, "direct_occupied"),
+        (DIRECT_DISPUTED, "direct_disputed"),
+        (INDIRECT, "indirect"),
+        (INDIRECT_DISPUTED, "indirect_disputed"),
+        (GROUP, "group"),
     )
     control_type = models.PositiveIntegerField(choices=CONTROL_TYPES)
+
+    history = HistoricalRecords()
+
+    def clean(self, *args, **kwargs):
+        if self.start_date > self.end_date:
+            raise ValidationError("Start date cannot be later than end date")
+
+        super(DiplomaticRelation, self).clean(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super(DiplomaticRelation, self).save(*args, **kwargs)
