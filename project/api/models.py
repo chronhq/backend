@@ -38,10 +38,16 @@ class TerritorialEntity(models.Model):
         blank=True,
         symmetrical=False,
         through="PoliticalRelation",
-        related_name="political_relations",
+        related_name="related_to",
     )
 
     history = HistoricalRecords()
+
+    def get_children(self):
+        return self.relations
+
+    def get_parents(self):
+        return self.related_to
 
 
 class PoliticalRelation(models.Model):
