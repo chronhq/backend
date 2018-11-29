@@ -43,6 +43,12 @@ class TerritorialEntity(models.Model):
 
     history = HistoricalRecords()
 
+    def get_children(self):
+        return self.relations
+
+    def get_parents(self):
+        return self.political_relations
+
 
 class PoliticalRelation(models.Model):
     """
