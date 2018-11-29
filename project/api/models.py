@@ -38,7 +38,7 @@ class TerritorialEntity(models.Model):
         blank=True,
         symmetrical=False,
         through="PoliticalRelation",
-        related_name="related_to",
+        related_name="political_relations",
     )
 
     history = HistoricalRecords()
@@ -47,7 +47,7 @@ class TerritorialEntity(models.Model):
         return self.relations
 
     def get_parents(self):
-        return self.related_to
+        return self.political_relations
 
 
 class PoliticalRelation(models.Model):
