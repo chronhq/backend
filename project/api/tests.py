@@ -69,22 +69,22 @@ class ModelTest(TestCase):
         Ensure that we can create PoliticalRelation of type GROUP
         """
         france_in_european_union = PoliticalRelation.objects.create(
-            start_date="0002-01-01",
-            end_date="0005-01-01",
+            start_date="0001-01-01",
+            end_date="0002-01-01",
             parent=self.european_union,
             child=self.france,
             control_type=PoliticalRelation.GROUP,
         )
         germany_in_european_union = PoliticalRelation.objects.create(
-            start_date="0002-01-01",
-            end_date="0005-01-01",
+            start_date="0001-01-01",
+            end_date="0002-01-01",
             parent=self.european_union,
             child=self.germany,
             control_type=PoliticalRelation.GROUP,
         )
         france_in_nato = PoliticalRelation.objects.create(
-            start_date="0002-01-01",
-            end_date="0005-01-01",
+            start_date="0001-01-01",
+            end_date="0002-01-01",
             parent=self.nato,
             child=self.france,
             control_type=PoliticalRelation.GROUP,
@@ -106,15 +106,15 @@ class ModelTest(TestCase):
         Ensure that we can create PoliticalRelation of type DIRECT
         """
         alsace_in_france = PoliticalRelation.objects.create(
-            start_date="0002-01-01",
-            end_date="0005-01-01",
+            start_date="0001-01-01",
+            end_date="0002-01-01",
             parent=self.france,
             child=self.alsace,
             control_type=PoliticalRelation.DIRECT,
         )
         lorraine_in_france = PoliticalRelation.objects.create(
-            start_date="0002-01-01",
-            end_date="0005-01-01",
+            start_date="0001-01-01",
+            end_date="0002-01-01",
             parent=self.france,
             child=self.lorraine,
             control_type=PoliticalRelation.DIRECT,
