@@ -13,6 +13,8 @@ help: ## Displays this message
 
 # Docker tasks
 
+CONTAINERS := $(shell docker ps -q)
+
 build: ## Builds and tags containers
 	docker-compose build
 
@@ -21,6 +23,10 @@ run: ## Builds, starts, and runs containers
 
 stop: ## Stops running containers
 	docker-compose stop
+
+rm: ## Stops and removes all running containers
+	docker kill $(CONTAINERS)
+	docker rm $(CONTAINERS)
 
 clean: ## Stop and remove containers, networks, volmes, and images
 	docker-compose down
@@ -44,6 +50,7 @@ exec_testk: ## Executes django tests in a running container, keeping the databas
 
 lint: ## Lints python files to pass CI
 	docker-compose exec web black . --exclude /migrations/
+	docker-compose exec web pylint ./api/
 
 bash: ## SSH into the docker container
 	docker-compose exec web sh

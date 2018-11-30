@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Chron.
@@ -20,16 +20,25 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
+import subprocess
 import sys
 
-if __name__ == "__main__":
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "chron.settings")
-    try:
-        from django.core.management import execute_from_command_line
-    except ImportError as exc:
-        raise ImportError(
-            "Couldn't import Django. Are you sure it's installed and "
-            "available on your PYTHONPATH environment variable? Did you "
-            "forget to activate a virtual environment?"
-        ) from exc
-    execute_from_command_line(sys.argv)
+path = sys.argv[-1]
+current_path = os.path.dirname(os.path.abspath(__file__))
+
+if path.startswith(current_path + "/project/"):
+    path = path.replace(current_path + "/project/", "/src/")
+    subprocess.run(
+        [
+            "docker-compose",
+            "exec",
+            "-T",
+            "web",
+            "sh",
+            "-c",
+            "black {} {}".format(" ".join(sys.argv[1:-1]), path),
+        ],
+        stdout=sys.stdout,
+    )
+else:
+    subprocess.run([os.environ["HOME"] + "/.local/bin/black"] + sys.argv[1:])

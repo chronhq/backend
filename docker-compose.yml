@@ -27,7 +27,6 @@ services:
     expose:
       - '80'
     ports:
-      - '3500:3500'
       - '8006:81'
     env_file:
       - django.env
