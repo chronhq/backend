@@ -38,16 +38,18 @@ class ModelTest(TestCase):
         cls.european_union = TerritorialEntityFactory(
             wikidata_id=10, color=1, admin_level=1
         )
-        cls.nato = TerritorialEntityFactory(
-            wikidata_id=11, color=1, admin_level=1
-        )
+        cls.nato = TerritorialEntityFactory(wikidata_id=11, color=1, admin_level=1)
 
         cls.germany = TerritorialEntityFactory(wikidata_id=20, color=1, admin_level=2)
         cls.france = TerritorialEntityFactory(wikidata_id=21, color=1, admin_level=2)
         cls.spain = TerritorialEntityFactory(wikidata_id=22, color=1, admin_level=2)
         cls.italy = TerritorialEntityFactory(wikidata_id=23, color=1, admin_level=2)
-        cls.british_empire = TerritorialEntityFactory(wikidata_id=24, color=1, admin_level=2)
-        cls.british_hk = TerritorialEntityFactory(wikidata_id=25, color=1, admin_level=2)
+        cls.british_empire = TerritorialEntityFactory(
+            wikidata_id=24, color=1, admin_level=2
+        )
+        cls.british_hk = TerritorialEntityFactory(
+            wikidata_id=25, color=1, admin_level=2
+        )
 
         cls.alsace = TerritorialEntityFactory(wikidata_id=30, color=1, admin_level=3)
         cls.lorraine = TerritorialEntityFactory(wikidata_id=31, color=1, admin_level=3)
@@ -57,32 +59,33 @@ class ModelTest(TestCase):
         Ensure that we can create TerritorialEntity
         """
         test_te = TerritorialEntity.objects.create(
-            wikidata_id=9,
-            color=2,
-            admin_level=4
+            wikidata_id=9, color=2, admin_level=4
         )
         test_te.save()
         self.assertTrue(TerritorialEntity.objects.filter(wikidata_id=9).exists())
 
     def test_model_can_create_pr(self):
         """
-        Ensure that we can create PoliticalRelation of type GROUP
+        Ensure that we can create PoliticalRelations of types GROUP and DIRECT
+        Tests get_children() and get_parents() methods
         """
-        france_in_european_union = PoliticalRelation.objects.create(
+
+        # GROUP
+        PoliticalRelation.objects.create(
             start_date="0001-01-01",
             end_date="0002-01-01",
             parent=self.european_union,
             child=self.france,
             control_type=PoliticalRelation.GROUP,
         )
-        germany_in_european_union = PoliticalRelation.objects.create(
+        PoliticalRelation.objects.create(
             start_date="0001-01-01",
             end_date="0002-01-01",
             parent=self.european_union,
             child=self.germany,
             control_type=PoliticalRelation.GROUP,
         )
-        france_in_nato = PoliticalRelation.objects.create(
+        PoliticalRelation.objects.create(
             start_date="0001-01-01",
             end_date="0002-01-01",
             parent=self.nato,
@@ -90,29 +93,19 @@ class ModelTest(TestCase):
             control_type=PoliticalRelation.GROUP,
         )
         self.assertEqual(
-            PoliticalRelation.objects.filter(
-                parent=self.european_union,
-            ).count(),
-            2
+            PoliticalRelation.objects.filter(parent=self.european_union).count(), 2
         )
-        self.assertEqual(
-            PoliticalRelation.objects.filter(
-                parent=self.nato,
-            ).count(),
-            1
-        )
+        self.assertEqual(PoliticalRelation.objects.filter(parent=self.nato).count(), 1)
 
-        """
-        Ensure that we can create PoliticalRelation of type DIRECT
-        """
-        alsace_in_france = PoliticalRelation.objects.create(
+        # DIRECT
+        PoliticalRelation.objects.create(
             start_date="0001-01-01",
             end_date="0002-01-01",
             parent=self.france,
             child=self.alsace,
             control_type=PoliticalRelation.DIRECT,
         )
-        lorraine_in_france = PoliticalRelation.objects.create(
+        PoliticalRelation.objects.create(
             start_date="0001-01-01",
             end_date="0002-01-01",
             parent=self.france,
@@ -120,25 +113,20 @@ class ModelTest(TestCase):
             control_type=PoliticalRelation.DIRECT,
         )
         self.assertEqual(
-            PoliticalRelation.objects.filter(
-                parent=self.france,
-            ).count(),
-            2
+            PoliticalRelation.objects.filter(parent=self.france).count(), 2
         )
 
-        """
-        Ensure get_parents is correct
-        """
+        # get_parents()
         self.assertEqual(self.lorraine.get_parents().count(), 1)
         self.assertEqual(self.lorraine.get_parents().first(), self.france)
-        self.assertEqual(self.france.get_parents().count(), 2) # euopean_union and nato
+        self.assertEqual(self.france.get_parents().count(), 2)  # euopean_union and nato
         self.assertFalse(self.european_union.get_parents().exists())
 
-        """
-        Ensure get_children is correct
-        """
-        self.assertEqual(self.european_union.get_children().count(), 2) # france and germany
-        self.assertEqual(self.france.get_children().count(), 2) # alsace and lorraine
+        # get_children()
+        self.assertEqual(
+            self.european_union.get_children().count(), 2
+        )  # france and germany
+        self.assertEqual(self.france.get_children().count(), 2)  # alsace and lorraine
         self.assertFalse(self.lorraine.get_children().exists())
 
     def test_model_can_not_create_pr(self):
