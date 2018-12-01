@@ -101,6 +101,21 @@ class PoliticalRelation(models.Model):
         super(PoliticalRelation, self).save(*args, **kwargs)
 
 
+class SpacetimeVolume(models.Model):
+    """
+    Maps a set of AtomicPolygons to a TerritorialEntity at a specific time
+    """
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+    entity = models.ForeignKey(TerritorialEntity, on_delete=models.CASCADE)
+    references = ArrayField(models.TextField(max_length=500))
+    # related_events = models.ManyToManyField(Event)
+    # TODO: implement Event model
+
+    history = HistoricalRecords()
+
+
 class AtomicPolygon(models.Model):
     """
     Stores geometric data corresponding to a wikidata ID
@@ -111,6 +126,13 @@ class AtomicPolygon(models.Model):
     geom = models.GeometryField()
     children = models.ManyToManyField(
         "self", blank=True, symmetrical=False, related_name="parents"
+    )
+    st = models.ForeignKey(
+        SpacetimeVolume,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="territories",
     )
 
     history = HistoricalRecords()
@@ -129,19 +151,3 @@ class AtomicPolygon(models.Model):
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
         super(AtomicPolygon, self).save(*args, **kwargs)
-
-
-class SpacetimeVolume(models.Model):
-    """
-    Maps a set of AtomicPolygons to a TerritorialEntity at a specific time
-    """
-
-    start_date = models.DateField()
-    end_date = models.DateField()
-    territory = models.ManyToManyField(AtomicPolygon)
-    entity = models.ForeignKey(TerritorialEntity, on_delete=models.CASCADE)
-    references = ArrayField(models.TextField(max_length=500))
-    # related_events = models.ManyToManyField(Event)
-    # TODO: implement Event model
-
-    history = HistoricalRecords()
