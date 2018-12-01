@@ -44,6 +44,18 @@ class TerritorialEntity(models.Model):
 
     history = HistoricalRecords()
 
+    def get_children(self):
+        """
+        Returns relations in which this nation is a parent
+        """
+        return self.relations
+
+    def get_parents(self):
+        """
+        Returns relations in which this nation is a child
+        """
+        return self.political_relations  # pylint: disable=E1101
+
 
 class PoliticalRelation(models.Model):
     """
