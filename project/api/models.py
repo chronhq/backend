@@ -145,3 +145,22 @@ class SpacetimeVolume(models.Model):
     # TODO: implement Event model
 
     history = HistoricalRecords()
+
+    def clean(self, *args, **kwargs):  # pylint: disable=W0221
+        if (
+            SpacetimeVolume.objects.filter(
+                start_date__lte=self.end_date,
+                end_date__gte=self.start_date,
+                entity__exact=self.entity,
+            )
+            .exclude(pk__exact=self.pk)
+            .exists()
+        ):
+            raise ValidationError(
+                "Another STV for this entity exists in the same timeframe"
+            )
+        super(SpacetimeVolume, self).clean(*args, **kwargs)
+
+    def save(self, *args, **kwargs):  # pylint: disable=W0221
+        self.full_clean()
+        super(SpacetimeVolume, self).save(*args, **kwargs)
