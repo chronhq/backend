@@ -106,7 +106,9 @@ class AtomicPolygon(models.Model):
     Stores geometric data corresponding to a wikidata ID
     """
 
-    wikidata_id = models.PositiveIntegerField(primary_key=True)  # Excluding the Q
+    wikidata_id = models.PositiveIntegerField(
+        unique=True, blank=True, null=True
+    )  # Excluding the Q
     name = models.TextField(max_length=100)
     geom = models.GeometryField()
     children = models.ManyToManyField(
