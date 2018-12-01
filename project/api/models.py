@@ -18,7 +18,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.contrib.gis.db import models
+from django.contrib.postgres.fields import ArrayField
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
 
@@ -86,3 +87,49 @@ class PoliticalRelation(models.Model):
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
         super(PoliticalRelation, self).save(*args, **kwargs)
+
+
+class AtomicPolygon(models.Model):
+    """
+    Stores geometric data corresponding to a wikidata ID
+    """
+
+    wikidata_id = models.PositiveIntegerField(primary_key=True)  # Excluding the Q
+    name = models.TextField(max_length=100)
+    geom = models.GeometryField()
+    children = models.ManyToManyField(
+        "self", blank=True, symmetrical=False, related_name="parents"
+    )
+
+    history = HistoricalRecords()
+
+    def clean(self, *args, **kwargs):  # pylint: disable=W0221
+        if not self.geom is None:
+            if (
+                self.geom.geom_type != "Polygon"
+                and self.geom.geom_type != "MultiPolygon"
+            ):
+                raise ValidationError(
+                    "Only Polygon and MultiPolygon objects are acceptable geometry types."
+                )
+        super(AtomicPolygon, self).clean(*args, **kwargs)
+
+    def save(self, *args, **kwargs):  # pylint: disable=W0221
+        self.full_clean()
+        super(AtomicPolygon, self).save(*args, **kwargs)
+
+
+class SpacetimeVolume(models.Model):
+    """
+    Maps a set of AtomicPolygons to a TerritorialEntity at a specific time
+    """
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+    territory = models.ManyToManyField(AtomicPolygon)
+    entity = models.ForeignKey(TerritorialEntity, on_delete=models.CASCADE)
+    references = ArrayField(models.TextField(max_length=500))
+    # related_events = models.ManyToManyField(Event)
+    # TODO: implement Event model
+
+    history = HistoricalRecords()
