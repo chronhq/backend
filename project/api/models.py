@@ -47,22 +47,16 @@ class TerritorialEntity(models.Model):
     history = HistoricalRecords()
 
     def get_children(self):
-        """
-        Returns relations in which this nation is a parent
-        """
+        """Returns relations in which this nation is a parent."""
         return self.relations
 
     def get_parents(self):
-        """
-        Returns relations in which this nation is a child
-        """
+        """Returns relations in which this nation is a child."""
         return self.political_relations  # pylint: disable=E1101
 
 
 class PoliticalRelation(models.Model):
-    """
-    Stores various political relations
-    """
+    """Stores various political relations."""
 
     parent = models.ForeignKey(
         TerritorialEntity, related_name="children", on_delete=models.CASCADE
@@ -104,9 +98,7 @@ class PoliticalRelation(models.Model):
 
 
 class AtomicPolygon(ClusterableModel):
-    """
-    Stores geometric data corresponding to a wikidata ID
-    """
+    """Stores geometric data corresponding to a wikidata ID."""
 
     wikidata_id = models.PositiveIntegerField(
         unique=True, blank=True, null=True
@@ -158,9 +150,7 @@ class AtomicPolygon(ClusterableModel):
 
 
 class SpacetimeVolume(models.Model):
-    """
-    Maps a set of AtomicPolygons to a TerritorialEntity at a specific time
-    """
+    """Maps a set of AtomicPolygons to a TerritorialEntity at a specific time."""
 
     start_date = models.DateField()
     end_date = models.DateField()
@@ -190,3 +180,67 @@ class SpacetimeVolume(models.Model):
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
         super(SpacetimeVolume, self).save(*args, **kwargs)
+
+
+# Generated models
+# These are tables that can be generated from the tables above. They are optional, but could serve as an optimization layer for MVT.
+class CountryLevelLayer(models.Model):
+    """
+    Stores outer borders of a country.
+    Generated model for MVT optimization.
+    """
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+    geom = models.GeometryField()
+    country = models.PositiveIntegerField()
+    disputed = ArrayField(models.PositiveIntegerField())
+    color = models.PositiveIntegerField()
+    sources = ArrayField(models.PositiveIntegerField())
+    related_events = ArrayField(models.PositiveIntegerField())
+
+
+class RegionalLevelLayer(models.Model):
+    """
+    States and regions, it's simple and can be extended later
+    Generated model for MVT optimization.
+    """
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+    geom = models.GeometryField()
+    country = models.PositiveIntegerField()
+    region = models.PositiveIntegerField()
+    color = models.PositiveIntegerField()
+    sources = ArrayField(models.PositiveIntegerField())
+    related_events = ArrayField(models.PositiveIntegerField())
+
+
+class IndependentLevelLayer(models.Model):
+    """
+    Any additional layer (cities territories, religions, languages)
+    Generated model for MVT optimization.
+    """
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+    geom = models.GeometryField()
+    area = models.PositiveIntegerField()
+    color = models.PositiveIntegerField()
+    sources = ArrayField(models.PositiveIntegerField())
+    related_events = ArrayField(models.PositiveIntegerField())
+
+
+class GroupLevelLayer(models.Model):
+    """
+    Stores forms of political relations and agreements
+    Generated model for MVT optimization.
+    """
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+    geom = models.GeometryField()
+    areas = ArrayField(models.PositiveIntegerField())
+    color = models.PositiveIntegerField()
+    sources = ArrayField(models.PositiveIntegerField())
+    related_events = ArrayField(models.PositiveIntegerField())
