@@ -154,17 +154,16 @@ class ModelTest(TestCase):
         Ensure we can create AtomicPolygons
         """
 
-        poly1 = Polygon(((0, 0), (0, 1), (1, 1), (0, 0)))
-        poly2 = Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
+        poly1 = Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
+        poly2 = Polygon(((3, 3), (3, 4), (4, 4), (3, 3)))
 
-        alsace = AtomicPolygon.objects.create(name="Alsace", geom=poly1)
         lorraine = AtomicPolygon.objects.create(name="Lorraine", geom=poly2)
         alsace_lorraine = AtomicPolygon.objects.create(
             name="Alsace-Lorraine", geom=MultiPolygon(poly1, poly2)
         )
-        alsace_lorraine.children.add(alsace, lorraine)
+        alsace_lorraine.children.add(self.alsace, lorraine)
 
-        self.assertEqual(AtomicPolygon.objects.count(), 4)
+        self.assertEqual(AtomicPolygon.objects.count(), 3)
 
     def test_model_can_not_create_ap(self):
         """

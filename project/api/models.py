@@ -22,6 +22,8 @@ from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
+from modelcluster.models import ClusterableModel
+from modelcluster.fields import ParentalManyToManyField
 
 
 class TerritorialEntity(models.Model):
@@ -101,7 +103,7 @@ class PoliticalRelation(models.Model):
         super(PoliticalRelation, self).save(*args, **kwargs)
 
 
-class AtomicPolygon(models.Model):
+class AtomicPolygon(ClusterableModel):
     """
     Stores geometric data corresponding to a wikidata ID
     """
@@ -109,9 +111,9 @@ class AtomicPolygon(models.Model):
     wikidata_id = models.PositiveIntegerField(
         unique=True, blank=True, null=True
     )  # Excluding the Q
-    name = models.TextField(max_length=100)
+    name = models.TextField(max_length=100, unique=True)
     geom = models.GeometryField()
-    children = models.ManyToManyField(
+    children = ParentalManyToManyField(
         "self", blank=True, symmetrical=False, related_name="parents"
     )
 
@@ -126,11 +128,33 @@ class AtomicPolygon(models.Model):
                 raise ValidationError(
                     "Only Polygon and MultiPolygon objects are acceptable geometry types."
                 )
+
+            if (
+                getattr(self, "children").exists()
+                and AtomicPolygon.objects.filter(
+                    children=None, geom__intersects=self.geom
+                )
+                .exclude(pk=self.pk)
+                .exists()
+            ):
+                raise ValidationError(
+                    "Another AtomicPolygon without children overlaps this polygon: "
+                    + "\n".join(
+                        str(i)
+                        for i in AtomicPolygon.objects.filter(
+                            children=None, geom__intersects=self.geom
+                        )
+                    )
+                )
+
         super(AtomicPolygon, self).clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
         super(AtomicPolygon, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
 
 
 class SpacetimeVolume(models.Model):
