@@ -18,10 +18,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.core.exceptions import ValidationError
+from django.contrib.gis.geos import Point, Polygon, MultiPolygon
 from django.test import TestCase
 
-from .factories import TerritorialEntityFactory
-from .models import PoliticalRelation, TerritorialEntity
+from .factories import TerritorialEntityFactory, AtomicPolygonFactory
+from .models import PoliticalRelation, TerritorialEntity, AtomicPolygon, SpacetimeVolume
 
 # Create your tests here.
 class ModelTest(TestCase):
@@ -54,10 +55,15 @@ class ModelTest(TestCase):
         cls.alsace = TerritorialEntityFactory(wikidata_id=30, color=1, admin_level=3)
         cls.lorraine = TerritorialEntityFactory(wikidata_id=31, color=1, admin_level=3)
 
+        cls.alsace_geom = AtomicPolygonFactory(
+            name="Alsace", geom=Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
+        )
+
     def test_model_can_create_te(self):
         """
         Ensure that we can create TerritorialEntity
         """
+
         test_te = TerritorialEntity.objects.create(
             wikidata_id=9, color=2, admin_level=4
         )
@@ -133,6 +139,7 @@ class ModelTest(TestCase):
         """
         Ensure date checks work
         """
+
         with self.assertRaises(ValidationError):
             PoliticalRelation.objects.create(
                 start_date="0005-01-01",
@@ -140,4 +147,65 @@ class ModelTest(TestCase):
                 parent=self.european_union,
                 child=self.germany,
                 control_type=PoliticalRelation.GROUP,
+            )
+
+    def test_model_can_create_ap(self):
+        """
+        Ensure we can create AtomicPolygons
+        """
+
+        poly1 = Polygon(((0, 0), (0, 1), (1, 1), (0, 0)))
+        poly2 = Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
+
+        alsace = AtomicPolygon.objects.create(name="Alsace", geom=poly1)
+        lorraine = AtomicPolygon.objects.create(name="Lorraine", geom=poly2)
+        alsace_lorraine = AtomicPolygon.objects.create(
+            name="Alsace-Lorraine", geom=MultiPolygon(poly1, poly2)
+        )
+        alsace_lorraine.children.add(alsace, lorraine)
+
+        self.assertEqual(AtomicPolygon.objects.count(), 4)
+
+    def test_model_can_not_create_ap(self):
+        """
+        Ensure geometry type validation works
+        """
+
+        with self.assertRaises(ValidationError):
+            AtomicPolygon.objects.create(name="Alsace", geom=Point(2.5, 2.5))
+
+    def test_model_can_create_stv(self):
+        """
+        Ensure we can create SpacetimeVolumes
+        """
+
+        alsace = SpacetimeVolume.objects.create(
+            start_date="0001-01-01",
+            end_date="0002-01-01",
+            entity=self.france,
+            references=["ref"],
+        )
+        alsace.territory.add(self.alsace_geom)
+
+        self.assertTrue(
+            SpacetimeVolume.objects.filter(territory__in=[self.alsace_geom]).exists()
+        )
+
+    def test_model_can_not_create_stv(self):
+        """
+        Ensure non overlapping timeframe constraint works
+        """
+
+        with self.assertRaises(ValidationError):
+            SpacetimeVolume.objects.create(
+                start_date="0001-01-01",
+                end_date="0003-01-01",
+                entity=self.france,
+                references=["ref"],
+            )
+            SpacetimeVolume.objects.create(
+                start_date="0002-01-01",
+                end_date="0004-01-01",
+                entity=self.france,
+                references=["ref"],
             )

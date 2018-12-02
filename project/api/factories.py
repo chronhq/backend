@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from .models import TerritorialEntity
+from .models import TerritorialEntity, AtomicPolygon
 
 
 class TerritorialEntityFactory(factory.django.DjangoModelFactory):
@@ -29,3 +29,12 @@ class TerritorialEntityFactory(factory.django.DjangoModelFactory):
 
     class Meta:  # pylint: disable=C0111
         model = TerritorialEntity
+
+
+class AtomicPolygonFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for the AtomicPolygon model
+    """
+
+    class Meta:  # pylint: disable=C0111
+        model = AtomicPolygon
