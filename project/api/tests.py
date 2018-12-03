@@ -55,9 +55,11 @@ class ModelTest(TestCase):
         cls.alsace = TerritorialEntityFactory(wikidata_id=30, color=1, admin_level=3)
         cls.lorraine = TerritorialEntityFactory(wikidata_id=31, color=1, admin_level=3)
 
-        cls.alsace_geom = AtomicPolygonFactory(
+        cls.alsace_geom = AtomicPolygonFactory.create(
             name="Alsace", geom=Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
         )
+        print("test")
+        print(cls.alsace_geom.id)
 
     def test_model_can_create_te(self):
         """
@@ -159,19 +161,25 @@ class ModelTest(TestCase):
 
         lorraine = AtomicPolygon.objects.create(name="Lorraine", geom=poly2)
         alsace_lorraine = AtomicPolygon.objects.create(
-            name="Alsace-Lorraine", geom=MultiPolygon(poly1, poly2)
+            name="Alsace-Lorraine", geom=MultiPolygon(poly1, poly2), live=False
         )
-        alsace_lorraine.children.add(self.alsace, lorraine)
+        alsace_lorraine.children.add(self.alsace_geom, lorraine)
+        alsace_lorraine.live = True
 
         self.assertEqual(AtomicPolygon.objects.count(), 3)
 
     def test_model_can_not_create_ap(self):
         """
-        Ensure geometry type validation works
+        Ensure the AtomicPolygon validations work
         """
 
         with self.assertRaises(ValidationError):
-            AtomicPolygon.objects.create(name="Alsace", geom=Point(2.5, 2.5))
+            AtomicPolygon.objects.create(name="Lorraine", geom=Point(2.5, 2.5))
+
+        with self.assertRaises(ValidationError):
+            AtomicPolygon.objects.create(
+                name="Lorraine", geom=Polygon(((1, 1), (1, 3), (2, 2), (1, 1)))
+            )
 
     def test_model_can_create_stv(self):
         """
