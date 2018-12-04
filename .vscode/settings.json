@@ -1,5 +1,18 @@
 {
   "python.formatting.blackPath": "./.black.py",
   "python.formatting.provider": "black",
-  "python.linting.pylintPath": "./.pylint.py"
+  "python.linting.pylintPath": "./.pylint.py",
+  "cSpell.words": [
+    "amaury",
+    "belyaeva",
+    "chron",
+    "daniil",
+    "kilicli",
+    "liam",
+    "martiny",
+    "mordasov",
+    "orlov",
+    "o’flynn",
+    "pylint"
+  ]
 }

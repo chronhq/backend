@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from random import randint
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
@@ -69,14 +70,14 @@ class PoliticalRelation(models.Model):
     end_date = models.DateField()
 
     DIRECT = 10
-    DIRECT_OCCUPED = 11
+    DIRECT_OCCUPIED = 11
     DIRECT_DISPUTED = 12
     INDIRECT = 20
     INDIRECT_DISPUTED = 21
     GROUP = 30
     CONTROL_TYPES = (
         (DIRECT, "direct"),
-        (DIRECT_OCCUPED, "direct_occupied"),
+        (DIRECT_OCCUPIED, "direct_occupied"),
         (DIRECT_DISPUTED, "direct_disputed"),
         (INDIRECT, "indirect"),
         (INDIRECT_DISPUTED, "indirect_disputed"),
@@ -183,9 +184,30 @@ class SpacetimeVolume(models.Model):
         self.full_clean()
         super(SpacetimeVolume, self).save(*args, **kwargs)
 
+        territories = list(self.territory.all().values_list('geom', flat=True))
+        print(territories)
+
+        if territories:
+            joined_territory = territories[0]
+            territories = territories[1:]
+
+            for territory in self.territory.all():
+                joined_territory = joined_territory.union(territory)
+
+            CountryLevelLayer.objects.create(
+                start_date=self.start_date,
+                end_date=self.end_date,
+                geom=joined_territory,
+                county=self.entity.wikidata_id,
+                color=randint(1, 13), # TODO replace with algorithm
+                references=self.references,
+                related_events=["not yet implemented"] # self.related_events
+            )
+
 
 # Generated models
-# These are tables that can be generated from the tables above. They are optional, but could serve as an optimization layer for MVT.
+# These are tables that can be generated from the tables above.
+# They are optional, but could serve as an optimization layer for MVT.
 class CountryLevelLayer(models.Model):
     """
     Stores outer borders of a country.
@@ -198,7 +220,7 @@ class CountryLevelLayer(models.Model):
     country = models.PositiveIntegerField()
     disputed = ArrayField(models.PositiveIntegerField())
     color = models.PositiveIntegerField()
-    sources = ArrayField(models.PositiveIntegerField())
+    references = ArrayField(models.PositiveIntegerField())
     related_events = ArrayField(models.PositiveIntegerField())
 
 
@@ -214,7 +236,7 @@ class RegionalLevelLayer(models.Model):
     country = models.PositiveIntegerField()
     region = models.PositiveIntegerField()
     color = models.PositiveIntegerField()
-    sources = ArrayField(models.PositiveIntegerField())
+    references = ArrayField(models.PositiveIntegerField())
     related_events = ArrayField(models.PositiveIntegerField())
 
 
@@ -229,7 +251,7 @@ class IndependentLevelLayer(models.Model):
     geom = models.GeometryField()
     area = models.PositiveIntegerField()
     color = models.PositiveIntegerField()
-    sources = ArrayField(models.PositiveIntegerField())
+    references = ArrayField(models.PositiveIntegerField())
     related_events = ArrayField(models.PositiveIntegerField())
 
 
@@ -244,5 +266,5 @@ class GroupLevelLayer(models.Model):
     geom = models.GeometryField()
     areas = ArrayField(models.PositiveIntegerField())
     color = models.PositiveIntegerField()
-    sources = ArrayField(models.PositiveIntegerField())
+    references = ArrayField(models.PositiveIntegerField())
     related_events = ArrayField(models.PositiveIntegerField())

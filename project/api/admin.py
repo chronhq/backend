@@ -19,10 +19,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from .models import TerritorialEntity, PoliticalRelation, AtomicPolygon, SpacetimeVolume
+from .models import TerritorialEntity, PoliticalRelation, AtomicPolygon, SpacetimeVolume, CountryLevelLayer,RegionalLevelLayer, IndependentLevelLayer, GroupLevelLayer
 
 # Register your models here.
 admin.site.register(TerritorialEntity)
 admin.site.register(PoliticalRelation)
 admin.site.register(AtomicPolygon)
 admin.site.register(SpacetimeVolume)
+admin.site.register(CountryLevelLayer)
+admin.site.register(RegionalLevelLayer)
+admin.site.register(IndependentLevelLayer)
+admin.site.register(GroupLevelLayer)
