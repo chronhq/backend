@@ -18,9 +18,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.contrib.gis.db import models
+from django.contrib.postgres.fields import ArrayField
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
+from modelcluster.models import ClusterableModel
+from modelcluster.fields import ParentalManyToManyField
 
 
 class TerritorialEntity(models.Model):
@@ -98,3 +101,94 @@ class PoliticalRelation(models.Model):
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
         super(PoliticalRelation, self).save(*args, **kwargs)
+
+
+class AtomicPolygon(ClusterableModel):
+    """
+    Stores geometric data corresponding to a wikidata ID
+    """
+
+    wikidata_id = models.PositiveIntegerField(
+        unique=True, blank=True, null=True
+    )  # Excluding the Q
+    name = models.TextField(max_length=100, unique=True)
+    geom = models.GeometryField()
+    children = ParentalManyToManyField(
+        "self", blank=True, symmetrical=False, related_name="parents"
+    )
+    live = models.BooleanField(default=True)
+
+    history = HistoricalRecords()
+
+    def clean(self, *args, **kwargs):  # pylint: disable=W0221
+        if not self.geom is None:
+            if (
+                self.geom.geom_type != "Polygon"
+                and self.geom.geom_type != "MultiPolygon"
+            ):
+                raise ValidationError(
+                    "Only Polygon and MultiPolygon objects are acceptable geometry types."
+                )
+
+            if (
+                self.live
+                and self.children.count() == 0
+                and AtomicPolygon.objects.filter(
+                    children=None, geom__intersects=self.geom
+                )
+                .exclude(pk=self.pk)
+                .exists()
+            ):
+                raise ValidationError(
+                    "Another AtomicPolygon without children overlaps this polygon: "
+                    + "\n".join(
+                        str(i)
+                        for i in AtomicPolygon.objects.filter(
+                            children=None, geom__intersects=self.geom
+                        )
+                    )
+                )
+
+        super(AtomicPolygon, self).clean(*args, **kwargs)
+
+    def save(self, *args, **kwargs):  # pylint: disable=W0221
+        self.full_clean()
+        super(AtomicPolygon, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class SpacetimeVolume(models.Model):
+    """
+    Maps a set of AtomicPolygons to a TerritorialEntity at a specific time
+    """
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+    territory = models.ManyToManyField(AtomicPolygon)
+    entity = models.ForeignKey(TerritorialEntity, on_delete=models.CASCADE)
+    references = ArrayField(models.TextField(max_length=500))
+    # related_events = models.ManyToManyField(Event)
+    # TODO: implement Event model
+
+    history = HistoricalRecords()
+
+    def clean(self, *args, **kwargs):  # pylint: disable=W0221
+        if (
+            SpacetimeVolume.objects.filter(
+                start_date__lte=self.end_date,
+                end_date__gte=self.start_date,
+                entity__exact=self.entity,
+            )
+            .exclude(pk__exact=self.pk)
+            .exists()
+        ):
+            raise ValidationError(
+                "Another STV for this entity exists in the same timeframe"
+            )
+        super(SpacetimeVolume, self).clean(*args, **kwargs)
+
+    def save(self, *args, **kwargs):  # pylint: disable=W0221
+        self.full_clean()
+        super(SpacetimeVolume, self).save(*args, **kwargs)
