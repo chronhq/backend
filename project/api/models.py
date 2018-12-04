@@ -22,6 +22,8 @@ from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
+from modelcluster.models import ClusterableModel
+from modelcluster.fields import ParentalManyToManyField
 
 
 class TerritorialEntity(models.Model):
@@ -101,7 +103,7 @@ class PoliticalRelation(models.Model):
         super(PoliticalRelation, self).save(*args, **kwargs)
 
 
-class AtomicPolygon(models.Model):
+class AtomicPolygon(ClusterableModel):
     """
     Stores geometric data corresponding to a wikidata ID
     """
@@ -111,7 +113,7 @@ class AtomicPolygon(models.Model):
     )  # Excluding the Q
     name = models.TextField(max_length=100, unique=True)
     geom = models.GeometryField()
-    children = models.ManyToManyField(
+    children = ParentalManyToManyField(
         "self", blank=True, symmetrical=False, related_name="parents"
     )
     live = models.BooleanField(default=True)
@@ -130,7 +132,7 @@ class AtomicPolygon(models.Model):
 
             if (
                 self.live
-                #and not getattr(self, 'children').exists() maybe try count
+                and self.children.count() == 0
                 and AtomicPolygon.objects.filter(
                     children=None, geom__intersects=self.geom
                 )

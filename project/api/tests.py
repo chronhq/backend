@@ -58,8 +58,6 @@ class ModelTest(TestCase):
         cls.alsace_geom = AtomicPolygonFactory.create(
             name="Alsace", geom=Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
         )
-        print("test")
-        print(cls.alsace_geom.id)
 
     def test_model_can_create_te(self):
         """
@@ -173,9 +171,11 @@ class ModelTest(TestCase):
         Ensure the AtomicPolygon validations work
         """
 
+        # Geometry type validation
         with self.assertRaises(ValidationError):
             AtomicPolygon.objects.create(name="Lorraine", geom=Point(2.5, 2.5))
 
+        # Non overlapping childless AP constraint
         with self.assertRaises(ValidationError):
             AtomicPolygon.objects.create(
                 name="Lorraine", geom=Polygon(((1, 1), (1, 3), (2, 2), (1, 1)))
