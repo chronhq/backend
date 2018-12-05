@@ -185,23 +185,22 @@ class SpacetimeVolume(models.Model):
         super(SpacetimeVolume, self).save(*args, **kwargs)
 
         territories = list(self.territory.all().values_list('geom', flat=True))
-        print(territories)
 
         if territories:
             joined_territory = territories[0]
             territories = territories[1:]
 
-            for territory in self.territory.all():
+            for territory in territories:
                 joined_territory = joined_territory.union(territory)
 
             CountryLevelLayer.objects.create(
                 start_date=self.start_date,
                 end_date=self.end_date,
                 geom=joined_territory,
-                county=self.entity.wikidata_id,
+                country=self.entity.wikidata_id,
                 color=randint(1, 13), # TODO replace with algorithm
                 references=self.references,
-                related_events=["not yet implemented"] # self.related_events
+                related_events=[0] # TODO replace with self.related_events when implemented
             )
 
 
@@ -218,10 +217,10 @@ class CountryLevelLayer(models.Model):
     end_date = models.DateField()
     geom = models.GeometryField()
     country = models.PositiveIntegerField()
-    disputed = ArrayField(models.PositiveIntegerField())
+    disputed = ArrayField(models.PositiveIntegerField(), null=True, blank=True)
     color = models.PositiveIntegerField()
-    references = ArrayField(models.PositiveIntegerField())
-    related_events = ArrayField(models.PositiveIntegerField())
+    references = ArrayField(models.TextField(max_length=500))
+    related_events = ArrayField(models.PositiveIntegerField(), null=True, blank=True)
 
 
 class RegionalLevelLayer(models.Model):
