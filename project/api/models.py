@@ -68,6 +68,7 @@ class PoliticalRelation(models.Model):
 
     start_date = models.DateField()
     end_date = models.DateField()
+    references = ArrayField(models.TextField(max_length=500))
 
     DIRECT = 10
     DIRECT_OCCUPIED = 11
@@ -96,6 +97,42 @@ class PoliticalRelation(models.Model):
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
         super(PoliticalRelation, self).save(*args, **kwargs)
+
+        print(self.control_type)
+        if self.control_type == PoliticalRelation.GROUP:
+            territories = list(
+                SpacetimeVolume.objects.get(
+                    start_date__lte=self.start_date,
+                    end_date__gte=self.end_date,
+                    entity=self.parent,
+                )
+                .territory.all()
+                .values_list("geom", flat=True)
+            ) + list(
+                SpacetimeVolume.objects.get(
+                    start_date__lte=self.start_date,
+                    end_date__gte=self.end_date,
+                    entity=self.child,
+                )
+                .territory.all()
+                .values_list("geom", flat=True)
+            )
+
+            joined_territory = territories[0]
+            territories = territories[1:]
+
+            for territory in territories:
+                joined_territory = joined_territory.union(territory)
+
+            GroupLevelLayer.objects.create(
+                start_date=self.start_date,
+                end_date=self.end_date,
+                geom=joined_territory,
+                areas=[self.parent.wikidata_id, self.child.wikidata_id],
+                color=randint(1, 13),  # TODO: replace with color alg
+                references=self.references,
+                related_events=[0],  # TODO: replace with self.related_events
+            )
 
 
 class AtomicPolygon(ClusterableModel):
@@ -184,7 +221,7 @@ class SpacetimeVolume(models.Model):
         self.full_clean()
         super(SpacetimeVolume, self).save(*args, **kwargs)
 
-        territories = list(self.territory.all().values_list('geom', flat=True))
+        territories = list(self.territory.all().values_list("geom", flat=True))
 
         if territories:
             joined_territory = territories[0]
@@ -198,9 +235,11 @@ class SpacetimeVolume(models.Model):
                 end_date=self.end_date,
                 geom=joined_territory,
                 country=self.entity.wikidata_id,
-                color=randint(1, 13), # TODO replace with algorithm
+                color=randint(1, 13),  # TODO replace with algorithm
                 references=self.references,
-                related_events=[0] # TODO replace with self.related_events when implemented
+                related_events=[
+                    0
+                ],  # TODO replace with self.related_events when implemented
             )
 
 
@@ -265,5 +304,5 @@ class GroupLevelLayer(models.Model):
     geom = models.GeometryField()
     areas = ArrayField(models.PositiveIntegerField())
     color = models.PositiveIntegerField()
-    references = ArrayField(models.PositiveIntegerField())
+    references = ArrayField(models.TextField(max_length=500))
     related_events = ArrayField(models.PositiveIntegerField())
