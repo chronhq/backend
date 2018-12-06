@@ -2,6 +2,8 @@
 
 ## Getting Started
 
+### Docker
+
 ```bash
 # Clone the repo
 git clone https://github.com/chronoscio/backend
@@ -16,4 +18,20 @@ make run
 
 # Navigate to http://localhost/
 # 502 error means postgres is starting, try again in a few seconds
+```
+
+### Local
+
+```bash
+# Clone the repo
+git clone https://github.com/chronoscio/backend
+cd backend
+
+# Create and activate virtual environment
+virtualenv venv
+source venv/bin/activate # *nix
+venv/Scripts/activate # win
+pip install -r config/requirements.txt
+
+python project/manage.py runserver
 ```
