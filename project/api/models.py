@@ -22,8 +22,6 @@ from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
-from modelcluster.models import ClusterableModel
-from modelcluster.fields import ParentalManyToManyField
 
 
 class TerritorialEntity(models.Model):
@@ -103,7 +101,7 @@ class PoliticalRelation(models.Model):
         super(PoliticalRelation, self).save(*args, **kwargs)
 
 
-class AtomicPolygon(ClusterableModel):
+class AtomicPolygon(models.Model):
     """
     Stores geometric data corresponding to a wikidata ID
     """
@@ -113,10 +111,6 @@ class AtomicPolygon(ClusterableModel):
     )  # Excluding the Q
     name = models.TextField(max_length=100, unique=True)
     geom = models.GeometryField()
-    children = ParentalManyToManyField(
-        "self", blank=True, symmetrical=False, related_name="parents"
-    )
-    live = models.BooleanField(default=True)
 
     history = HistoricalRecords()
 
@@ -131,20 +125,16 @@ class AtomicPolygon(ClusterableModel):
                 )
 
             if (
-                self.live
-                and self.children.count() == 0
-                and AtomicPolygon.objects.filter(
-                    children=None, geom__intersects=self.geom
-                )
+                AtomicPolygon.objects.filter(geom__intersects=self.geom)
                 .exclude(pk=self.pk)
                 .exists()
             ):
                 raise ValidationError(
-                    "Another AtomicPolygon without children overlaps this polygon: "
+                    "Another AtomicPolygon overlaps this polygon: "
                     + "\n".join(
                         str(i)
                         for i in AtomicPolygon.objects.filter(
-                            children=None, geom__intersects=self.geom
+                            geom__intersects=self.geom
                         )
                     )
                 )

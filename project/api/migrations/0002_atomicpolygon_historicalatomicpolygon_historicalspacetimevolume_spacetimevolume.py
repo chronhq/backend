@@ -5,7 +5,6 @@ import django.contrib.gis.db.models.fields
 import django.contrib.postgres.fields
 from django.db import migrations, models
 import django.db.models.deletion
-import modelcluster.fields
 import simple_history.models
 
 
@@ -25,7 +24,7 @@ class Migration(migrations.Migration):
                 ('name', models.TextField(max_length=100, unique=True)),
                 ('geom', django.contrib.gis.db.models.fields.GeometryField(srid=4326)),
                 ('live', models.BooleanField(default=True)),
-                ('children', modelcluster.fields.ParentalManyToManyField(blank=True, related_name='parents', to='api.AtomicPolygon')),
+                ('children', models.ManyToManyField(blank=True, related_name='parents', to='api.AtomicPolygon')),
             ],
             options={
                 'abstract': False,

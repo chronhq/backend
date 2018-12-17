@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.core.exceptions import ValidationError
-from django.contrib.gis.geos import Point, Polygon, MultiPolygon
+from django.contrib.gis.geos import Point, Polygon
 from django.test import TestCase
 
 from .factories import TerritorialEntityFactory, AtomicPolygonFactory
@@ -154,17 +154,11 @@ class ModelTest(TestCase):
         Ensure we can create AtomicPolygons
         """
 
-        poly1 = Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
-        poly2 = Polygon(((3, 3), (3, 4), (4, 4), (3, 3)))
-
-        lorraine = AtomicPolygon.objects.create(name="Lorraine", geom=poly2)
-        alsace_lorraine = AtomicPolygon.objects.create(
-            name="Alsace-Lorraine", geom=MultiPolygon(poly1, poly2), live=False
+        AtomicPolygon.objects.create(
+            name="Lorraine", geom=Polygon(((3, 3), (3, 4), (4, 4), (3, 3)))
         )
-        alsace_lorraine.children.add(self.alsace_geom, lorraine)
-        alsace_lorraine.live = True
 
-        self.assertEqual(AtomicPolygon.objects.count(), 3)
+        self.assertEqual(AtomicPolygon.objects.count(), 2)
 
     def test_model_can_not_create_ap(self):
         """
