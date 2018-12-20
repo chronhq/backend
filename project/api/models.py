@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
+from ordered_model.models import OrderedModel
 from django.contrib.postgres.fields import ArrayField
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
@@ -182,3 +183,55 @@ class SpacetimeVolume(models.Model):
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
         super(SpacetimeVolume, self).save(*args, **kwargs)
+
+class Narrative(models.Model):
+    """
+    Stores narrative information.
+    """
+
+    author = models.CharField(max_length=100)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    start_date = models.CharField(max_length=100)
+    end_date = models.CharField(max_length=100)
+    language = models.CharField(max_length=100)
+    tags = ArrayField(models.CharField(max_length=100)) 
+
+
+    def save(self, *args, **kwargs):  # pylint: disable=W0221
+        self.full_clean()
+        super(Narrative, self).save(*args, **kwargs)
+
+class MapSettings(models.Model):
+    """
+    Stores settings to be used when a narration is active.
+    """
+
+    bbox = models.MultiPointField()
+    zoom_min = models.IntegerField()
+    zoom_max = models.IntegerField()
+
+    def save(self, *args, **kwargs):  # pylint: disable=W0221
+        self.full_clean()
+        super(MapSettings, self).save(*args, **kwargs)
+
+class Narration(OrderedModel):
+    """
+    Each point of narration inside a narrative commenting on events. 
+    """
+
+    narrative = models.ForeignKey(Narrative, on_delete=models.CASCADE)
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    date_label = models.CharField(max_length=100)
+    map_datetime = models.DateTimeField()
+    # attached_events = models.ManyToManyField(Event)
+    img = models.URLField(blank=True, null=True)
+    video = models.URLField(blank=True, null=True)
+    settings_id = models.ForeignKey(MapSettings, on_delete=models.CASCADE)
+    
+    order_with_respect_to = 'narrative'
+
+    def save(self, *args, **kwargs):  # pylint: disable=W0221
+        self.full_clean()
+        super(Narration, self).save(*args, **kwargs)
