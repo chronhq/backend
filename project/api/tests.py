@@ -223,7 +223,10 @@ class ModelTest(TestCase):
         """
 
         hastings = CachedData.objects.create(
-            wikidata_id=1, location=Point(0, 0), date="0001-01-01"
+            wikidata_id=1,
+            location=Point(0, 0),
+            date="0001-01-01",
+            event_type=CachedData.BATTLE,
         )
 
         self.assertTrue(hastings.rank > 0, hastings.date)
