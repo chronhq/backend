@@ -222,7 +222,9 @@ class ModelTest(TestCase):
         Ensure CachedData can be created
         """
 
-        hastings = CachedData.objects.create(wikidata_id=1, location=Point(0, 0))
+        hastings = CachedData.objects.create(
+            wikidata_id=1, location=Point(0, 0), date="0001-01-01"
+        )
 
-        self.assertTrue(hastings.rank > 0, hastings.last_fetched)
+        self.assertTrue(hastings.rank > 0, hastings.date)
         self.assertEqual(CachedData.objects.count(), 1)

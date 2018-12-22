@@ -109,7 +109,7 @@ class CachedData(models.Model):
 
     wikidata_id = models.PositiveIntegerField(unique=True)  # Excluding the Q
     location = models.PointField()
-    last_fetched = models.DateTimeField(auto_now=True)
+    date = models.DateField()
     rank = models.PositiveIntegerField()
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
