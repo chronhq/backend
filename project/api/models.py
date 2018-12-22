@@ -112,6 +112,11 @@ class CachedData(models.Model):
     date = models.DateField()
     rank = models.PositiveIntegerField()
 
+    BATTLE = 178561
+    TREATY = 131569
+    EVENT_TYPES = ((BATTLE, "battle"), (TREATY, "treaty"))
+    event_type = models.PositiveIntegerField(choices=EVENT_TYPES)
+
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.rank = self.wikidata_id * randint(0, 10)  # TODO: implement #8
         super(CachedData, self).save(*args, **kwargs)
