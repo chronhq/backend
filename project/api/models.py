@@ -113,8 +113,15 @@ class CachedData(models.Model):
     rank = models.PositiveIntegerField()
 
     BATTLE = 178561
-    TREATY = 131569
-    EVENT_TYPES = ((BATTLE, "battle"), (TREATY, "treaty"))
+    DOCUMENT = 131569
+    BIRTH = 569
+    DEATH = 570
+    EVENT_TYPES = (
+        (BATTLE, "battle"),
+        (DOCUMENT, "document"),
+        (BIRTH, "birth"),
+        (DEATH, "death"),
+    )
     event_type = models.PositiveIntegerField(choices=EVENT_TYPES)
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
