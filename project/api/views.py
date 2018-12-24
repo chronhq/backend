@@ -17,6 +17,64 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-# from django.shortcuts import render
+from rest_framework import viewsets
 
-# Create your views here.
+from .models import (
+    TerritorialEntity,
+    PoliticalRelation,
+    CachedData,
+    AtomicPolygon,
+    SpacetimeVolume,
+)
+from .serializers import (
+    TerritorialEntitySerializer,
+    PoliticalRelationSerializer,
+    CachedDataSerializer,
+    AtomicPolygonSerializer,
+    SpacetimeVolumeSerializer,
+)
+
+
+class TerritorialEntityViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for TerritorialEntities
+    """
+
+    queryset = TerritorialEntity.objects.all()
+    serializer_class = TerritorialEntitySerializer
+
+
+class PoliticalRelationViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for PoliticalRelations
+    """
+
+    queryset = PoliticalRelation.objects.all()
+    serializer_class = PoliticalRelationSerializer
+
+
+class CachedDataViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for CachedData
+    """
+
+    queryset = CachedData.objects.all()
+    serializer_class = CachedDataSerializer
+
+
+class AtomicPolygonViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for AtomicPolygons
+    """
+
+    queryset = AtomicPolygon.objects.all()
+    serializer_class = AtomicPolygonSerializer
+
+
+class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for SpacetimeVolumes
+    """
+
+    queryset = SpacetimeVolume.objects.all()
+    serializer_class = SpacetimeVolumeSerializer

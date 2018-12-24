@@ -17,7 +17,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.contrib import admin
 from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 
-urlpatterns = [path("api/", include("api.urls")), path("admin/", admin.site.urls)]
+from . import views
+
+ROUTER = DefaultRouter()
+ROUTER.register(r"territorial-entities", views.TerritorialEntityViewSet)
+ROUTER.register(r"poltical-relations", views.PoliticalRelationViewSet)
+ROUTER.register(r"cached-data", views.CachedDataViewSet)
+ROUTER.register(r"atomic-polygons", views.AtomicPolygonViewSet)
+ROUTER.register(r"spacetime-volumes", views.SpacetimeVolumeViewSet)
+
+urlpatterns = [path("", include(ROUTER.urls))]

@@ -17,57 +17,65 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import factory
+from rest_framework.serializers import ModelSerializer, IntegerField
 
 from .models import (
     TerritorialEntity,
-    AtomicPolygon,
     PoliticalRelation,
     CachedData,
+    AtomicPolygon,
     SpacetimeVolume,
 )
 
 
-class TerritorialEntityFactory(factory.django.DjangoModelFactory):
+class TerritorialEntitySerializer(ModelSerializer):
     """
-    Factory for the TerritorialEntity model
+    Serializes the TerritorialEntity model
     """
 
-    class Meta:  # pylint: disable=C0111
+    class Meta:
         model = TerritorialEntity
+        fields = "__all__"
 
 
-class AtomicPolygonFactory(factory.django.DjangoModelFactory):
+class PoliticalRelationSerializer(ModelSerializer):
     """
-    Factory for the AtomicPolygon model
-    """
-
-    class Meta:  # pylint: disable=C0111
-        model = AtomicPolygon
-
-
-class PoliticalRelationFactory(factory.django.DjangoModelFactory):
-    """
-    Factory for the PoliticalRelation model
+    Serializes the PoliticalRelation model
     """
 
-    class Meta:  # pylint: disable=C0111
+    class Meta:
         model = PoliticalRelation
+        fields = "__all__"
 
 
-class CachedDataFactory(factory.django.DjangoModelFactory):
+class CachedDataSerializer(ModelSerializer):
     """
-    Factory for the CachedData model
+    Serializes the CachedData model
     """
 
-    class Meta:  # pylint: disable=C0111
+    event_type = IntegerField(min_value=0)
+
+    class Meta:
         model = CachedData
+        fields = "__all__"
+        read_only_fields = ("rank",)
 
 
-class SpacetimeVolumeFactory(factory.django.DjangoModelFactory):
+class AtomicPolygonSerializer(ModelSerializer):
     """
-    Factory for the SpacetimeVolume model
+    Serializes the PoliticalRelation model
     """
 
-    class Meta:  # pylint: disable=C0111
+    class Meta:
+        model = AtomicPolygon
+        fields = "__all__"
+
+
+class SpacetimeVolumeSerializer(ModelSerializer):
+    """
+    Serializes the SpacetimeVolume model
+    """
+
+    class Meta:
         model = SpacetimeVolume
+        fields = "__all__"
