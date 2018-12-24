@@ -227,9 +227,6 @@ class ModelTest(TestCase):
             author="Test Author",
             title="Test Narrative",
             description="This is a test narrative for automated testing.",
-            start_date="0001-01-01",
-            end_date="0003-01-01",
-            language="en",
             tags=["test", "tags"],
         )
 
@@ -245,7 +242,7 @@ class ModelTest(TestCase):
             description="This is a narration point",
             date_label="test",
             map_datetime="0002-01-01 00:00",
-            settings_id=test_settings,
+            settings=test_settings,
         )
 
         test_settings2 = MapSettings.objects.create(
@@ -260,7 +257,7 @@ class ModelTest(TestCase):
             description="This is another narration point",
             date_label="test2",
             map_datetime="0002-05-01 00:00",
-            settings_id=test_settings2,
+            settings=test_settings2,
         )
 
         narration1.swap(narration2)

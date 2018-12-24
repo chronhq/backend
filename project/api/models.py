@@ -191,11 +191,8 @@ class Narrative(models.Model):
     """
 
     author = models.CharField(max_length=100)
-    title = models.CharField(max_length=200)
+    title = models.TextField()
     description = models.TextField()
-    start_date = models.CharField(max_length=100)
-    end_date = models.CharField(max_length=100)
-    language = models.CharField(max_length=100)
     tags = ArrayField(models.CharField(max_length=100))
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
@@ -223,14 +220,14 @@ class Narration(OrderedModel):
     """
 
     narrative = models.ForeignKey(Narrative, on_delete=models.CASCADE)
-    title = models.CharField(max_length=100)
+    title = models.TextField()
     description = models.TextField()
     date_label = models.CharField(max_length=100)
     map_datetime = models.DateTimeField()
     # attached_events = models.ManyToManyField(Event)
     img = models.URLField(blank=True, null=True)
     video = models.URLField(blank=True, null=True)
-    settings_id = models.ForeignKey(MapSettings, on_delete=models.CASCADE)
+    settings = models.ForeignKey(MapSettings, on_delete=models.CASCADE)
 
     order_with_respect_to = "narrative"
 
