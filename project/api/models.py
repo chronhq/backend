@@ -19,8 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
-from ordered_model.models import OrderedModel
 from django.contrib.postgres.fields import ArrayField
+from ordered_model.models import OrderedModel
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
 
@@ -184,6 +184,7 @@ class SpacetimeVolume(models.Model):
         self.full_clean()
         super(SpacetimeVolume, self).save(*args, **kwargs)
 
+
 class Narrative(models.Model):
     """
     Stores narrative information.
@@ -195,12 +196,12 @@ class Narrative(models.Model):
     start_date = models.CharField(max_length=100)
     end_date = models.CharField(max_length=100)
     language = models.CharField(max_length=100)
-    tags = ArrayField(models.CharField(max_length=100)) 
-
+    tags = ArrayField(models.CharField(max_length=100))
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
         super(Narrative, self).save(*args, **kwargs)
+
 
 class MapSettings(models.Model):
     """
@@ -215,9 +216,10 @@ class MapSettings(models.Model):
         self.full_clean()
         super(MapSettings, self).save(*args, **kwargs)
 
+
 class Narration(OrderedModel):
     """
-    Each point of narration inside a narrative commenting on events. 
+    Each point of narration inside a narrative commenting on events.
     """
 
     narrative = models.ForeignKey(Narrative, on_delete=models.CASCADE)
@@ -229,8 +231,8 @@ class Narration(OrderedModel):
     img = models.URLField(blank=True, null=True)
     video = models.URLField(blank=True, null=True)
     settings_id = models.ForeignKey(MapSettings, on_delete=models.CASCADE)
-    
-    order_with_respect_to = 'narrative'
+
+    order_with_respect_to = "narrative"
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()

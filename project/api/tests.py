@@ -22,7 +22,15 @@ from django.contrib.gis.geos import Point, Polygon, MultiPoint
 from django.test import TestCase
 
 from .factories import TerritorialEntityFactory, AtomicPolygonFactory
-from .models import PoliticalRelation, TerritorialEntity, AtomicPolygon, SpacetimeVolume, Narrative, MapSettings, Narration
+from .models import (
+    PoliticalRelation,
+    TerritorialEntity,
+    AtomicPolygon,
+    SpacetimeVolume,
+    Narrative,
+    MapSettings,
+    Narration,
+)
 
 # Create your tests here.
 class ModelTest(TestCase):
@@ -212,7 +220,9 @@ class ModelTest(TestCase):
             )
 
     def test_model_can_create_narrative(self):
-
+        """
+        Ensure that we can create a narrative and the ordering plugin works.
+        """
         test_narrative = Narrative.objects.create(
             author="Test Author",
             title="Test Narrative",
@@ -220,24 +230,41 @@ class ModelTest(TestCase):
             start_date="0001-01-01",
             end_date="0003-01-01",
             language="en",
-            tags=["test","tags"]
+            tags=["test", "tags"],
         )
 
         test_settings = MapSettings.objects.create(
-            bbox = MultiPoint(Point(0,0), Point(0,1), Point(1,0), Point(1,1)),
-            zoom_min = 1,
-            zoom_max = 12,
+            bbox=MultiPoint(Point(0, 0), Point(0, 1), Point(1, 0), Point(1, 1)),
+            zoom_min=1,
+            zoom_max=12,
         )
 
-        narration = Narration.objects.create(
+        narration1 = Narration.objects.create(
             narrative=test_narrative,
             title="Test Narration",
             description="This is a narration point",
             date_label="test",
             map_datetime="0002-01-01 00:00",
-            settings_id = test_settings,
+            settings_id=test_settings,
         )
 
-        self.assertEqual(
-            Narrative.objects.filter().count(), 1
+        test_settings2 = MapSettings.objects.create(
+            bbox=MultiPoint(Point(0, 0), Point(0, 1), Point(1, 0), Point(1, 1)),
+            zoom_min=1,
+            zoom_max=12,
         )
+
+        narration2 = Narration.objects.create(
+            narrative=test_narrative,
+            title="Test Narration2",
+            description="This is another narration point",
+            date_label="test2",
+            map_datetime="0002-05-01 00:00",
+            settings_id=test_settings2,
+        )
+
+        narration1.swap(narration2)
+
+        self.assertEqual(Narrative.objects.filter().count(), 1)
+        self.assertEqual(Narration.objects.filter().count(), 2)
+        self.assertEqual(narration2.next().title, "Test Narration")
