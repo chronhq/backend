@@ -94,6 +94,9 @@ class PoliticalRelation(models.Model):
         if self.start_date > self.end_date:
             raise ValidationError("Start date cannot be later than end date")
 
+        if self.child.admin_level < self.parent.admin_level:
+            raise ValidationError("Child entity's admin level cannot be less than parent entity's")
+
         super(PoliticalRelation, self).clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
