@@ -95,7 +95,9 @@ class PoliticalRelation(models.Model):
             raise ValidationError("Start date cannot be later than end date")
 
         if self.child.admin_level < self.parent.admin_level:
-            raise ValidationError("Child entity's admin level cannot be less than parent entity's")
+            raise ValidationError(
+                "Child entity's admin level cannot be less than parent entity's"
+            )
 
         super(PoliticalRelation, self).clean(*args, **kwargs)
 
