@@ -22,7 +22,13 @@ from django.contrib.gis.geos import Point, Polygon
 from django.test import TestCase
 
 from .factories import TerritorialEntityFactory, AtomicPolygonFactory
-from .models import PoliticalRelation, TerritorialEntity, AtomicPolygon, SpacetimeVolume
+from .models import (
+    PoliticalRelation,
+    TerritorialEntity,
+    AtomicPolygon,
+    SpacetimeVolume,
+    CachedData,
+)
 
 # Create your tests here.
 class ModelTest(TestCase):
@@ -210,3 +216,18 @@ class ModelTest(TestCase):
                 entity=self.france,
                 references=["ref"],
             )
+
+    def test_model_can_create_cd(self):
+        """
+        Ensure CachedData can be created
+        """
+
+        hastings = CachedData.objects.create(
+            wikidata_id=1,
+            location=Point(0, 0),
+            date="0001-01-01",
+            event_type=CachedData.BATTLE,
+        )
+
+        self.assertTrue(hastings.rank > 0, hastings.date)
+        self.assertEqual(CachedData.objects.count(), 1)
