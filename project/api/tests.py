@@ -152,7 +152,7 @@ class ModelTest(TestCase):
 
     def test_model_can_not_create_pr(self):
         """
-        Ensure date checks work
+        Ensure PoliticalRelation validations work
         """
 
         with self.assertRaises(ValidationError):
@@ -162,6 +162,15 @@ class ModelTest(TestCase):
                 parent=self.european_union,
                 child=self.germany,
                 control_type=PoliticalRelation.GROUP,
+            )
+
+        with self.assertRaises(ValidationError):
+            PoliticalRelation.objects.create(
+                start_date="0001-01-01",
+                end_date="0002-01-01",
+                parent=self.germany,
+                child=self.european_union,
+                control_type=PoliticalRelation.DIRECT,
             )
 
     def test_model_can_create_ap(self):

@@ -20,4 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from django.contrib import admin
 from django.urls import path, include
 
-urlpatterns = [path("api/", include("api.urls")), path("admin/", admin.site.urls)]
+urlpatterns = [
+    path("api/", include("api.urls")),
+    path("admin/", admin.site.urls),
+    path("doc/", include("django.contrib.admindocs.urls")),
+]

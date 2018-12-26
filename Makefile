@@ -38,6 +38,10 @@ run_debug: ## Builds, starts, and runs containers, running the built-in Django w
 exec_debug: ## Runs built-in Django web server
 	docker-compose exec web python manage.py runserver 0.0.0.0:81
 
+# Documentation
+graph: ## Builds a UML class diagram of the models
+	docker-compose exec web python manage.py graph_models -a -g -o graph.svg
+
 # Misc
 test: ## Builds, starts, and runs containers, running the django tests
 	docker-compose run --service-ports web sh init.sh python manage.py test

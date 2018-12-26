@@ -11,3 +11,5 @@ django-colorfield~=0.1.15
 django-simple-history~=2.6.0
 djangorestframework~=3.9.0
 djangorestframework-gis~=0.14
+docutils~=0.14
+pydotplus~=2.0.2
