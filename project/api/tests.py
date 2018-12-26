@@ -231,9 +231,7 @@ class ModelTest(TestCase):
         )
 
         test_settings = MapSettings.objects.create(
-            bbox=MultiPoint(Point(0, 0), Point(0, 1), Point(1, 0), Point(1, 1)),
-            zoom_min=1,
-            zoom_max=12,
+            bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=1, zoom_max=12
         )
 
         narration1 = Narration.objects.create(
@@ -246,9 +244,7 @@ class ModelTest(TestCase):
         )
 
         test_settings2 = MapSettings.objects.create(
-            bbox=MultiPoint(Point(0, 0), Point(0, 1), Point(1, 0), Point(1, 1)),
-            zoom_min=1,
-            zoom_max=12,
+            bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=1, zoom_max=12
         )
 
         narration2 = Narration.objects.create(
@@ -265,3 +261,35 @@ class ModelTest(TestCase):
         self.assertEqual(Narrative.objects.filter().count(), 1)
         self.assertEqual(Narration.objects.filter().count(), 2)
         self.assertEqual(narration2.next().title, "Test Narration")
+
+    def test_model_cant_create_bbox(self):
+        """
+        Ensure that the constraints on mapsettings work.
+        """
+
+        with self.assertRaises(ValidationError):
+            MapSettings.objects.create(
+                bbox=MultiPoint(Point(0, 0)), zoom_min=1, zoom_max=2
+            )
+
+        with self.assertRaises(ValidationError):
+            MapSettings.objects.create(
+                bbox=MultiPoint(Point(0, 0), Point(1, 1), Point(0, 1)),
+                zoom_min=1,
+                zoom_max=2,
+            )
+
+        with self.assertRaises(ValidationError):
+            MapSettings.objects.create(
+                bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=-0.1, zoom_max=2
+            )
+
+        with self.assertRaises(ValidationError):
+            MapSettings.objects.create(
+                bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=1, zoom_max=22.1
+            )
+
+        with self.assertRaises(ValidationError):
+            MapSettings.objects.create(
+                bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=5, zoom_max=3
+            )

@@ -206,8 +206,24 @@ class MapSettings(models.Model):
     """
 
     bbox = models.MultiPointField()
-    zoom_min = models.IntegerField()
-    zoom_max = models.IntegerField()
+    zoom_min = models.FloatField()
+    zoom_max = models.FloatField()
+
+    def clean(self, *args, **kwargs):  # pylint: disable=W0221
+        if self.bbox.num_points != 2:  # pylint: disable=E1101
+            raise ValidationError("Bounding box needs exactly two coordinates.")
+
+        if self.zoom_min < 0.0 or self.zoom_max > 22.0:
+            raise ValidationError(
+                "Zoom levels should be in the range [0,22] inclusive."
+            )
+
+        if self.zoom_min > self.zoom_max:
+            raise ValidationError(
+                "Minimum zoom level can not be bigger then maximum zoom level."
+            )
+
+        super(MapSettings, self).clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
