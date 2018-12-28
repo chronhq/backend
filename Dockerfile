@@ -21,7 +21,8 @@ RUN set -ex \
     musl-dev \
     postgresql-dev \
     linux-headers \
-    pcre-dev 
+    pcre-dev \
+    graphviz
 
 RUN mkdir /config
 COPY /config/requirements.txt /config/

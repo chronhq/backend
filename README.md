@@ -1,5 +1,9 @@
 # Chron Backend
 
+[![Build Status](https://travis-ci.org/chronhq/backend.svg?branch=master)](https://travis-ci.org/chronhq/backend)
+[![Requirements Status](https://requires.io/github/chronhq/backend/requirements.svg?branch=master)](https://requires.io/github/chronhq/backend/requirements/?branch=master)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/5fa15e25779540978040d406d69929b3)](https://www.codacy.com/app/chronhq/backend?utm_source=github.com&utm_medium=referral&utm_content=chronhq/backend&utm_campaign=Badge_Grade)
+
 ## Getting Started
 
 ### Docker

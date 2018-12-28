@@ -30,6 +30,7 @@ from .models import (
     Narrative,
     MapSettings,
     Narration,
+    CachedData,
 )
 
 # Create your tests here.
@@ -145,7 +146,7 @@ class ModelTest(TestCase):
 
     def test_model_can_not_create_pr(self):
         """
-        Ensure date checks work
+        Ensure PoliticalRelation validations work
         """
 
         with self.assertRaises(ValidationError):
@@ -155,6 +156,15 @@ class ModelTest(TestCase):
                 parent=self.european_union,
                 child=self.germany,
                 control_type=PoliticalRelation.GROUP,
+            )
+
+        with self.assertRaises(ValidationError):
+            PoliticalRelation.objects.create(
+                start_date="0001-01-01",
+                end_date="0002-01-01",
+                parent=self.germany,
+                child=self.european_union,
+                control_type=PoliticalRelation.DIRECT,
             )
 
     def test_model_can_create_ap(self):
@@ -293,3 +303,17 @@ class ModelTest(TestCase):
             MapSettings.objects.create(
                 bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=5, zoom_max=3
             )
+    def test_model_can_create_cd(self):
+        """
+        Ensure CachedData can be created
+        """
+
+        hastings = CachedData.objects.create(
+            wikidata_id=1,
+            location=Point(0, 0),
+            date="0001-01-01",
+            event_type=CachedData.BATTLE,
+        )
+
+        self.assertTrue(hastings.rank > 0, hastings.date)
+        self.assertEqual(CachedData.objects.count(), 1)

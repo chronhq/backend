@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from random import randint
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
@@ -95,11 +96,43 @@ class PoliticalRelation(models.Model):
         if self.start_date > self.end_date:
             raise ValidationError("Start date cannot be later than end date")
 
+        if self.child.admin_level < self.parent.admin_level:
+            raise ValidationError(
+                "Child entity's admin level cannot be less than parent entity's"
+            )
+
         super(PoliticalRelation, self).clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
         super(PoliticalRelation, self).save(*args, **kwargs)
+
+
+class CachedData(models.Model):
+    """
+    Stores cache of ranked Wikidata entities
+    """
+
+    wikidata_id = models.PositiveIntegerField(unique=True)  # Excluding the Q
+    location = models.PointField()
+    date = models.DateField()
+    rank = models.PositiveIntegerField()
+
+    BATTLE = 178561
+    DOCUMENT = 131569
+    BIRTH = 569
+    DEATH = 570
+    EVENT_TYPES = (
+        (BATTLE, "battle"),
+        (DOCUMENT, "document"),
+        (BIRTH, "birth"),
+        (DEATH, "death"),
+    )
+    event_type = models.PositiveIntegerField(choices=EVENT_TYPES)
+
+    def save(self, *args, **kwargs):  # pylint: disable=W0221
+        self.rank = self.wikidata_id * randint(0, 10)  # TODO: implement #8
+        super(CachedData, self).save(*args, **kwargs)
 
 
 class AtomicPolygon(models.Model):
