@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from random import randint
+from requests import get
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
@@ -130,7 +130,36 @@ class CachedData(models.Model):
     event_type = models.PositiveIntegerField(choices=EVENT_TYPES)
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
-        self.rank = self.wikidata_id * randint(0, 10)  # TODO: implement #8
+        url = "https://query.wikidata.org/sparql"
+        query = """
+        SELECT ?item ?outcoming ?sitelinks ?incoming WHERE {{
+            BIND(wd:Q{wid} AS ?item)
+            ?item wikibase:statements ?outcoming.
+            ?item wikibase:sitelinks ?sitelinks.
+            {{
+                SELECT (COUNT(?s) AS ?incoming) ?item WHERE {{
+                ?s ?p ?item.
+                _:b3 wikibase:directClaim ?p.
+                }}
+                GROUP BY ?item
+            }}
+            SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
+        }}
+        """.format(
+            wid=self.wikidata_id
+        )
+        req = get(url, params={"format": "json", "query": query})
+
+        try:
+            data = req.json()["results"]["bindings"][0]
+
+            incoming = int(data["incoming"]["value"])
+            sitelinks = int(data["sitelinks"]["value"])
+            outcoming = int(data["outcoming"]["value"])
+            self.rank = incoming * sitelinks * outcoming
+        except IndexError:
+            self.rank = 0
+
         super(CachedData, self).save(*args, **kwargs)
 
 
