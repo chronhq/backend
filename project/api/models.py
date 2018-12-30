@@ -238,6 +238,7 @@ class MapSettings(models.Model):
     Stores settings to be used when a narration is active.
     """
 
+    # [[Left, Top], [Right, Bottom]]
     bbox = models.MultiPointField()
     zoom_min = models.FloatField()
     zoom_max = models.FloatField()
@@ -273,7 +274,7 @@ class Narration(OrderedModel):
     description = models.TextField()
     date_label = models.CharField(max_length=100)
     map_datetime = models.DateTimeField()
-    # attached_events = models.ManyToManyField(Event)
+    attached_events = models.ManyToManyField(CachedData)
     img = models.URLField(blank=True, null=True)
     video = models.URLField(blank=True, null=True)
     settings = models.ForeignKey(MapSettings, on_delete=models.CASCADE)

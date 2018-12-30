@@ -244,6 +244,20 @@ class ModelTest(TestCase):
             bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=1, zoom_max=12
         )
 
+        hastings = CachedData.objects.create(
+            wikidata_id=1,
+            location=Point(0, 0),
+            date="0001-01-01",
+            event_type=CachedData.BATTLE,
+        )
+
+        balaclava = CachedData.objects.create(
+            wikidata_id=2,
+            location=Point(0, 0),
+            date="0002-02-02",
+            event_type=CachedData.BATTLE,
+        )
+
         narration1 = Narration.objects.create(
             narrative=test_narrative,
             title="Test Narration",
@@ -252,6 +266,8 @@ class ModelTest(TestCase):
             map_datetime="0002-01-01 00:00",
             settings=test_settings,
         )
+
+        narration1.attached_events.add(hastings)
 
         test_settings2 = MapSettings.objects.create(
             bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=1, zoom_max=12
@@ -265,6 +281,8 @@ class ModelTest(TestCase):
             map_datetime="0002-05-01 00:00",
             settings=test_settings2,
         )
+
+        narration2.attached_events.add(balaclava)
 
         narration1.swap(narration2)
 
@@ -303,6 +321,7 @@ class ModelTest(TestCase):
             MapSettings.objects.create(
                 bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=5, zoom_max=3
             )
+
     def test_model_can_create_cd(self):
         """
         Ensure CachedData can be created
