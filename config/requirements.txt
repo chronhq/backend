@@ -11,3 +11,4 @@ django-colorfield~=0.1.15
 django-simple-history~=2.6.0
 docutils~=0.14
 pydotplus~=2.0.2
+django-ordered-model~=3.1.1

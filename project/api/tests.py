@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.core.exceptions import ValidationError
-from django.contrib.gis.geos import Point, Polygon
+from django.contrib.gis.geos import Point, Polygon, MultiPoint
 from django.test import TestCase
 
 from .factories import TerritorialEntityFactory, AtomicPolygonFactory
@@ -27,6 +27,9 @@ from .models import (
     TerritorialEntity,
     AtomicPolygon,
     SpacetimeVolume,
+    Narrative,
+    MapSettings,
+    Narration,
     CachedData,
 )
 
@@ -224,6 +227,99 @@ class ModelTest(TestCase):
                 end_date="0004-01-01",
                 entity=self.france,
                 references=["ref"],
+            )
+
+    def test_model_can_create_narrative(self):
+        """
+        Ensure that we can create a narrative and the ordering plugin works.
+        """
+        test_narrative = Narrative.objects.create(
+            author="Test Author",
+            title="Test Narrative",
+            description="This is a test narrative for automated testing.",
+            tags=["test", "tags"],
+        )
+
+        test_settings = MapSettings.objects.create(
+            bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=1, zoom_max=12
+        )
+
+        hastings = CachedData.objects.create(
+            wikidata_id=1,
+            location=Point(0, 0),
+            date="0001-01-01",
+            event_type=CachedData.BATTLE,
+        )
+
+        balaclava = CachedData.objects.create(
+            wikidata_id=2,
+            location=Point(0, 0),
+            date="0002-02-02",
+            event_type=CachedData.BATTLE,
+        )
+
+        narration1 = Narration.objects.create(
+            narrative=test_narrative,
+            title="Test Narration",
+            description="This is a narration point",
+            date_label="test",
+            map_datetime="0002-01-01 00:00",
+            settings=test_settings,
+        )
+
+        narration1.attached_events.add(hastings)
+
+        test_settings2 = MapSettings.objects.create(
+            bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=1, zoom_max=12
+        )
+
+        narration2 = Narration.objects.create(
+            narrative=test_narrative,
+            title="Test Narration2",
+            description="This is another narration point",
+            date_label="test2",
+            map_datetime="0002-05-01 00:00",
+            settings=test_settings2,
+        )
+
+        narration2.attached_events.add(balaclava)
+
+        narration1.swap(narration2)
+
+        self.assertEqual(Narrative.objects.filter().count(), 1)
+        self.assertEqual(Narration.objects.filter().count(), 2)
+        self.assertEqual(narration2.next().title, "Test Narration")
+
+    def test_model_cant_create_bbox(self):
+        """
+        Ensure that the constraints on mapsettings work.
+        """
+
+        with self.assertRaises(ValidationError):
+            MapSettings.objects.create(
+                bbox=MultiPoint(Point(0, 0)), zoom_min=1, zoom_max=2
+            )
+
+        with self.assertRaises(ValidationError):
+            MapSettings.objects.create(
+                bbox=MultiPoint(Point(0, 0), Point(1, 1), Point(0, 1)),
+                zoom_min=1,
+                zoom_max=2,
+            )
+
+        with self.assertRaises(ValidationError):
+            MapSettings.objects.create(
+                bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=-0.1, zoom_max=2
+            )
+
+        with self.assertRaises(ValidationError):
+            MapSettings.objects.create(
+                bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=1, zoom_max=22.1
+            )
+
+        with self.assertRaises(ValidationError):
+            MapSettings.objects.create(
+                bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=5, zoom_max=3
             )
 
     def test_model_can_create_cd(self):
