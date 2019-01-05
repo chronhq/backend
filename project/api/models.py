@@ -21,6 +21,7 @@ from requests import get
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
+from ordered_model.models import OrderedModel
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
 
@@ -244,3 +245,63 @@ class SpacetimeVolume(models.Model):
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
         super(SpacetimeVolume, self).save(*args, **kwargs)
+
+
+class Narrative(models.Model):
+    """
+    Stores narrative information.
+    """
+
+    author = models.CharField(max_length=100)
+    title = models.TextField()
+    description = models.TextField()
+    tags = ArrayField(models.CharField(max_length=100))
+
+
+class MapSettings(models.Model):
+    """
+    Stores settings to be used when a narration is active.
+    """
+
+    # [[Left, Top], [Right, Bottom]]
+    bbox = models.MultiPointField()
+    zoom_min = models.FloatField()
+    zoom_max = models.FloatField()
+
+    def clean(self, *args, **kwargs):  # pylint: disable=W0221
+        if self.bbox.num_points != 2:  # pylint: disable=E1101
+            raise ValidationError("Bounding box needs exactly two coordinates.")
+
+        if self.zoom_min < 0.0 or self.zoom_max > 22.0:
+            raise ValidationError(
+                "Zoom levels should be in the range [0,22] inclusive."
+            )
+
+        if self.zoom_min > self.zoom_max:
+            raise ValidationError(
+                "Minimum zoom level can not be bigger then maximum zoom level."
+            )
+
+        super(MapSettings, self).clean(*args, **kwargs)
+
+    def save(self, *args, **kwargs):  # pylint: disable=W0221
+        self.full_clean()
+        super(MapSettings, self).save(*args, **kwargs)
+
+
+class Narration(OrderedModel):
+    """
+    Each point of narration inside a narrative commenting on events.
+    """
+
+    narrative = models.ForeignKey(Narrative, on_delete=models.CASCADE)
+    title = models.TextField()
+    description = models.TextField()
+    date_label = models.CharField(max_length=100)
+    map_datetime = models.DateTimeField()
+    attached_events = models.ManyToManyField(CachedData)
+    img = models.URLField(blank=True, null=True)
+    video = models.URLField(blank=True, null=True)
+    settings = models.ForeignKey(MapSettings, on_delete=models.CASCADE)
+
+    order_with_respect_to = "narrative"

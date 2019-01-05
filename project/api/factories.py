@@ -25,6 +25,9 @@ from .models import (
     PoliticalRelation,
     CachedData,
     SpacetimeVolume,
+    Narrative,
+    MapSettings,
+    Narration,
 )
 
 
@@ -71,3 +74,30 @@ class SpacetimeVolumeFactory(factory.django.DjangoModelFactory):
 
     class Meta:  # pylint: disable=C0111
         model = SpacetimeVolume
+
+
+class NarrativeFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for the Narrative model
+    """
+
+    class Meta:  # pylint: disable=C0111
+        model = Narrative
+
+
+class MapSettingsFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for the MapSettings model
+    """
+
+    class Meta:  # pylint: disable=C0111
+        model = MapSettings
+
+
+class NarrationFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for the Narration model
+    """
+
+    class Meta:  # pylint: disable=C0111
+        model = Narration

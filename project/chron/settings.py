@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "colorfield",
     "rest_framework",
     "rest_framework_gis",
+    "ordered_model",
 ]
 
 MIDDLEWARE = [

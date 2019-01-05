@@ -25,6 +25,9 @@ from .models import (
     CachedData,
     AtomicPolygon,
     SpacetimeVolume,
+    Narrative,
+    MapSettings,
+    Narration,
 )
 from .serializers import (
     TerritorialEntitySerializer,
@@ -32,6 +35,9 @@ from .serializers import (
     CachedDataSerializer,
     AtomicPolygonSerializer,
     SpacetimeVolumeSerializer,
+    NarrativeSerializer,
+    MapSettingsSerializer,
+    NarrationSerializer,
 )
 
 
@@ -78,3 +84,30 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
 
     queryset = SpacetimeVolume.objects.all()
     serializer_class = SpacetimeVolumeSerializer
+
+
+class NarrativeViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Narratives
+    """
+
+    queryset = Narrative.objects.all()
+    serializer_class = NarrativeSerializer
+
+
+class MapSettingsViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for MapSettings
+    """
+
+    queryset = MapSettings.objects.all()
+    serializer_class = MapSettingsSerializer
+
+
+class NarrationViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Narrations
+    """
+
+    queryset = Narration.objects.all()
+    serializer_class = NarrationSerializer
