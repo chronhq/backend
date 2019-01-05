@@ -30,6 +30,9 @@ from .factories import (
     PoliticalRelationFactory,
     CachedDataFactory,
     SpacetimeVolumeFactory,
+    NarrativeFactory,
+    MapSettingsFactory,
+    NarrationFactory,
 )
 from .models import (
     PoliticalRelation,
@@ -410,6 +413,29 @@ class APITest(APITestCase):
         )
         cls.alsace_stv.territory.add(cls.alsace_geom)
 
+        # Narratives
+        cls.norman_conquest = NarrativeFactory(
+            author="Test Author",
+            title="Test Narrative",
+            description="This is a test narrative for automated testing.",
+            tags=["test", "tags"],
+        )
+
+        # MapSettings
+        cls.norman_conquest_settings = MapSettingsFactory(
+            bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=1, zoom_max=12
+        )
+
+        # Narrations
+        cls.hastings_narration = NarrationFactory(
+            narrative=cls.norman_conquest,
+            title="Test Narration",
+            description="This is a narration point",
+            date_label="test",
+            map_datetime="0002-01-01 00:00",
+            settings=cls.norman_conquest_settings,
+        )
+
     def test_api_can_create_te(self):
         """
         Ensure we can create TerritorialEntities
@@ -677,3 +703,158 @@ class APITest(APITestCase):
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["end_date"], "0002-01-01")
+
+    def test_api_can_create_narrative(self):
+        """
+        Ensure we can create Narratives
+        """
+
+        url = reverse("narrative-list")
+        data = {
+            "author": "Test Author 2",
+            "title": "Test Narrative",
+            "description": "This is a test narrative for automated testing.",
+            "tags": ["test", "tags"],
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Narrative.objects.count(), 2)
+        self.assertEqual(Narrative.objects.last().author, "Test Author 2")
+
+    def test_api_can_update_narrative(self):
+        """
+        Ensure we can update Narratives
+        """
+
+        url = reverse("narrative-detail", args=[self.norman_conquest.pk])
+        data = {
+            "author": "Other Test Author",
+            "title": "Test Narrative",
+            "description": "This is a test narrative for automated testing.",
+            "tags": ["test", "tags"],
+        }
+        response = self.client.put(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["author"], "Other Test Author")
+
+    def test_api_can_query_narratives(self):
+        """
+        Ensure we can query for all Narratives
+        """
+
+        url = reverse("narrative-list")
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]["author"], "Test Author")
+
+    def test_api_can_query_narrative(self):
+        """
+        Ensure we can query for individual Narratives
+        """
+
+        url = reverse("narrative-detail", args=[self.norman_conquest.pk])
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["author"], "Test Author")
+
+    def test_api_can_create_ms(self):
+        """
+        Ensure we can create MapSettings
+        """
+
+        url = reverse("mapsettings-list")
+        data = {"bbox": "MULTIPOINT ((0 0), (1 1))", "zoom_min": 1, "zoom_max": 13}
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(MapSettings.objects.count(), 2)
+        self.assertEqual(MapSettings.objects.last().zoom_min, 1.0)
+
+    def test_api_can_update_ms(self):
+        """
+        Ensure we can update MapSettings
+        """
+
+        url = reverse("mapsettings-detail", args=[self.norman_conquest_settings.pk])
+        data = {"bbox": "MULTIPOINT ((0 0), (1 1))", "zoom_min": 5, "zoom_max": 13}
+        response = self.client.put(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["zoom_min"], 5)
+
+    def test_api_can_query_mss(self):
+        """
+        Ensure we can query for all MapSettings
+        """
+
+        url = reverse("mapsettings-list")
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]["zoom_min"], 1)
+
+    def test_api_can_query_ms(self):
+        """
+        Ensure we can query for individual MapSettings
+        """
+
+        url = reverse("mapsettings-detail", args=[self.norman_conquest_settings.pk])
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["zoom_min"], 1)
+
+    def test_api_can_create_narration(self):
+        """
+        Ensure we can create Narrations
+        """
+
+        url = reverse("narration-list")
+        data = {
+            "narrative": self.norman_conquest.pk,
+            "title": "Test Narration",
+            "description": "This is a narration point",
+            "date_label": "test",
+            "map_datetime": "0002-01-01 00:00",
+            "settings": self.norman_conquest_settings.pk,
+            "attached_events": [self.hastings.pk],
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Narration.objects.count(), 2)
+        self.assertEqual(Narration.objects.last().title, "Test Narration")
+
+    def test_api_can_update_narration(self):
+        """
+        Ensure we can update Narrations
+        """
+
+        url = reverse("narration-detail", args=[self.hastings_narration.pk])
+        data = {
+            "narrative": self.norman_conquest.pk,
+            "title": "Test Narration 2",
+            "description": "This is a narration point",
+            "date_label": "test",
+            "map_datetime": "0002-01-01 00:00",
+            "settings": self.norman_conquest_settings.pk,
+            "attached_events": [self.hastings.pk],
+        }
+        response = self.client.put(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["title"], "Test Narration 2")
+
+    def test_api_can_query_narrations(self):
+        """
+        Ensure we can query for all Narrations
+        """
+
+        url = reverse("narration-list")
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]["title"], "Test Narration")
+
+    def test_api_can_query_narration(self):
+        """
+        Ensure we can query for individual Narrations
+        """
+
+        url = reverse("narration-detail", args=[self.hastings_narration.pk])
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["title"], "Test Narration")

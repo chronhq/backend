@@ -25,6 +25,9 @@ from .models import (
     CachedData,
     AtomicPolygon,
     SpacetimeVolume,
+    Narrative,
+    MapSettings,
+    Narration,
 )
 
 
@@ -78,4 +81,34 @@ class SpacetimeVolumeSerializer(ModelSerializer):
 
     class Meta:
         model = SpacetimeVolume
+        fields = "__all__"
+
+
+class NarrativeSerializer(ModelSerializer):
+    """
+    Serializes the Narrative model
+    """
+
+    class Meta:
+        model = Narrative
+        fields = "__all__"
+
+
+class MapSettingsSerializer(ModelSerializer):
+    """
+    Serializes the MapSettings model
+    """
+
+    class Meta:
+        model = MapSettings
+        fields = "__all__"
+
+
+class NarrationSerializer(ModelSerializer):
+    """
+    Serializes the Narration model
+    """
+
+    class Meta:
+        model = Narration
         fields = "__all__"

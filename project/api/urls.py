@@ -28,5 +28,8 @@ ROUTER.register(r"poltical-relations", views.PoliticalRelationViewSet)
 ROUTER.register(r"cached-data", views.CachedDataViewSet)
 ROUTER.register(r"atomic-polygons", views.AtomicPolygonViewSet)
 ROUTER.register(r"spacetime-volumes", views.SpacetimeVolumeViewSet)
+ROUTER.register(r"narratives", views.NarrativeViewSet)
+ROUTER.register(r"map-settings", views.MapSettingsViewSet)
+ROUTER.register(r"narrations", views.NarrationViewSet)
 
 urlpatterns = [path("", include(ROUTER.urls))]

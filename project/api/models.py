@@ -228,10 +228,6 @@ class Narrative(models.Model):
     description = models.TextField()
     tags = ArrayField(models.CharField(max_length=100))
 
-    def save(self, *args, **kwargs):  # pylint: disable=W0221
-        self.full_clean()
-        super(Narrative, self).save(*args, **kwargs)
-
 
 class MapSettings(models.Model):
     """
@@ -280,7 +276,3 @@ class Narration(OrderedModel):
     settings = models.ForeignKey(MapSettings, on_delete=models.CASCADE)
 
     order_with_respect_to = "narrative"
-
-    def save(self, *args, **kwargs):  # pylint: disable=W0221
-        self.full_clean()
-        super(Narration, self).save(*args, **kwargs)
