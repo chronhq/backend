@@ -113,7 +113,7 @@ class CachedData(models.Model):
     Stores cache of ranked Wikidata entities
     """
 
-    wikidata_id = models.PositiveIntegerField(unique=True)  # Excluding the Q
+    wikidata_id = models.PositiveIntegerField()  # Excluding the Q
     location = models.PointField()
     date = models.DateField()
     rank = models.PositiveIntegerField()
