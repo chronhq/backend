@@ -19,7 +19,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from .models import TerritorialEntity, AtomicPolygon
+from .models import (
+    TerritorialEntity,
+    AtomicPolygon,
+    PoliticalRelation,
+    CachedData,
+    SpacetimeVolume,
+    Narrative,
+    MapSettings,
+    Narration,
+)
 
 
 class TerritorialEntityFactory(factory.django.DjangoModelFactory):
@@ -38,3 +47,57 @@ class AtomicPolygonFactory(factory.django.DjangoModelFactory):
 
     class Meta:  # pylint: disable=C0111
         model = AtomicPolygon
+
+
+class PoliticalRelationFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for the PoliticalRelation model
+    """
+
+    class Meta:  # pylint: disable=C0111
+        model = PoliticalRelation
+
+
+class CachedDataFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for the CachedData model
+    """
+
+    class Meta:  # pylint: disable=C0111
+        model = CachedData
+
+
+class SpacetimeVolumeFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for the SpacetimeVolume model
+    """
+
+    class Meta:  # pylint: disable=C0111
+        model = SpacetimeVolume
+
+
+class NarrativeFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for the Narrative model
+    """
+
+    class Meta:  # pylint: disable=C0111
+        model = Narrative
+
+
+class MapSettingsFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for the MapSettings model
+    """
+
+    class Meta:  # pylint: disable=C0111
+        model = MapSettings
+
+
+class NarrationFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for the Narration model
+    """
+
+    class Meta:  # pylint: disable=C0111
+        model = Narration

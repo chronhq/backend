@@ -47,8 +47,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.gis",
     "django_extensions",
-    "colorfield",
     "api.apps.ApiConfig",
+    "colorfield",
+    "rest_framework",
+    "rest_framework_gis",
     "ordered_model",
 ]
 
@@ -131,3 +133,5 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
+REST_FRAMEWORK = {"DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"]}
