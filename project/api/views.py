@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from django.db import connection
+from django.http import Http404, HttpResponse
 from rest_framework import viewsets
 
 from .models import (
@@ -111,3 +113,23 @@ class NarrationViewSet(viewsets.ModelViewSet):
 
     queryset = Narration.objects.all()
     serializer_class = NarrationSerializer
+
+
+# https://medium.com/@mrgrantanderson/https-medium-com-serving-vector-tiles-from-django-38c705f677cf
+def mvt_tiles(request, zoom, x_cor, y_cor):
+    """
+    Custom view to serve Mapbox Vector Tiles for the custom polygon model.
+    """
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            (
+                "SELECT ST_AsMVT(tile) FROM (SELECT id, wikidata_id, date, "
+                "ST_AsMVTGeom(location, TileBBox(%s, %s, %s, 4326)) FROM api_cacheddata) AS tile"
+            ),
+            [zoom, x_cor, y_cor],
+        )
+        tile = bytes(cursor.fetchone()[0])
+        if not tile:
+            raise Http404()
+    return HttpResponse(tile, content_type="application/x-protobuf")

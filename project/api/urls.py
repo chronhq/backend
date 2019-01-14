@@ -32,4 +32,11 @@ ROUTER.register(r"narratives", views.NarrativeViewSet)
 ROUTER.register(r"map-settings", views.MapSettingsViewSet)
 ROUTER.register(r"narrations", views.NarrationViewSet)
 
-urlpatterns = [path("", include(ROUTER.urls))]
+urlpatterns = [
+    path("", include(ROUTER.urls)),
+    path(
+        "mvt-tiles/<int:zoom>/<int:x_cor>/<int:y_cor>",
+        views.mvt_tiles,
+        name="mvt-tiles",
+    ),
+]
