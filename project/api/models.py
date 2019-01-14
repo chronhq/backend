@@ -140,11 +140,10 @@ class CachedData(models.Model):
             {{
                 SELECT (COUNT(?s) AS ?incoming) ?item WHERE {{
                 ?s ?p ?item.
-                _:b3 wikibase:directClaim ?p.
+                [] wikibase:directClaim ?p.
                 }}
                 GROUP BY ?item
             }}
-            SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
         }}
         """.format(
             wid=self.wikidata_id
