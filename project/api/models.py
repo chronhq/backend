@@ -134,6 +134,16 @@ class CachedData(models.Model):
         self.rank = self.wikidata_id * randint(0, 10)  # TODO: implement #8
         super(CachedData, self).save(*args, **kwargs)
 
+class City(models.Model):
+    """
+    Stores a city represented by a point on the map
+    """
+
+    wikidata_id = models.PositiveIntegerField()  # Excluding the Q
+    location = models.PointField(unique=True)
+    inception_date = models.DateField()
+    dissolution_date = models.DateField(blank=True, null=True)
+
 
 class AtomicPolygon(models.Model):
     """
