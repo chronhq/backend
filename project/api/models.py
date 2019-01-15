@@ -134,6 +134,7 @@ class CachedData(models.Model):
         self.rank = self.wikidata_id * randint(0, 10)  # TODO: implement #8
         super(CachedData, self).save(*args, **kwargs)
 
+
 class City(models.Model):
     """
     Stores a city represented by a point on the map
@@ -146,12 +147,14 @@ class City(models.Model):
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
         if self.dissolution_date and self.inception_date > self.dissolution_date:
-            raise ValidationError("Inception date cannot be later than dissolution date")
-        super(PoliticalRelation, self).clean(*args, **kwargs)
+            raise ValidationError(
+                "Inception date cannot be later than dissolution date"
+            )
+        super(City, self).clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
-        super(PoliticalRelation, self).save(*args, **kwargs)
+        super(City, self).save(*args, **kwargs)
 
 
 class AtomicPolygon(models.Model):

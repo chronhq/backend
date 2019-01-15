@@ -78,6 +78,7 @@ class CityViewSet(viewsets.ModelViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
 
+
 class AtomicPolygonViewSet(viewsets.ModelViewSet):
     """
     ViewSet for AtomicPolygons
