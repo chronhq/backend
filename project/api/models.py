@@ -144,6 +144,15 @@ class City(models.Model):
     inception_date = models.DateField()
     dissolution_date = models.DateField(blank=True, null=True)
 
+    def clean(self, *args, **kwargs):  # pylint: disable=W0221
+        if self.dissolution_date and self.inception_date > self.dissolution_date:
+            raise ValidationError("Inception date cannot be later than dissolution date")
+        super(PoliticalRelation, self).clean(*args, **kwargs)
+
+    def save(self, *args, **kwargs):  # pylint: disable=W0221
+        self.full_clean()
+        super(PoliticalRelation, self).save(*args, **kwargs)
+
 
 class AtomicPolygon(models.Model):
     """
