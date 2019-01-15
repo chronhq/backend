@@ -23,6 +23,7 @@ from .models import (
     TerritorialEntity,
     PoliticalRelation,
     CachedData,
+    City,
     AtomicPolygon,
     SpacetimeVolume,
     Narrative,
@@ -33,6 +34,7 @@ from .serializers import (
     TerritorialEntitySerializer,
     PoliticalRelationSerializer,
     CachedDataSerializer,
+    CitySerializer,
     AtomicPolygonSerializer,
     SpacetimeVolumeSerializer,
     NarrativeSerializer,
@@ -67,6 +69,14 @@ class CachedDataViewSet(viewsets.ModelViewSet):
     queryset = CachedData.objects.all()
     serializer_class = CachedDataSerializer
 
+
+class CityViewSet(viewsets.ModelViewSet):
+    """
+    Viewset for Cities
+    """
+
+    queryset = City.objects.all()
+    serializer_class = CitySerializer
 
 class AtomicPolygonViewSet(viewsets.ModelViewSet):
     """
