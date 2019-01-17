@@ -142,7 +142,7 @@ class City(models.Model):
 
     wikidata_id = models.PositiveIntegerField()  # Excluding the Q
     label = models.TextField(max_length=50)
-    location = models.PointField(unique=True)
+    location = models.PointField()
     inception_date = models.DateField()
     dissolution_date = models.DateField(blank=True, null=True)
 
