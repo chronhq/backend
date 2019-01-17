@@ -141,9 +141,11 @@ class City(models.Model):
     """
 
     wikidata_id = models.PositiveIntegerField()  # Excluding the Q
+    label = models.TextField(max_length=50)
     location = models.PointField(unique=True)
     inception_date = models.DateField()
     dissolution_date = models.DateField(blank=True, null=True)
+
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
         if self.dissolution_date and self.inception_date > self.dissolution_date:
