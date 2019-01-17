@@ -146,7 +146,6 @@ class City(models.Model):
     inception_date = models.DateField()
     dissolution_date = models.DateField(blank=True, null=True)
 
-
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
         if self.dissolution_date and self.inception_date > self.dissolution_date:
             raise ValidationError(

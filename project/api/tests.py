@@ -33,7 +33,7 @@ from .factories import (
     NarrativeFactory,
     MapSettingsFactory,
     NarrationFactory,
-    CityFactory
+    CityFactory,
 )
 from .models import (
     PoliticalRelation,
@@ -361,7 +361,7 @@ class ModelTest(TestCase):
             wikidata_id=1,
             label="Paris",
             location=Point(0, 0),
-            inception_date="0001-01-01"
+            inception_date="0001-01-01",
         )
 
         self.assertEqual(paris.label, "Paris")
@@ -458,7 +458,7 @@ class APITest(APITestCase):
             wikidata_id=1,
             label="Paris",
             location=Point(0, 0),
-            inception_date="0001-01-01"
+            inception_date="0001-01-01",
         )
 
     def test_api_can_create_te(self):
