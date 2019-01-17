@@ -28,6 +28,7 @@ from .models import (
     Narrative,
     MapSettings,
     Narration,
+    City
 )
 
 
@@ -101,3 +102,11 @@ class NarrationFactory(factory.django.DjangoModelFactory):
 
     class Meta:  # pylint: disable=C0111
         model = Narration
+
+class CityFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for the City model
+    """
+
+    class Meta:  # pylint: disable=C0111
+        model = City
