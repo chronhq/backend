@@ -1,7 +1,7 @@
 """
 Chron.
 Copyright (C) 2018 Alisa Belyaeva, Ata Ali Kilicli, Amaury Martiny,
-Daniil Mordasov, Liam O’Flynn, Mikhail Orlov.
+Daniil Mordasov, Liam O'Flynn, Mikhail Orlov.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -42,10 +42,14 @@ for city in CITIES["results"]["bindings"]:
         "location": city["location"]["value"],
         "inception_date": datetime.strptime(
             city["inception"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
-        ).strftime("%Y-%m-%d") if "inception" in city else "0001-01-01",
+        ).strftime("%Y-%m-%d")
+        if "inception" in city
+        else "0001-01-01",
         "dissolution_date": datetime.strptime(
             city["dissolution"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
-        ).strftime("%Y-%m-%d") if "dissolution" in city else "",
+        ).strftime("%Y-%m-%d")
+        if "dissolution" in city
+        else "",
     }
     r_city = requests.post(
         os.getenv("API_ROOT", "http://localhost/api/") + "/cities/",
