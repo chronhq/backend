@@ -33,6 +33,7 @@ from .factories import (
     NarrativeFactory,
     MapSettingsFactory,
     NarrationFactory,
+    CityFactory,
 )
 from .models import (
     PoliticalRelation,
@@ -43,6 +44,7 @@ from .models import (
     MapSettings,
     Narration,
     CachedData,
+    City,
 )
 
 # Create your tests here.
@@ -350,6 +352,21 @@ class ModelTest(TestCase):
         self.assertEqual(hastings.date, "0001-01-01")
         self.assertEqual(CachedData.objects.count(), 1)
 
+    def test_model_can_create_city(self):
+        """
+        Ensure Cities can be created
+        """
+
+        paris = City.objects.create(
+            wikidata_id=1,
+            label="Paris",
+            location=Point(0, 0),
+            inception_date="0001-01-01",
+        )
+
+        self.assertEqual(paris.label, "Paris")
+        self.assertEqual(City.objects.count(), 1)
+
 
 class APITest(APITestCase):
     """
@@ -434,6 +451,14 @@ class APITest(APITestCase):
             date_label="test",
             map_datetime="0002-01-01 00:00",
             settings=cls.norman_conquest_settings,
+        )
+
+        # Cities
+        cls.paris = CityFactory(
+            wikidata_id=1,
+            label="Paris",
+            location=Point(0, 0),
+            inception_date="0001-01-01",
         )
 
     def test_api_can_create_te(self):
@@ -858,3 +883,56 @@ class APITest(APITestCase):
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["title"], "Test Narration")
+
+    def test_api_can_create_city(self):
+        """
+        Ensure we can create Cities
+        """
+
+        url = reverse("city-list")
+        data = {
+            "wikidata_id": 2,
+            "label": "London",
+            "location": "POINT (10 10)",
+            "inception_date": "0001-01-01",
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(City.objects.count(), 2)
+        self.assertEqual(City.objects.last().label, "London")
+
+    def test_api_can_update_city(self):
+        """
+        Ensure we can update Cities
+        """
+
+        url = reverse("city-detail", args=[self.paris.pk])
+        data = {
+            "wikidata_id": 2,
+            "label": "London",
+            "location": "POINT (10 10)",
+            "inception_date": "0001-01-01",
+        }
+        response = self.client.put(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["label"], "London")
+
+    def test_api_can_query_cities(self):
+        """
+        Ensure we can query for all Cities
+        """
+
+        url = reverse("city-list")
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]["label"], "Paris")
+
+    def test_api_can_query_city(self):
+        """
+        Ensure we can query for individual Cities
+        """
+
+        url = reverse("city-detail", args=[self.paris.pk])
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["label"], "Paris")

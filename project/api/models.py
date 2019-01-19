@@ -75,14 +75,14 @@ class PoliticalRelation(models.Model):
     end_date = models.DateField()
 
     DIRECT = 10
-    DIRECT_OCCUPED = 11
+    DIRECT_OCCUPIED = 11
     DIRECT_DISPUTED = 12
     INDIRECT = 20
     INDIRECT_DISPUTED = 21
     GROUP = 30
     CONTROL_TYPES = (
         (DIRECT, "direct"),
-        (DIRECT_OCCUPED, "direct_occupied"),
+        (DIRECT_OCCUPIED, "direct_occupied"),
         (DIRECT_DISPUTED, "direct_disputed"),
         (INDIRECT, "indirect"),
         (INDIRECT_DISPUTED, "indirect_disputed"),
@@ -161,6 +161,29 @@ class CachedData(models.Model):
             self.rank = 0
 
         super(CachedData, self).save(*args, **kwargs)
+
+
+class City(models.Model):
+    """
+    Stores a city represented by a point on the map
+    """
+
+    wikidata_id = models.PositiveIntegerField()  # Excluding the Q
+    label = models.TextField(max_length=90)
+    location = models.PointField()
+    inception_date = models.DateField()
+    dissolution_date = models.DateField(blank=True, null=True)
+
+    def clean(self, *args, **kwargs):  # pylint: disable=W0221
+        if self.dissolution_date and self.inception_date > self.dissolution_date:
+            raise ValidationError(
+                "Inception date cannot be later than dissolution date"
+            )
+        super(City, self).clean(*args, **kwargs)
+
+    def save(self, *args, **kwargs):  # pylint: disable=W0221
+        self.full_clean()
+        super(City, self).save(*args, **kwargs)
 
 
 class AtomicPolygon(models.Model):
