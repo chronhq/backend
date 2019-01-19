@@ -23,14 +23,15 @@ import os
 
 URL = "https://query.wikidata.org/sparql"
 QUERY = """
-SELECT ?treaty ?treatyLabel ?time ?location
+SELECT ?treaty ?treatyLabel ?time ?location ?coors
 WHERE 
 { 
   ?treaty wdt:P31 wd:Q625298.
   ?treaty wdt:P585 ?time.
   ?treaty wdt:P276 ?location.
+  ?location wdt:P625 ?coors
   FILTER (?time > "1789-01-01T00:00:00Z"^^xsd:dateTime)
-  FILTER (?time < "1815-01-01T00:00:00Z"^^xsd:dateTime)
+  FILTER (?time < "1816-01-01T00:00:00Z"^^xsd:dateTime)
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
 }
 """
@@ -39,28 +40,10 @@ TREATIES = R_TREATIES.json()
 
 for treaty in TREATIES["results"]["bindings"]:
     try:
-        # Coordinate location given in the query is blank for most documents, fallback:
-        LOC_QUERY = """
-        PREFIX entity: <http://www.wikidata.org/entity/>
-
-        SELECT ?coors WHERE {{
-            hint:Query hint:optimizer "None".
-            {{
-                BIND(entity:Q{wid} AS ?valUrl)
-            }}
-            OPTIONAL {{ ?valUrl wdt:P625 ?coors . }}
-        }}
-        """.format(
-            wid=treaty["location"]["value"].split("Q", 1)[1]
-        )
-        LOCATION = requests.get(
-            URL, params={"format": "json", "query": LOC_QUERY}
-        ).json()["results"]["bindings"][0]["coors"]["value"]
-
         data = {
             "event_type": 131569,
             "wikidata_id": int(treaty["treaty"]["value"].split("Q", 1)[1]),
-            "location": LOCATION,
+            "location": treaty["coors"]["value"],
             "date": datetime.strptime(
                 treaty["time"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
             ).strftime("%Y-%m-%d"),
