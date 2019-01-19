@@ -23,29 +23,33 @@ import os
 
 URL = "https://query.wikidata.org/sparql"
 QUERY = """
-SELECT ?battle ?coordinate_location ?point_in_time WHERE {
+SELECT ?battle ?battleLabel ?point_in_time ?coordinate_location WHERE {
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
-  ?battle wdt:P31 wd:Q178561.
-  ?battle wdt:P361 wd:Q78994.
-  ?battle wdt:P625 ?coordinate_location.
+  ?battle (wdt:P31/wdt:P279*) wd:Q178561.
   ?battle wdt:P585 ?point_in_time.
+  FILTER(?point_in_time < "1816-01-01T00:00:00Z"^^xsd:dateTime)
+  FILTER(?point_in_time >= "1789-01-01T00:00:00Z"^^xsd:dateTime)
+  OPTIONAL { ?battle wdt:P625 ?coordinate_location. }
 }
 """
 R_BATTLES = requests.get(URL, params={"format": "json", "query": QUERY})
 BATTLES = R_BATTLES.json()
 
 for battle in BATTLES["results"]["bindings"]:
-    data = {
-        "event_type": 178561,
-        "wikidata_id": int(battle["battle"]["value"].split("Q", 1)[1]),
-        "location": battle["coordinate_location"]["value"],
-        "date": datetime.strptime(
-            battle["point_in_time"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
-        ).strftime("%Y-%m-%d"),
-    }
-    r_battle = requests.post(
-        os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
-        data,
-        params={"format": "json"},
-    )
-    print(str(r_battle.status_code) + ": " + r_battle.reason)
+    try:
+        data = {
+            "event_type": 178561,
+            "wikidata_id": int(battle["battle"]["value"].split("Q", 1)[1]),
+            "location": battle["coordinate_location"]["value"],
+            "date": datetime.strptime(
+                battle["point_in_time"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
+            ).strftime("%Y-%m-%d"),
+        }
+        r_battle = requests.post(
+            os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
+            data,
+            params={"format": "json"},
+        )
+        print(str(r_battle.status_code) + ": " + r_battle.reason)
+    except KeyError:
+        print("No coordiantes for " + battle["battleLabel"]["value"])
