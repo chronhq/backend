@@ -23,16 +23,14 @@ import os
 
 URL = "https://query.wikidata.org/sparql"
 QUERY = """
-SELECT DISTINCT ?city ?cityLabel ?inception (SAMPLE(?location) AS ?location)
-WHERE
-{
-  ?city wdt:P31/wdt:P279* wd:Q515;
-        wdt:P625 ?location;
-        wdt:P1082 ?population.
-  OPTIONAL { ?city wdt:P571 ?inception }.
+SELECT DISTINCT ?city ?cityLabel ?inception (SAMPLE(?location) AS ?location) ?dissolution WHERE {
+  ?city (wdt:P31/wdt:P279*) wd:Q515.
+  ?city wdt:P625 ?location.
+  OPTIONAL { ?city wdt:P571 ?inception. }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+  OPTIONAL { ?city wdt:P576 ?dissolution. }
 }
-GROUP BY ?city ?cityLabel ?inception
+GROUP BY ?city ?cityLabel ?inception ?dissolution
 """
 R_CITIES = requests.get(URL, params={"format": "json", "query": QUERY})
 CITIES = R_CITIES.json()
@@ -45,6 +43,9 @@ for city in CITIES["results"]["bindings"]:
         "inception_date": datetime.strptime(
             city["inception"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
         ).strftime("%Y-%m-%d") if "inception" in city else "0001-01-01",
+        "dissolution_date": datetime.strptime(
+            city["dissolution"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
+        ).strftime("%Y-%m-%d") if "dissolution" in city else "",
     }
     r_city = requests.post(
         os.getenv("API_ROOT", "http://localhost/api/") + "/cities/",
