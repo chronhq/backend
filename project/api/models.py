@@ -77,11 +77,7 @@ class PoliticalRelation(models.Model):
     DIRECT = 10
     INDIRECT = 20
     GROUP = 30
-    CONTROL_TYPES = (
-        (DIRECT, "direct"),
-        (INDIRECT, "indirect"),
-        (GROUP, "group"),
-    )
+    CONTROL_TYPES = ((DIRECT, "direct"), (INDIRECT, "indirect"), (GROUP, "group"))
     control_type = models.PositiveIntegerField(choices=CONTROL_TYPES)
 
     history = HistoricalRecords()
