@@ -46,7 +46,7 @@ DPRS = R_DPRS.json()
 for dpr in DPRS["results"]["bindings"]:
     try:
         data = {
-            "control_type": 10, # direct
+            "control_type": 10,  # direct
             "parent": int(dpr["parent"]["value"].split("Q", 1)[1]),
             "child": int(dpr["child"]["value"].split("Q", 1)[1]),
             "start_date": datetime.strptime(
@@ -56,7 +56,6 @@ for dpr in DPRS["results"]["bindings"]:
                 dpr["dissolved"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
             ).strftime("%Y-%m-%d"),
         }
-        print(data)
         r_dpr = requests.post(
             os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
             data,
