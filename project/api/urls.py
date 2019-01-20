@@ -24,8 +24,9 @@ from . import views
 
 ROUTER = DefaultRouter()
 ROUTER.register(r"territorial-entities", views.TerritorialEntityViewSet)
-ROUTER.register(r"poltical-relations", views.PoliticalRelationViewSet)
+ROUTER.register(r"political-relations", views.PoliticalRelationViewSet)
 ROUTER.register(r"cached-data", views.CachedDataViewSet)
+ROUTER.register(r"cities", views.CityViewSet)
 ROUTER.register(r"atomic-polygons", views.AtomicPolygonViewSet)
 ROUTER.register(r"spacetime-volumes", views.SpacetimeVolumeViewSet)
 ROUTER.register(r"narratives", views.NarrativeViewSet)

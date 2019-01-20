@@ -23,6 +23,7 @@ from .models import (
     TerritorialEntity,
     PoliticalRelation,
     CachedData,
+    City,
     AtomicPolygon,
     SpacetimeVolume,
     Narrative,
@@ -62,6 +63,16 @@ class CachedDataSerializer(ModelSerializer):
         model = CachedData
         fields = "__all__"
         read_only_fields = ("rank",)
+
+
+class CitySerializer(ModelSerializer):
+    """
+    Serializes the City model
+    """
+
+    class Meta:
+        model = City
+        fields = "__all__"
 
 
 class AtomicPolygonSerializer(ModelSerializer):
