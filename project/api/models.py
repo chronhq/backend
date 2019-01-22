@@ -75,19 +75,9 @@ class PoliticalRelation(models.Model):
     end_date = models.DateField()
 
     DIRECT = 10
-    DIRECT_OCCUPIED = 11
-    DIRECT_DISPUTED = 12
     INDIRECT = 20
-    INDIRECT_DISPUTED = 21
     GROUP = 30
-    CONTROL_TYPES = (
-        (DIRECT, "direct"),
-        (DIRECT_OCCUPIED, "direct_occupied"),
-        (DIRECT_DISPUTED, "direct_disputed"),
-        (INDIRECT, "indirect"),
-        (INDIRECT_DISPUTED, "indirect_disputed"),
-        (GROUP, "group"),
-    )
+    CONTROL_TYPES = ((DIRECT, "direct"), (INDIRECT, "indirect"), (GROUP, "group"))
     control_type = models.PositiveIntegerField(choices=CONTROL_TYPES)
 
     history = HistoricalRecords()
