@@ -127,7 +127,7 @@ class NarrationViewSet(viewsets.ModelViewSet):
 
 
 # https://medium.com/@mrgrantanderson/https-medium-com-serving-vector-tiles-from-django-38c705f677cf
-def mvt_tiles(request, zoom, x_cor, y_cor, year):
+def mvt_tiles(request, zoom, x_cor, y_cor):
     """
     Custom view to serve Mapbox Vector Tiles for CachedData.
     """
@@ -135,11 +135,10 @@ def mvt_tiles(request, zoom, x_cor, y_cor, year):
     with connection.cursor() as cursor:
         cursor.execute(
             (
-                "SELECT ST_AsMVT(tile) FROM (SELECT id, wikidata_id, date, "
-                "ST_AsMVTGeom(location, TileBBox(%s, %s, %s, 4326)) FROM api_cacheddata "
-                "WHERE EXTRACT(YEAR from date) = %s) AS tile"
+                "SELECT ST_AsMVT(tile) FROM (SELECT id, wikidata_id, EXTRACT(year from date), "
+                "ST_AsMVTGeom(location, TileBBox(%s, %s, %s, 4326)) FROM api_cacheddata) AS tile"
             ),
-            [zoom, x_cor, y_cor, year],
+            [zoom, x_cor, y_cor],
         )
         tile = bytes(cursor.fetchone()[0])
         if not tile:
