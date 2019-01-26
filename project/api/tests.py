@@ -186,9 +186,7 @@ class ModelTest(TestCase):
         Ensure we can create AtomicPolygons
         """
 
-        AtomicPolygon.objects.create(
-            geom=Polygon(((3, 3), (3, 4), (4, 4), (3, 3)))
-        )
+        AtomicPolygon.objects.create(geom=Polygon(((3, 3), (3, 4), (4, 4), (3, 3))))
 
         self.assertEqual(AtomicPolygon.objects.count(), 2)
 
@@ -203,9 +201,7 @@ class ModelTest(TestCase):
 
         # Non overlapping childless AP constraint
         with self.assertRaises(ValidationError):
-            AtomicPolygon.objects.create(
-                geom=Polygon(((1, 1), (1, 3), (2, 2), (1, 1)))
-            )
+            AtomicPolygon.objects.create(geom=Polygon(((1, 1), (1, 3), (2, 2), (1, 1))))
 
     def test_model_can_create_stv(self):
         """
