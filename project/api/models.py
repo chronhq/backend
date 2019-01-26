@@ -215,9 +215,6 @@ class AtomicPolygon(models.Model):
         self.full_clean()
         super(AtomicPolygon, self).save(*args, **kwargs)
 
-    def __str__(self):
-        return self.name
-
 
 class SpacetimeVolume(models.Model):
     """
@@ -229,7 +226,7 @@ class SpacetimeVolume(models.Model):
     territory = models.ManyToManyField(AtomicPolygon)
     entity = models.ForeignKey(TerritorialEntity, on_delete=models.CASCADE)
     references = ArrayField(models.TextField(max_length=500))
-    related_events = models.ManyToManyField(CachedData)
+    related_events = models.ManyToManyField(CachedData, blank=True)
     history = HistoricalRecords()
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
