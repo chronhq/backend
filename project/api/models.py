@@ -254,10 +254,10 @@ class Narrative(models.Model):
     Stores narrative information.
     """
 
-    author = models.CharField(max_length=100)
+    author = models.TextField(max_length=100)
     title = models.TextField()
     description = models.TextField()
-    tags = ArrayField(models.CharField(max_length=100))
+    tags = ArrayField(models.TextField(max_length=100))
     history = HistoricalRecords()
 
 
@@ -301,7 +301,7 @@ class Narration(OrderedModel):
     narrative = models.ForeignKey(Narrative, on_delete=models.CASCADE)
     title = models.TextField()
     description = models.TextField()
-    date_label = models.CharField(max_length=100)
+    date_label = models.TextField(max_length=100)
     map_datetime = models.DateTimeField()
     attached_events = models.ManyToManyField(CachedData)
     img = models.URLField(blank=True, null=True)
