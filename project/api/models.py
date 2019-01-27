@@ -303,7 +303,7 @@ class Narration(OrderedModel):
     description = models.TextField()
     date_label = models.TextField(max_length=100)
     map_datetime = models.DateTimeField()
-    attached_events = models.ManyToManyField(CachedData)
+    attached_events = models.ManyToManyField(CachedData, blank=True)
     img = models.URLField(blank=True, null=True)
     video = models.URLField(blank=True, null=True)
     settings = models.ForeignKey(MapSettings, on_delete=models.CASCADE)
