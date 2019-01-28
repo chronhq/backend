@@ -1,5 +1,6 @@
 from datetime import datetime
 import csv
+import re
 import requests
 import os
 
@@ -66,6 +67,7 @@ with open("nar1.csv", mode="r") as narrative_file:
                 SELECT DISTINCT ?battle ?battleLabel WHERE {{
                     SERVICE wikibase:label {{ bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }}
                     ?battle (wdt:P31/wdt:P279*) wd:Q178561.
+                    # VALUES ?type {{wd:Q178561 wd:Q188055}} ?treaty wdt:P31 ?type .
                     ?battle rdfs:label ?queryByTitle.
                     FILTER(REGEX(?queryByTitle, "{}", "i"))
                 }}
@@ -86,7 +88,36 @@ with open("nar1.csv", mode="r") as narrative_file:
                     print("No wid for {}".format(battle))
             for treaty in row["peace treaties"].splitlines():
                 if "(" in treaty:
-                    pass  # TODO: implement year checking
+                    treaty_year = int(re.search("\((.+?)\)", treaty))
+                    print(treaty_year)
+                    URL = "https://query.wikidata.org/sparql"
+                    QUERY = """
+                    SELECT DISTINCT ?treaty ?treatyLabel
+                    WHERE
+                    {{
+                        ?treaty wdt:P31 wd:Q625298.
+                        ?treaty rdfs:label ?queryByTitle.
+                        FILTER(REGEX(?queryByTitle, "{}", "i"))
+                        FILTER(YEAR(?point_in_time) = {})
+                        SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+                    }}
+                    """.format(
+                        treaty, treaty_year
+                    ) 
+                    R_TREATY = requests.get(
+                        URL, params={"format": "json", "query": QUERY}
+                    )
+                    try:
+                        events.append(
+                            int(
+                                R_TREATY.json()["results"]["bindings"][0]["treaty"][
+                                    "value"
+                                ].split("Q", 1)[1]
+                            )
+                        )
+                        print("Found wid for {}".format(treaty))
+                    except IndexError:
+                        print("No wid for {}".format(treaty))
                 else:
                     URL = "https://query.wikidata.org/sparql"
                     QUERY = """
