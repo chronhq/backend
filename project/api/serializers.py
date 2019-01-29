@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from rest_framework.serializers import ModelSerializer, IntegerField
+from rest_framework.serializers import ModelSerializer, IntegerField, PrimaryKeyRelatedField
 
 from .models import (
     TerritorialEntity,
@@ -79,6 +79,7 @@ class AtomicPolygonSerializer(ModelSerializer):
     """
     Serializes the PoliticalRelation model
     """
+    stvs = PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = AtomicPolygon
