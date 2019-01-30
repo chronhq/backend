@@ -30,7 +30,7 @@ print(
     )
 )
 
-with open("nar1.csv", mode="r") as narrative_file:
+with open("data.csv", mode="r") as narrative_file:
     narrative_reader = csv.DictReader(narrative_file)
     line_count = 0
     for row in narrative_reader:
@@ -65,10 +65,15 @@ with open("nar1.csv", mode="r") as narrative_file:
                 URL = "https://query.wikidata.org/sparql"
                 QUERY = """
                 SELECT DISTINCT ?battle ?battleLabel WHERE {{
-                    SERVICE wikibase:label {{ bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }}
-                    ?battle (wdt:P31/wdt:P279*) wd:Q178561.
-                    # VALUES ?type {{wd:Q178561 wd:Q188055}} ?treaty wdt:P31 ?type .
+                    hint:Query hint:optimizer "None".
+                    VALUES (?type) {{
+                        (wd:Q178561)
+                        (wd:Q188055)
+                    }}
+                    ?subtype wdt:P279* ?type.
+                    ?battle wdt:P31 ?subtype.
                     ?battle rdfs:label ?queryByTitle.
+                    SERVICE wikibase:label {{ bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }}
                     FILTER(REGEX(?queryByTitle, "{}", "i"))
                 }}
                 """.format(
@@ -88,8 +93,9 @@ with open("nar1.csv", mode="r") as narrative_file:
                     print("No wid for {}".format(battle))
             for treaty in row["peace treaties"].splitlines():
                 if "(" in treaty:
-                    treaty_year = int(re.search("\((.+?)\)", treaty))
-                    print(treaty_year)
+                    treaty_year = int(re.search(r"\((.+?)\)", treaty).group(1))
+                    treaty = treaty.split(" (")[0]
+                    print(treaty)
                     URL = "https://query.wikidata.org/sparql"
                     QUERY = """
                     SELECT DISTINCT ?treaty ?treatyLabel
@@ -103,7 +109,7 @@ with open("nar1.csv", mode="r") as narrative_file:
                     }}
                     """.format(
                         treaty, treaty_year
-                    ) 
+                    )
                     R_TREATY = requests.get(
                         URL, params={"format": "json", "query": QUERY}
                     )
@@ -166,3 +172,5 @@ with open("nar1.csv", mode="r") as narrative_file:
                     row["title"], str(r_narration.status_code), r_narration.reason
                 )
             )
+            if r_narration.status_code == 400:
+                print(r_narration.json())
