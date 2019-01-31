@@ -19,11 +19,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from requests import get
 from django.core.exceptions import ValidationError
+from django.contrib.gis.geos import Point, MultiPolygon
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
 from ordered_model.models import OrderedModel
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
+from polylabel import polylabel
 
 
 class TerritorialEntity(models.Model):
@@ -234,6 +236,7 @@ class SpacetimeVolume(models.Model):
     territory = models.ManyToManyField(AtomicPolygon)
     entity = models.ForeignKey(TerritorialEntity, on_delete=models.CASCADE)
     references = ArrayField(models.TextField(max_length=500))
+    visual_center = models.PointField(default=Point([0,0]))
     # related_events = models.ManyToManyField(Event)
     # TODO: implement Event model
 
@@ -256,6 +259,14 @@ class SpacetimeVolume(models.Model):
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
+        mp = MultiPolygon()
+
+        for x in self.territory.all():
+            mp.append(x.geom)
+        
+        union = mp.unary_union
+        self.visual_center = Point(polylabel(union.coords))
+
         super(SpacetimeVolume, self).save(*args, **kwargs)
 
 

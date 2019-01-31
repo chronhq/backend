@@ -15,3 +15,4 @@ docutils~=0.14
 pydotplus~=2.0.2
 requests~=2.21.0
 django-ordered-model~=3.1.1
+git+git://github.com/ataalik/python-polylabel.git#egg=python-polylabel
