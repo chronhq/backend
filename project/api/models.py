@@ -236,7 +236,7 @@ class SpacetimeVolume(models.Model):
     territory = models.ManyToManyField(AtomicPolygon)
     entity = models.ForeignKey(TerritorialEntity, on_delete=models.CASCADE)
     references = ArrayField(models.TextField(max_length=500))
-    visual_center = models.PointField(default=Point([0,0]))
+    visual_center = models.PointField(default=Point([0, 0]))
     # related_events = models.ManyToManyField(Event)
     # TODO: implement Event model
 
@@ -259,12 +259,12 @@ class SpacetimeVolume(models.Model):
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
-        mp = MultiPolygon()
+        all_atomics = MultiPolygon()
 
-        for x in self.territory.all():
-            mp.append(x.geom)
-        
-        union = mp.unary_union
+        for atomic in self.territory.all():
+            all_atomics.append(atomic.geom)
+
+        union = all_atomics.unary_union
         self.visual_center = Point(polylabel(union.coords))
 
         super(SpacetimeVolume, self).save(*args, **kwargs)
