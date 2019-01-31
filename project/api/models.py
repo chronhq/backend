@@ -22,6 +22,8 @@ from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import Point, MultiPolygon
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
 from ordered_model.models import OrderedModel
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
@@ -236,7 +238,7 @@ class SpacetimeVolume(models.Model):
     territory = models.ManyToManyField(AtomicPolygon)
     entity = models.ForeignKey(TerritorialEntity, on_delete=models.CASCADE)
     references = ArrayField(models.TextField(max_length=500))
-    visual_center = models.PointField(default=Point([0, 0]))
+    visual_center = models.PointField(blank=True, null=True)
     # related_events = models.ManyToManyField(Event)
     # TODO: implement Event model
 
@@ -259,15 +261,25 @@ class SpacetimeVolume(models.Model):
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
+        super(SpacetimeVolume, self).save(*args, **kwargs)
+
+
+@receiver(m2m_changed, sender=SpacetimeVolume.territory.through)
+def change_visual_center(sender, instance, **kwargs):  # pylint: disable=W0613
+    """
+    Signal function to calculate visual center when a new atomic polygon is added.
+    """
+    atomic_set = instance.territory.all()
+
+    if atomic_set.exists():
         all_atomics = MultiPolygon()
 
-        for atomic in self.territory.all():
+        for atomic in atomic_set:
             all_atomics.append(atomic.geom)
-
         union = all_atomics.unary_union
-        self.visual_center = Point(polylabel(union.coords))
 
-        super(SpacetimeVolume, self).save(*args, **kwargs)
+        instance.visual_center = Point(polylabel(union.coords))
+        instance.save()
 
 
 class Narrative(models.Model):

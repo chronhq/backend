@@ -224,6 +224,15 @@ class ModelTest(TestCase):
             SpacetimeVolume.objects.filter(territory__in=[self.alsace_geom]).exists()
         )
 
+        self.assertEqual(
+            str(
+                SpacetimeVolume.objects.filter(territory__in=[self.alsace_geom])[
+                    0
+                ].visual_center
+            ),
+            "SRID=4326;POINT (1.333333333333333 1.666666666666667)",
+        )
+
     def test_model_can_not_create_stv(self):
         """
         Ensure non overlapping timeframe constraint works
