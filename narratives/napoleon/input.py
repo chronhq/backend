@@ -4,6 +4,42 @@ import csv
 import re
 import requests
 
+def populate_cd(wid, is_battle):
+    """
+    Populates CachedData table for missing values
+    Returns: ID for new item
+    """
+    print(wid)
+    URL = "https://query.wikidata.org/sparql"
+    QUERY = """
+    SELECT ?event ?date ?coors
+    WHERE 
+    {{
+        BIND(wd:Q{} as ?event)
+        ?event wdt:P585 ?date.
+        ?event wdt:P276 ?location.
+        ?location wdt:P625 ?coors
+        SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+    }}
+    """.format(
+        wid
+    )
+    event_info = requests.get(URL, params={"format": "json", "query": QUERY}).json()[
+        "results"
+    ]["bindings"][0]
+    cd_data = {
+        "event_type": 178_561 if is_battle else 131_569,
+        "wikidata_id": wid,
+        "location": event_info["coors"]["value"],
+        "date": event_info["date"]["value"],
+    }
+    new_cd = requests.post(
+        os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
+        cd_data,
+        params={"format": "json"},
+    )
+    return new_cd["id"]
+
 narrative_data = {
     "author": "Bamber Gascoigne <http://www.historyworld.net>",
     "title": "Napoleonic Wars",
@@ -32,11 +68,11 @@ print(
 
 with open("data.csv", mode="r") as narrative_file:
     narrative_reader = csv.DictReader(narrative_file)
-    FIRST = True
+    first = True
     for row in narrative_reader:
-        if FIRST == True:
+        if first == True:
             print(f'Column names are {", ".join(row)}')
-            FIRST = False
+            first = False
         else:
             # TODO: fix placeholder MapSettings
             ms_data = {
@@ -135,7 +171,7 @@ with open("data.csv", mode="r") as narrative_file:
                     }}
                     """.format(
                         treaty
-                    )  # TODO: also check sieges, output list of failed battles at end
+                    )
                     R_TREATY = requests.get(
                         URL, params={"format": "json", "query": QUERY}
                     )
@@ -152,30 +188,29 @@ with open("data.csv", mode="r") as narrative_file:
             print(battle_events)
             print(treaty_events)
             print(battle_events + treaty_events)
-            try:
-                narration_data = {
-                    "title": row["title"],
-                    "description": row["description"],
-                    "date_label": row["year"],
-                    "map_datetime": first_year_dt,
-                    "narrative": narrative_id,
-                    "settings": ms_id,
-                    "attached_events": list(
-                        map(
-                            lambda wid: int(
-                                requests.get(
-                                    os.getenv("API_ROOT", "http://localhost/api/")
-                                    + "/cached-data?wikidata_id="
-                                    + wid
-                                ).json()[0]["id"]
-                            ),
-                            battle_events + treaty_events,
-                        )
-                    ),
-                }
-            except IndexError:
-                # TODO: code to handle cases where there is no exsiting CD for this wid
-                pass
+            narration_data = {
+                "title": row["title"],
+                "description": row["description"],
+                "date_label": row["year"],
+                "map_datetime": first_year_dt,
+                "narrative": narrative_id,
+                "settings": ms_id,
+            }
+            get_cd_by_wid = lambda wid: requests.get(
+                os.getenv("API_ROOT", "http://localhost/api/")
+                + "/cached-data?wikidata_id="
+                + wid
+            ).json()
+            narration_data["attached_events"] = (
+                list(
+                    map(
+                        lambda wid: int(get_cd_by_wid(wid)[0]["id"])
+                        if get_cd_by_wid(wid)
+                        else populate_cd(wid, wid in battle_events),
+                        battle_events + treaty_events,
+                    )
+                ),
+            )
 
             print(narration_data["attached_events"])
 
