@@ -1,8 +1,8 @@
 from datetime import datetime
+import os
 import csv
 import re
 import requests
-import os
 
 narrative_data = {
     "author": "Bamber Gascoigne <http://www.historyworld.net>",
@@ -32,11 +32,11 @@ print(
 
 with open("data.csv", mode="r") as narrative_file:
     narrative_reader = csv.DictReader(narrative_file)
-    line_count = 0
+    FIRST = True
     for row in narrative_reader:
-        if line_count == 0:
+        if FIRST == True:
             print(f'Column names are {", ".join(row)}')
-            line_count += 1
+            FIRST = False
         else:
             # TODO: fix placeholder MapSettings
             ms_data = {
@@ -60,7 +60,8 @@ with open("data.csv", mode="r") as narrative_file:
                 row["year"].split("-")[0] if "-" in row["year"] else row["year"]
             )
             first_year_dt = datetime.strptime(first_year, "%Y")
-            events = []
+            battle_events = []
+            treaty_events = []
             for battle in row["battles"].splitlines():
                 URL = "https://query.wikidata.org/sparql"
                 QUERY = """
@@ -81,12 +82,10 @@ with open("data.csv", mode="r") as narrative_file:
                 )
                 R_BATTLE = requests.get(URL, params={"format": "json", "query": QUERY})
                 try:
-                    events.append(
-                        int(
-                            R_BATTLE.json()["results"]["bindings"][0]["battle"][
-                                "value"
-                            ].split("Q", 1)[1]
-                        )
+                    battle_events.append(
+                        R_BATTLE.json()["results"]["bindings"][0]["battle"][
+                            "value"
+                        ].split("Q", 1)[1]
                     )
                     print("Found wid for {}".format(battle))
                 except IndexError:
@@ -101,8 +100,9 @@ with open("data.csv", mode="r") as narrative_file:
                     SELECT DISTINCT ?treaty ?treatyLabel
                     WHERE
                     {{
-                        ?treaty wdt:P31 wd:Q625298.
+                        ?treaty (wdt:P31/wdt:P279*) wd:Q131569.
                         ?treaty rdfs:label ?queryByTitle.
+                        ?treaty wdt:P585 ?point_in_time.
                         FILTER(REGEX(?queryByTitle, "{}", "i"))
                         FILTER(YEAR(?point_in_time) = {})
                         SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
@@ -114,12 +114,10 @@ with open("data.csv", mode="r") as narrative_file:
                         URL, params={"format": "json", "query": QUERY}
                     )
                     try:
-                        events.append(
-                            int(
-                                R_TREATY.json()["results"]["bindings"][0]["treaty"][
-                                    "value"
-                                ].split("Q", 1)[1]
-                            )
+                        treaty_events.append(
+                            R_TREATY.json()["results"]["bindings"][0]["treaty"][
+                                "value"
+                            ].split("Q", 1)[1]
                         )
                         print("Found wid for {}".format(treaty))
                     except IndexError:
@@ -130,7 +128,7 @@ with open("data.csv", mode="r") as narrative_file:
                     SELECT DISTINCT ?treaty ?treatyLabel
                     WHERE
                     {{
-                        ?treaty wdt:P31 wd:Q625298.
+                        ?treaty (wdt:P31/wdt:P279*) wd:Q131569.
                         ?treaty rdfs:label ?queryByTitle.
                         FILTER(REGEX(?queryByTitle, "{}", "i"))
                         SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
@@ -142,26 +140,45 @@ with open("data.csv", mode="r") as narrative_file:
                         URL, params={"format": "json", "query": QUERY}
                     )
                     try:
-                        events.append(
-                            int(
-                                R_TREATY.json()["results"]["bindings"][0]["treaty"][
-                                    "value"
-                                ].split("Q", 1)[1]
-                            )
+                        treaty_events.append(
+                            R_TREATY.json()["results"]["bindings"][0]["treaty"][
+                                "value"
+                            ].split("Q", 1)[1]
                         )
                         print("Found wid for {}".format(treaty))
                     except IndexError:
                         print("No wid for {}".format(treaty))
 
-            narration_data = {
-                "title": row["title"],
-                "description": row["description"],
-                "date_label": row["year"],
-                "map_datetime": first_year_dt,
-                "narrative": narrative_id,
-                "settings": ms_id,
-                "attached_events": events,
-            }
+            print(battle_events)
+            print(treaty_events)
+            print(battle_events + treaty_events)
+            try:
+                narration_data = {
+                    "title": row["title"],
+                    "description": row["description"],
+                    "date_label": row["year"],
+                    "map_datetime": first_year_dt,
+                    "narrative": narrative_id,
+                    "settings": ms_id,
+                    "attached_events": list(
+                        map(
+                            lambda wid: int(
+                                requests.get(
+                                    os.getenv("API_ROOT", "http://localhost/api/")
+                                    + "/cached-data?wikidata_id="
+                                    + wid
+                                ).json()[0]["id"]
+                            ),
+                            battle_events + treaty_events,
+                        )
+                    ),
+                }
+            except IndexError:
+                # TODO: code to handle cases where there is no exsiting CD for this wid
+                pass
+
+            print(narration_data["attached_events"])
+
             r_narration = requests.post(
                 os.getenv("API_ROOT", "http://localhost/api/") + "/narrations/",
                 narration_data,
