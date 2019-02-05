@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from requests import get
 from django.core.exceptions import ValidationError
-from django.contrib.gis.geos import Point, MultiPolygon
+from django.contrib.gis.geos import Point
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.db.models.signals import m2m_changed
@@ -272,13 +272,9 @@ def change_visual_center(sender, instance, **kwargs):  # pylint: disable=W0613
     atomic_set = instance.territory.all()
 
     if atomic_set.exists():
-        all_atomics = MultiPolygon()
+        combined = atomic_set.aggregate(models.Collect("geom"))
 
-        for atomic in atomic_set:
-            all_atomics.append(atomic.geom)
-        union = all_atomics.unary_union
-
-        instance.visual_center = Point(polylabel(union.coords))
+        instance.visual_center = Point(polylabel(combined.coords))
         instance.save()
 
 
