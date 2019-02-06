@@ -35,7 +35,5 @@ ROUTER.register(r"narrations", views.NarrationViewSet)
 
 urlpatterns = [
     path("", include(ROUTER.urls)),
-    path(
-        "mvt/<int:zoom>/<int:x_cor>/<int:y_cor>", views.mvt_tiles, name="mvt"
-    ),
+    path("mvt/<int:zoom>/<int:x_cor>/<int:y_cor>", views.mvt_tiles, name="mvt"),
 ]

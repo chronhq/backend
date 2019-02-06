@@ -136,7 +136,8 @@ def mvt_tiles(request, zoom, x_cor, y_cor):
         cursor.execute(
             (
                 "SELECT ST_AsMVT(tile) FROM (SELECT id, wikidata_id, EXTRACT(year from date), "
-                "ST_AsMVTGeom(location, TileBBox(%s, %s, %s, 4326)) FROM api_cacheddata) AS tile"
+                "ST_AsMVTGeom(ST_Transform(location, 3857), "
+                "ST_Transform(TileBBox(%s, %s, %s, 4326), 3857)) FROM api_cacheddata) AS tile"
             ),
             [zoom, x_cor, y_cor],
         )
