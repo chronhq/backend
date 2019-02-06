@@ -277,10 +277,10 @@ def change_visual_center(sender, instance, **kwargs):  # pylint: disable=W0613
             deep_list( (1,2,(3,4)) ) returns [1,2,[3,4]]"""
             return list(map(deep_list,to_convert)) if isinstance(to_convert, (list, tuple)) else to_convert
 
-        combined = atomic_set.aggregate(models.Union("geom"))
-        print(deep_list(combined["geom__union"].coords))
+        combined = atomic_set.aggregate(models.Collect("geom"))
+        print(deep_list(combined["geom__collect"].coords))
 
-        instance.visual_center = Point(polylabel(deep_list(combined["geom__union"].coords)))
+        instance.visual_center = Point(polylabel(deep_list(combined["geom__collect"].coords)))
         instance.save()
 
 
