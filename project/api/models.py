@@ -272,9 +272,15 @@ def change_visual_center(sender, instance, **kwargs):  # pylint: disable=W0613
     atomic_set = instance.territory.all()
 
     if atomic_set.exists():
-        combined = atomic_set.aggregate(models.Collect("geom"))
+        def deep_list(to_convert):
+            """fully copies trees of tuples to a tree of lists.
+            deep_list( (1,2,(3,4)) ) returns [1,2,[3,4]]"""
+            return list(map(deep_list,to_convert)) if isinstance(to_convert, (list, tuple)) else to_convert
 
-        instance.visual_center = Point(polylabel(combined.coords))
+        combined = atomic_set.aggregate(models.Union("geom"))
+        print(deep_list(combined["geom__union"].coords))
+
+        instance.visual_center = Point(polylabel(deep_list(combined["geom__union"].coords)))
         instance.save()
 
 
