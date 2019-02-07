@@ -35,5 +35,19 @@ ROUTER.register(r"narrations", views.NarrationViewSet)
 
 urlpatterns = [
     path("", include(ROUTER.urls)),
-    path("mvt/<int:zoom>/<int:x_cor>/<int:y_cor>", views.mvt_tiles, name="mvt"),
+    path(
+        "mvt/cached-data/<int:zoom>/<int:x_cor>/<int:y_cor>",
+        views.mvt_cacheddata,
+        name="mvt-cacheddata",
+    ),
+    path(
+        "mvt/cities/<int:zoom>/<int:x_cor>/<int:y_cor>",
+        views.mvt_cities,
+        name="mvt-cities",
+    ),
+    path(
+        "mvt/narrations/<int:narration>/<int:zoom>/<int:x_cor>/<int:y_cor>",
+        views.mvt_narration_events,
+        name="mvt-cities",
+    ),
 ]
