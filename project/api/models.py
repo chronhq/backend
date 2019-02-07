@@ -75,19 +75,9 @@ class PoliticalRelation(models.Model):
     end_date = models.DateField()
 
     DIRECT = 10
-    DIRECT_OCCUPIED = 11
-    DIRECT_DISPUTED = 12
     INDIRECT = 20
-    INDIRECT_DISPUTED = 21
     GROUP = 30
-    CONTROL_TYPES = (
-        (DIRECT, "direct"),
-        (DIRECT_OCCUPIED, "direct_occupied"),
-        (DIRECT_DISPUTED, "direct_disputed"),
-        (INDIRECT, "indirect"),
-        (INDIRECT_DISPUTED, "indirect_disputed"),
-        (GROUP, "group"),
-    )
+    CONTROL_TYPES = ((DIRECT, "direct"), (INDIRECT, "indirect"), (GROUP, "group"))
     control_type = models.PositiveIntegerField(choices=CONTROL_TYPES)
 
     history = HistoricalRecords()
@@ -241,7 +231,7 @@ class SpacetimeVolume(models.Model):
 
     start_date = models.DateField()
     end_date = models.DateField()
-    territory = models.ManyToManyField(AtomicPolygon)
+    territory = models.ManyToManyField(AtomicPolygon, related_name="stvs")
     entity = models.ForeignKey(TerritorialEntity, on_delete=models.CASCADE)
     references = ArrayField(models.TextField(max_length=500))
     # related_events = models.ManyToManyField(Event)

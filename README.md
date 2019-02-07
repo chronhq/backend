@@ -37,5 +37,6 @@ source venv/bin/activate # *nix
 venv/Scripts/activate # win
 pip install -r config/requirements.txt
 
-python project/manage.py runserver
+cd project
+python manage.py runserver # must be executed from the project directory
 ```
