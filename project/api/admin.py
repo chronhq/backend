@@ -25,7 +25,7 @@ from .models import (
     AtomicPolygon,
     SpacetimeVolume,
     CachedData,
-    Narration
+    Narration,
 )
 
 # Register your models here.
