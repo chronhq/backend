@@ -129,3 +129,4 @@ class NarrationSerializer(ModelSerializer):
     class Meta:
         model = Narration
         fields = "__all__"
+        depth = 1

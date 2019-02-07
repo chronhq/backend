@@ -25,6 +25,7 @@ from .models import (
     AtomicPolygon,
     SpacetimeVolume,
     CachedData,
+    Narration
 )
 
 # Register your models here.
@@ -33,3 +34,4 @@ admin.site.register(PoliticalRelation)
 admin.site.register(AtomicPolygon)
 admin.site.register(SpacetimeVolume)
 admin.site.register(CachedData)
+admin.site.register(Narration)
