@@ -143,3 +143,6 @@ postgres.env
 
 # docs
 project/graph.svg
+
+# dbdumps
+project/dump.json

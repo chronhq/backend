@@ -36,7 +36,6 @@ class TerritorialEntity(models.Model):
     wikidata_id = models.PositiveIntegerField(primary_key=True)  # Excluding the Q
     color = ColorField()
     admin_level = models.PositiveIntegerField()
-    predecessors = models.ManyToManyField("self", blank=True, related_name="successors")
     relations = models.ManyToManyField(
         "self",
         blank=True,
@@ -44,7 +43,6 @@ class TerritorialEntity(models.Model):
         through="PoliticalRelation",
         related_name="political_relations",
     )
-
     history = HistoricalRecords()
 
     def get_children(self):
@@ -71,7 +69,6 @@ class PoliticalRelation(models.Model):
     child = models.ForeignKey(
         TerritorialEntity, related_name="parents", on_delete=models.CASCADE
     )
-
     start_date = models.DateField()
     end_date = models.DateField()
 
@@ -121,6 +118,8 @@ class CachedData(models.Model):
     )
     event_type = models.PositiveIntegerField(choices=EVENT_TYPES)
 
+    history = HistoricalRecords()
+
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         url = "https://query.wikidata.org/sparql"
         query = """
@@ -164,6 +163,7 @@ class City(models.Model):
     location = models.PointField()
     inception_date = models.DateField()
     dissolution_date = models.DateField(blank=True, null=True)
+    history = HistoricalRecords()
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
         if self.dissolution_date and self.inception_date > self.dissolution_date:
@@ -182,12 +182,7 @@ class AtomicPolygon(models.Model):
     Stores geometric data corresponding to a wikidata ID
     """
 
-    wikidata_id = models.PositiveIntegerField(
-        unique=True, blank=True, null=True
-    )  # Excluding the Q
-    name = models.TextField(max_length=100, unique=True)
     geom = models.GeometryField()
-
     history = HistoricalRecords()
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
@@ -221,9 +216,6 @@ class AtomicPolygon(models.Model):
         self.full_clean()
         super(AtomicPolygon, self).save(*args, **kwargs)
 
-    def __str__(self):
-        return self.name
-
 
 class SpacetimeVolume(models.Model):
     """
@@ -232,13 +224,11 @@ class SpacetimeVolume(models.Model):
 
     start_date = models.DateField()
     end_date = models.DateField()
-    territory = models.ManyToManyField(AtomicPolygon)
+    territory = models.ManyToManyField(AtomicPolygon, related_name="stvs")
     entity = models.ForeignKey(TerritorialEntity, on_delete=models.CASCADE)
     references = ArrayField(models.TextField(max_length=500))
     visual_center = models.PointField(default=Point(0, 0))
-    # related_events = models.ManyToManyField(Event)
-    # TODO: implement Event model
-
+    related_events = models.ManyToManyField(CachedData, blank=True)
     history = HistoricalRecords()
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
@@ -266,10 +256,11 @@ class Narrative(models.Model):
     Stores narrative information.
     """
 
-    author = models.CharField(max_length=100)
+    author = models.TextField(max_length=100)
     title = models.TextField()
     description = models.TextField()
-    tags = ArrayField(models.CharField(max_length=100))
+    tags = ArrayField(models.TextField(max_length=100))
+    history = HistoricalRecords()
 
 
 class MapSettings(models.Model):
@@ -281,6 +272,7 @@ class MapSettings(models.Model):
     bbox = models.MultiPointField()
     zoom_min = models.FloatField()
     zoom_max = models.FloatField()
+    history = HistoricalRecords()
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
         if self.bbox.num_points != 2:  # pylint: disable=E1101
@@ -311,11 +303,12 @@ class Narration(OrderedModel):
     narrative = models.ForeignKey(Narrative, on_delete=models.CASCADE)
     title = models.TextField()
     description = models.TextField()
-    date_label = models.CharField(max_length=100)
+    date_label = models.TextField(max_length=100)
     map_datetime = models.DateTimeField()
-    attached_events = models.ManyToManyField(CachedData)
+    attached_events = models.ManyToManyField(CachedData, blank=True)
     img = models.URLField(blank=True, null=True)
     video = models.URLField(blank=True, null=True)
     settings = models.ForeignKey(MapSettings, on_delete=models.CASCADE)
+    history = HistoricalRecords()
 
     order_with_respect_to = "narrative"
