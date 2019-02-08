@@ -435,6 +435,7 @@ class APITest(APITestCase):
             end_date="0002-01-01",
             entity=cls.france,
             references=["ref"],
+            visual_center=Point(1, 1)
         )
         cls.alsace_stv.territory.add(cls.alsace_geom)
 
@@ -712,6 +713,7 @@ class APITest(APITestCase):
             "entity": self.france.pk,
             "references": ["ref"],
             "territory": [self.alsace_geom.pk],
+            "visual_center": "POINT (2 2)"
         }
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)

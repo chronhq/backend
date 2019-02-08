@@ -227,7 +227,7 @@ class SpacetimeVolume(models.Model):
     territory = models.ManyToManyField(AtomicPolygon, related_name="stvs")
     entity = models.ForeignKey(TerritorialEntity, on_delete=models.CASCADE)
     references = ArrayField(models.TextField(max_length=500))
-    visual_center = models.PointField(default=Point(0, 0))
+    visual_center = models.PointField()
     related_events = models.ManyToManyField(CachedData, blank=True)
     history = HistoricalRecords()
 
