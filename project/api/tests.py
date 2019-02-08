@@ -217,6 +217,7 @@ class ModelTest(TestCase):
             end_date="0002-01-01",
             entity=self.france,
             references=["ref"],
+            visual_center=Point(2, 2),
         )
         alsace.territory.add(self.alsace_geom)
 
@@ -230,7 +231,7 @@ class ModelTest(TestCase):
                     0
                 ].visual_center
             ),
-            "SRID=4326;POINT (1.333333333333333 1.666666666666667)",
+            "SRID=4326;POINT (2 2)",
         )
 
     def test_model_can_not_create_stv(self):
@@ -244,12 +245,14 @@ class ModelTest(TestCase):
                 end_date="0003-01-01",
                 entity=self.france,
                 references=["ref"],
+                visual_center=Point(2, 2),
             )
             SpacetimeVolume.objects.create(
                 start_date="0002-01-01",
                 end_date="0004-01-01",
                 entity=self.france,
                 references=["ref"],
+                visual_center=Point(1, 1),
             )
 
     def test_model_can_create_narrative(self):
@@ -695,6 +698,7 @@ class APITest(APITestCase):
             "entity": self.germany.pk,
             "references": ["ref"],
             "territory": [self.alsace_geom.pk],
+            "visual_center": "POINT(2 2)",
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
