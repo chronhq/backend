@@ -79,7 +79,7 @@ class ModelTest(TestCase):
         cls.lorraine = TerritorialEntityFactory(wikidata_id=31, color=1, admin_level=3)
 
         cls.alsace_geom = AtomicPolygonFactory.create(
-            name="Alsace", geom=Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
+            geom=Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
         )
 
     def test_model_can_create_te(self):
@@ -186,9 +186,7 @@ class ModelTest(TestCase):
         Ensure we can create AtomicPolygons
         """
 
-        AtomicPolygon.objects.create(
-            name="Lorraine", geom=Polygon(((3, 3), (3, 4), (4, 4), (3, 3)))
-        )
+        AtomicPolygon.objects.create(geom=Polygon(((3, 3), (3, 4), (4, 4), (3, 3))))
 
         self.assertEqual(AtomicPolygon.objects.count(), 2)
 
@@ -199,13 +197,11 @@ class ModelTest(TestCase):
 
         # Geometry type validation
         with self.assertRaises(ValidationError):
-            AtomicPolygon.objects.create(name="Lorraine", geom=Point(2.5, 2.5))
+            AtomicPolygon.objects.create(geom=Point(2.5, 2.5))
 
         # Non overlapping childless AP constraint
         with self.assertRaises(ValidationError):
-            AtomicPolygon.objects.create(
-                name="Lorraine", geom=Polygon(((1, 1), (1, 3), (2, 2), (1, 1)))
-            )
+            AtomicPolygon.objects.create(geom=Polygon(((1, 1), (1, 3), (2, 2), (1, 1))))
 
     def test_model_can_create_stv(self):
         """
@@ -401,7 +397,7 @@ class APITest(APITestCase):
 
         # AtomicPolygons
         cls.alsace_geom = AtomicPolygonFactory(
-            name="Alsace", geom=Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
+            geom=Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
         )
 
         # PoliticalRelations
@@ -637,11 +633,10 @@ class APITest(APITestCase):
         """
 
         url = reverse("atomicpolygon-list")
-        data = {"name": "Lorraine", "geom": "POLYGON((3 3, 3 4, 4 4, 3 3))"}
+        data = {"geom": "POLYGON((3 3, 3 4, 4 4, 3 3))"}
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(AtomicPolygon.objects.count(), 2)
-        self.assertEqual(AtomicPolygon.objects.last().name, "Lorraine")
 
     def test_api_can_update_ap(self):
         """
@@ -649,10 +644,10 @@ class APITest(APITestCase):
         """
 
         url = reverse("atomicpolygon-detail", args=[self.alsace_geom.pk])
-        data = {"name": "Lorraine", "geom": "POLYGON((3 3, 3 4, 4 4, 3 3))"}
+        data = {"geom": "POLYGON((3 3, 3 4, 4 4, 3 3))"}
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["name"], "Lorraine")
+        self.assertEqual(response.data["id"], self.alsace_geom.pk)
 
     def test_api_can_query_aps(self):
         """
@@ -662,7 +657,7 @@ class APITest(APITestCase):
         url = reverse("atomicpolygon-list")
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]["name"], "Alsace")
+        self.assertEqual(response.data[0]["id"], self.alsace_geom.pk)
 
     def test_api_can_query_ap(self):
         """
@@ -672,7 +667,7 @@ class APITest(APITestCase):
         url = reverse("atomicpolygon-detail", args=[self.alsace_geom.pk])
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["name"], "Alsace")
+        self.assertEqual(response.data["id"], self.alsace_geom.pk)
 
     def test_api_can_create_stv(self):
         """

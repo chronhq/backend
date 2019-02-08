@@ -68,8 +68,15 @@ class CachedDataViewSet(viewsets.ModelViewSet):
     ViewSet for CachedData
     """
 
-    queryset = CachedData.objects.all()
+    queryset = CachedData.objects.all().order_by("-rank")
     serializer_class = CachedDataSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        wid = self.request.query_params.get("wikidata_id", None)
+        if wid is not None:
+            queryset = queryset.filter(wikidata_id=wid)
+        return queryset
 
 
 class CityViewSet(viewsets.ModelViewSet):
