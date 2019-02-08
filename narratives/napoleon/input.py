@@ -190,6 +190,7 @@ with open("data.csv", mode="r") as narrative_file:
             "map_datetime": first_year_dt,
             "narrative": narrative_id,
             "settings": ms_id,
+            "img": row["pics"].splitlines()[0] if row["pics"] else "",
         }
         get_cd_by_wid = lambda wid: requests.get(
             os.getenv("API_ROOT", "http://localhost/api/")
