@@ -170,12 +170,14 @@ def mvt_cities(request, zoom, x_cor, y_cor):
             raise Http404()
     return HttpResponse(tile, content_type="application/x-protobuf")
 
+
 def mvt_narration_events(request, narration, zoom, x_cor, y_cor):
     """
     Custom view to serve Mapbox Vector Tiles for attached_events in a given Narration.
     """
 
     with connection.cursor() as cursor:
+        # TODO: query across m2m table
         cursor.execute(
             (
                 "SELECT ST_AsMVT(tile) FROM ("
