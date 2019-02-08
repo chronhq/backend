@@ -213,7 +213,7 @@ class ModelTest(TestCase):
             end_date="0002-01-01",
             entity=self.france,
             references=["ref"],
-            visual_center=Point(2, 2),
+            visual_center=Point(1.2, 1.8),
         )
         alsace.territory.add(self.alsace_geom)
 
@@ -227,7 +227,7 @@ class ModelTest(TestCase):
                     0
                 ].visual_center
             ),
-            "SRID=4326;POINT (2 2)",
+            "SRID=4326;POINT (1.2 1.8)",
         )
 
     def test_model_can_not_create_stv(self):
@@ -435,7 +435,7 @@ class APITest(APITestCase):
             end_date="0002-01-01",
             entity=cls.france,
             references=["ref"],
-            visual_center=Point(1, 1)
+            visual_center=Point(1.2, 1.8)
         )
         cls.alsace_stv.territory.add(cls.alsace_geom)
 
@@ -694,7 +694,7 @@ class APITest(APITestCase):
             "entity": self.germany.pk,
             "references": ["ref"],
             "territory": [self.alsace_geom.pk],
-            "visual_center": "POINT(2 2)",
+            "visual_center": "POINT(1.2 1.8)",
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -713,7 +713,7 @@ class APITest(APITestCase):
             "entity": self.france.pk,
             "references": ["ref"],
             "territory": [self.alsace_geom.pk],
-            "visual_center": "POINT (2 2)"
+            "visual_center": "POINT (0.7 0.7)"
         }
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
