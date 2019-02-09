@@ -21,6 +21,7 @@ from rest_framework.serializers import (
     ModelSerializer,
     IntegerField,
     PrimaryKeyRelatedField,
+    SerializerMethodField,
 )
 
 from .models import (
@@ -60,7 +61,6 @@ class CachedDataSerializer(ModelSerializer):
     """
     Serializes the CachedData model
     """
-
     event_type = IntegerField(min_value=0)
 
     class Meta:
@@ -81,9 +81,8 @@ class CitySerializer(ModelSerializer):
 
 class AtomicPolygonSerializer(ModelSerializer):
     """
-    Serializes the PoliticalRelation model
+    Serializes the AtomicPolygon model
     """
-
     stvs = PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
@@ -101,16 +100,6 @@ class SpacetimeVolumeSerializer(ModelSerializer):
         fields = "__all__"
 
 
-class NarrativeSerializer(ModelSerializer):
-    """
-    Serializes the Narrative model
-    """
-
-    class Meta:
-        model = Narrative
-        fields = "__all__"
-
-
 class MapSettingsSerializer(ModelSerializer):
     """
     Serializes the MapSettings model
@@ -125,8 +114,39 @@ class NarrationSerializer(ModelSerializer):
     """
     Serializes the Narration model
     """
+    attached_events = CachedDataSerializer(many=True, read_only=True)
+    attached_events_ids = PrimaryKeyRelatedField(source='attached_events', queryset=CachedData.objects.all(), many=True, write_only=True)
 
     class Meta:
         model = Narration
         fields = "__all__"
-        depth = 1
+
+
+class NarrativeSerializer(ModelSerializer):
+    """
+    Serializes the Narrative model
+    """
+    start_year = SerializerMethodField()
+    end_year = SerializerMethodField()
+
+    class Meta:
+        model = Narrative
+        fields = "__all__"
+
+    def get_start_year(self, obj):  # pylint: disable=R0201
+        """
+        Retrieves year of first narration in set
+        """
+
+        if obj.narration_set.first() is not None:
+            return obj.narration_set.first().map_datetime.year
+        return None
+
+    def get_end_year(self, obj):  # pylint: disable=R0201
+        """
+        Retrieves year of last narration in set
+        """
+
+        if obj.narration_set.last() is not None:
+            return obj.narration_set.last().map_datetime.year
+        return None
