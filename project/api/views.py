@@ -132,6 +132,13 @@ class NarrationViewSet(viewsets.ModelViewSet):
     queryset = Narration.objects.all()
     serializer_class = NarrationSerializer
 
+    def get_queryset(self):
+        queryset = self.queryset
+        narrative = self.request.query_params.get("narrative", None)
+        if narrative is not None:
+            queryset = queryset.filter(narrative=narrative)
+        return queryset
+
 
 # https://medium.com/@mrgrantanderson/https-medium-com-serving-vector-tiles-from-django-38c705f677cf
 def mvt_tiles(request, zoom, x_cor, y_cor):
