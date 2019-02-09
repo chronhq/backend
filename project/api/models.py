@@ -19,7 +19,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from requests import get
 from django.core.exceptions import ValidationError
-from django.contrib.gis.geos import Point
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.db.models.signals import m2m_changed
@@ -246,7 +245,7 @@ class SpacetimeVolume(models.Model):
             raise ValidationError(
                 "Another STV for this entity exists in the same timeframe"
             )
-            
+
         super(SpacetimeVolume, self).clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
@@ -265,9 +264,7 @@ def change_visual_center(sender, instance, **kwargs):  # pylint: disable=W0613
 
         combined = atomic_set.aggregate(models.Collect("geom"))
         if combined["geom__collect"].contains(instance.visual_center) is False:
-            raise ValidationError(
-                "Visual center is not inside the territory"
-            )
+            raise ValidationError("Visual center is not inside the territory")
 
 
 class Narrative(models.Model):

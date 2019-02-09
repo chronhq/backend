@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import Point, Polygon, MultiPoint
+from django.db import transaction
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -78,7 +79,7 @@ class ModelTest(TestCase):
         cls.alsace = TerritorialEntityFactory(wikidata_id=30, color=1, admin_level=3)
         cls.lorraine = TerritorialEntityFactory(wikidata_id=31, color=1, admin_level=3)
 
-        cls.alsace_geom = AtomicPolygonFactory.create(
+        cls.alsace_geom = AtomicPolygonFactory(
             geom=Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
         )
 
@@ -234,6 +235,16 @@ class ModelTest(TestCase):
         """
         Ensure non overlapping timeframe constraint works
         """
+        with self.assertRaises(ValidationError):
+            alsace = SpacetimeVolume.objects.create(
+                start_date="0005-01-01",
+                end_date="0006-01-01",
+                entity=self.france,
+                references=["ref"],
+                visual_center=Point(0, 1.8),
+            )
+            with transaction.atomic():
+                alsace.territory.add(self.alsace_geom)
 
         with self.assertRaises(ValidationError):
             SpacetimeVolume.objects.create(
@@ -312,7 +323,7 @@ class ModelTest(TestCase):
         self.assertEqual(Narration.objects.filter().count(), 2)
         self.assertEqual(narration2.next().title, "Test Narration")
 
-    def test_model_cant_create_bbox(self):
+    def test_model_can_not_create_ms(self):
         """
         Ensure that the constraints on mapsettings work.
         """
@@ -435,7 +446,7 @@ class APITest(APITestCase):
             end_date="0002-01-01",
             entity=cls.france,
             references=["ref"],
-            visual_center=Point(1.2, 1.8)
+            visual_center=Point(1.2, 1.8),
         )
         cls.alsace_stv.territory.add(cls.alsace_geom)
 
@@ -713,7 +724,7 @@ class APITest(APITestCase):
             "entity": self.france.pk,
             "references": ["ref"],
             "territory": [self.alsace_geom.pk],
-            "visual_center": "POINT (0.7 0.7)"
+            "visual_center": "POINT (0.7 0.7)",
         }
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
