@@ -246,6 +246,7 @@ class ModelTest(TestCase):
         test_narrative = Narrative.objects.create(
             author="Test Author",
             title="Test Narrative",
+            url="test",
             description="This is a test narrative for automated testing.",
             tags=["test", "tags"],
         )
@@ -430,6 +431,7 @@ class APITest(APITestCase):
         cls.norman_conquest = NarrativeFactory(
             author="Test Author",
             title="Test Narrative",
+            url="test",
             description="This is a test narrative for automated testing.",
             tags=["test", "tags"],
         )
@@ -733,6 +735,7 @@ class APITest(APITestCase):
         data = {
             "author": "Test Author 2",
             "title": "Test Narrative",
+            "url": "test2",
             "description": "This is a test narrative for automated testing.",
             "tags": ["test", "tags"],
         }
@@ -750,6 +753,7 @@ class APITest(APITestCase):
         data = {
             "author": "Other Test Author",
             "title": "Test Narrative",
+            "url": "test2",
             "description": "This is a test narrative for automated testing.",
             "tags": ["test", "tags"],
         }

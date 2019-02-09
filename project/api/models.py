@@ -256,6 +256,7 @@ class Narrative(models.Model):
 
     author = models.TextField(max_length=100)
     title = models.TextField()
+    url = models.TextField(unique=True)
     description = models.TextField()
     tags = ArrayField(models.TextField(max_length=100))
     history = HistoricalRecords()
