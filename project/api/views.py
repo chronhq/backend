@@ -123,6 +123,13 @@ class MapSettingsViewSet(viewsets.ModelViewSet):
     queryset = MapSettings.objects.all()
     serializer_class = MapSettingsSerializer
 
+    def get_queryset(self):
+        queryset = self.queryset
+        narrative = self.request.query_params.get("narrative", None)
+        if narrative is not None:
+            queryset = queryset.filter(narration__narrative=narrative)
+        return queryset
+
 
 class NarrationViewSet(viewsets.ModelViewSet):
     """
@@ -131,6 +138,13 @@ class NarrationViewSet(viewsets.ModelViewSet):
 
     queryset = Narration.objects.all()
     serializer_class = NarrationSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        narrative = self.request.query_params.get("narrative", None)
+        if narrative is not None:
+            queryset = queryset.filter(narrative=narrative)
+        return queryset
 
 
 # https://medium.com/@mrgrantanderson/https-medium-com-serving-vector-tiles-from-django-38c705f677cf
