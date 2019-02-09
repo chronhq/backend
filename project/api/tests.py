@@ -837,7 +837,7 @@ class APITest(APITestCase):
             "date_label": "test",
             "map_datetime": "0002-01-01 00:00",
             "settings": self.norman_conquest_settings.pk,
-            "attached_events": [self.hastings.pk],
+            "attached_events_ids": [self.hastings.pk],
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -857,7 +857,7 @@ class APITest(APITestCase):
             "date_label": "test",
             "map_datetime": "0002-01-01 00:00",
             "settings": self.norman_conquest_settings.pk,
-            "attached_events": [self.hastings.pk],
+            "attached_events_ids": [self.hastings.pk],
         }
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
