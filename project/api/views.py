@@ -74,8 +74,14 @@ class CachedDataViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset
         wid = self.request.query_params.get("wikidata_id", None)
+        has_location = self.request.query_params.get("has_location", None)
+        year = self.request.query_params.get("year", None)
         if wid is not None:
             queryset = queryset.filter(wikidata_id=wid)
+        if has_location == "false":
+            queryset = queryset.filter(location__isnull=True)
+        if year is not None:
+            queryset = queryset.filter(date__year=year)
         return queryset
 
 
