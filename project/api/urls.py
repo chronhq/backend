@@ -48,6 +48,6 @@ urlpatterns = [
     path(
         "mvt/narrations/<int:narration>/<int:zoom>/<int:x_cor>/<int:y_cor>",
         views.mvt_narration_events,
-        name="mvt-cities",
+        name="mvt-narrationevents",
     ),
 ]

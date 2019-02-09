@@ -144,8 +144,7 @@ def mvt_cacheddata(request, zoom, x_cor, y_cor):
             (
                 "SELECT ST_AsMVT(tile) FROM ("
                 "SELECT id, wikidata_id, rank, EXTRACT(year from date), "
-                "ST_AsMVTGeom(ST_Transform(location, 3857), "
-                "TileBBox(%s, %s, %s, 4326)) "
+                "ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) "
                 "FROM api_cacheddata ORDER BY rank ASC LIMIT 20) AS tile"
             ),
             [zoom, x_cor, y_cor],
@@ -166,8 +165,7 @@ def mvt_cities(request, zoom, x_cor, y_cor):
             (
                 "SELECT ST_AsMVT(tile) FROM ("
                 "SELECT id, wikidata_id, label, inception_date, dissolution_date, "
-                "ST_AsMVTGeom(ST_Transform(location, 3857), "
-                "TileBBox(%s, %s, %s, 4326)) "
+                "ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) "
                 "FROM api_city) AS tile"
             ),
             [zoom, x_cor, y_cor],
@@ -184,16 +182,16 @@ def mvt_narration_events(request, narration, zoom, x_cor, y_cor):
     """
 
     with connection.cursor() as cursor:
-        # TODO: query across m2m table
         cursor.execute(
             (
                 "SELECT ST_AsMVT(tile) FROM ("
-                "SELECT id, wikidata_id, label, inception_date, dissolution_date, "
-                "ST_AsMVTGeom(ST_Transform(location, 3857), "
-                "TileBBox(%s, %s, %s, 4326)) "
-                "FROM api_city) AS tile"
+                "SELECT id, wikidata_id, rank, EXTRACT(year from date), "
+                "ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) "
+                "FROM api_cacheddata WHERE id = ("
+                "SELECT cacheddata_id FROM api_narration_attached_events "
+                "WHERE narration_id = %s)) AS tile"
             ),
-            [zoom, x_cor, y_cor],
+            [zoom, x_cor, y_cor, narration],
         )
         tile = bytes(cursor.fetchone()[0])
         if not tile:
