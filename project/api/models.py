@@ -254,7 +254,7 @@ class SpacetimeVolume(models.Model):
 
 
 @receiver(m2m_changed, sender=SpacetimeVolume.territory.through)
-def change_visual_center(sender, instance, **kwargs):  # pylint: disable=W0613
+def check_visual_center(sender, instance, **kwargs):  # pylint: disable=W0613
     """
     Signal function to calculate visual center when a new atomic polygon is added.
     """
