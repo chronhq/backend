@@ -61,6 +61,7 @@ class CachedDataSerializer(ModelSerializer):
     """
     Serializes the CachedData model
     """
+
     event_type = IntegerField(min_value=0)
 
     class Meta:
@@ -83,6 +84,7 @@ class AtomicPolygonSerializer(ModelSerializer):
     """
     Serializes the AtomicPolygon model
     """
+
     stvs = PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
@@ -114,8 +116,14 @@ class NarrationSerializer(ModelSerializer):
     """
     Serializes the Narration model
     """
+
     attached_events = CachedDataSerializer(many=True, read_only=True)
-    attached_events_ids = PrimaryKeyRelatedField(source='attached_events', queryset=CachedData.objects.all(), many=True, write_only=True)
+    attached_events_ids = PrimaryKeyRelatedField(
+        source="attached_events",
+        queryset=CachedData.objects.all(),
+        many=True,
+        write_only=True,
+    )
 
     class Meta:
         model = Narration
@@ -126,6 +134,7 @@ class NarrativeSerializer(ModelSerializer):
     """
     Serializes the Narrative model
     """
+
     start_year = SerializerMethodField()
     end_year = SerializerMethodField()
 
