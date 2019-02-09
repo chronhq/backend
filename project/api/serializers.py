@@ -21,6 +21,7 @@ from rest_framework.serializers import (
     ModelSerializer,
     IntegerField,
     PrimaryKeyRelatedField,
+    SerializerMethodField,
 )
 
 from .models import (
@@ -101,16 +102,6 @@ class SpacetimeVolumeSerializer(ModelSerializer):
         fields = "__all__"
 
 
-class NarrativeSerializer(ModelSerializer):
-    """
-    Serializes the Narrative model
-    """
-
-    class Meta:
-        model = Narrative
-        fields = "__all__"
-
-
 class MapSettingsSerializer(ModelSerializer):
     """
     Serializes the MapSettings model
@@ -129,3 +120,34 @@ class NarrationSerializer(ModelSerializer):
     class Meta:
         model = Narration
         fields = "__all__"
+
+
+class NarrativeSerializer(ModelSerializer):
+    """
+    Serializes the Narrative model
+    """
+
+    start_year = SerializerMethodField()
+    end_year = SerializerMethodField()
+
+    class Meta:
+        model = Narrative
+        fields = "__all__"
+
+    def get_start_year(self, obj):  # pylint: disable=R0201
+        """
+        Retrieves year of first narration in set
+        """
+
+        if obj.narration_set.first() is not None:
+            return obj.narration_set.first().map_datetime.year
+        return None
+
+    def get_end_year(self, obj):  # pylint: disable=R0201
+        """
+        Retrieves year of last narration in set
+        """
+
+        if obj.narration_set.last() is not None:
+            return obj.narration_set.last().map_datetime.year
+        return None
