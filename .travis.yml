@@ -17,3 +17,8 @@ script:
   - docker-compose run web black . --exclude /migrations/ --diff --check
   - docker-compose run web pylint ./api/
   - docker-compose run web ash init.sh python manage.py test
+
+branches:
+  only:
+    - staging
+    - trying
