@@ -154,7 +154,7 @@ class NarrationViewSet(viewsets.ModelViewSet):
 
 
 # https://medium.com/@mrgrantanderson/https-medium-com-serving-vector-tiles-from-django-38c705f677cf
-def mvt_tiles(request, zoom, x_cor, y_cor):
+def mvt_cacheddata(request, zoom, x_cor, y_cor):
     """
     Custom view to serve Mapbox Vector Tiles for CachedData.
     """
@@ -162,11 +162,56 @@ def mvt_tiles(request, zoom, x_cor, y_cor):
     with connection.cursor() as cursor:
         cursor.execute(
             (
-                "SELECT ST_AsMVT(tile) FROM (SELECT id, wikidata_id, EXTRACT(year from date), "
-                "ST_AsMVTGeom(ST_Transform(location, 3857), "
-                "ST_Transform(TileBBox(%s, %s, %s, 4326), 3857)) FROM api_cacheddata) AS tile"
+                "SELECT ST_AsMVT(tile) FROM ("
+                "SELECT id, wikidata_id, rank, EXTRACT(year from date), "
+                "ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) "
+                "FROM api_cacheddata ORDER BY rank DESC LIMIT 20) AS tile"
             ),
             [zoom, x_cor, y_cor],
+        )
+        tile = bytes(cursor.fetchone()[0])
+        if not tile:
+            raise Http404()
+    return HttpResponse(tile, content_type="application/x-protobuf")
+
+
+def mvt_cities(request, zoom, x_cor, y_cor):
+    """
+    Custom view to serve Mapbox Vector Tiles for Cities.
+    """
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            (
+                "SELECT ST_AsMVT(tile) FROM ("
+                "SELECT id, wikidata_id, label, inception_date, dissolution_date, "
+                "ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) "
+                "FROM api_city) AS tile"
+            ),
+            [zoom, x_cor, y_cor],
+        )
+        tile = bytes(cursor.fetchone()[0])
+        if not tile:
+            raise Http404()
+    return HttpResponse(tile, content_type="application/x-protobuf")
+
+
+def mvt_narration_events(request, narration, zoom, x_cor, y_cor):
+    """
+    Custom view to serve Mapbox Vector Tiles for attached_events in a given Narration.
+    """
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            (
+                "SELECT ST_AsMVT(tile) FROM ("
+                "SELECT id, wikidata_id, rank, EXTRACT(year from date), "
+                "ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) "
+                "FROM api_cacheddata WHERE id = ("
+                "SELECT cacheddata_id FROM api_narration_attached_events "
+                "WHERE narration_id = %s)) AS tile"
+            ),
+            [zoom, x_cor, y_cor, narration],
         )
         tile = bytes(cursor.fetchone()[0])
         if not tile:
