@@ -246,6 +246,7 @@ class ModelTest(TestCase):
         test_narrative = Narrative.objects.create(
             author="Test Author",
             title="Test Narrative",
+            url="test",
             description="This is a test narrative for automated testing.",
             tags=["test", "tags"],
         )
@@ -430,6 +431,7 @@ class APITest(APITestCase):
         cls.norman_conquest = NarrativeFactory(
             author="Test Author",
             title="Test Narrative",
+            url="test",
             description="This is a test narrative for automated testing.",
             tags=["test", "tags"],
         )
@@ -733,6 +735,7 @@ class APITest(APITestCase):
         data = {
             "author": "Test Author 2",
             "title": "Test Narrative",
+            "url": "test2",
             "description": "This is a test narrative for automated testing.",
             "tags": ["test", "tags"],
         }
@@ -750,6 +753,7 @@ class APITest(APITestCase):
         data = {
             "author": "Other Test Author",
             "title": "Test Narrative",
+            "url": "test2",
             "description": "This is a test narrative for automated testing.",
             "tags": ["test", "tags"],
         }
@@ -833,7 +837,7 @@ class APITest(APITestCase):
             "date_label": "test",
             "map_datetime": "0002-01-01 00:00",
             "settings": self.norman_conquest_settings.pk,
-            "attached_events": [self.hastings.pk],
+            "attached_events_ids": [self.hastings.pk],
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -853,7 +857,7 @@ class APITest(APITestCase):
             "date_label": "test",
             "map_datetime": "0002-01-01 00:00",
             "settings": self.norman_conquest_settings.pk,
-            "attached_events": [self.hastings.pk],
+            "attached_events_ids": [self.hastings.pk],
         }
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)

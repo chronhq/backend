@@ -101,7 +101,7 @@ class CachedData(models.Model):
     """
 
     wikidata_id = models.PositiveIntegerField()  # Excluding the Q
-    location = models.PointField()
+    location = models.PointField(blank=True, null=True)
     date = models.DateField()
     rank = models.PositiveIntegerField()
 
@@ -256,6 +256,7 @@ class Narrative(models.Model):
 
     author = models.TextField(max_length=100)
     title = models.TextField()
+    url = models.TextField(unique=True)
     description = models.TextField()
     tags = ArrayField(models.TextField(max_length=100))
     history = HistoricalRecords()

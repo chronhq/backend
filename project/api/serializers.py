@@ -82,7 +82,7 @@ class CitySerializer(ModelSerializer):
 
 class AtomicPolygonSerializer(ModelSerializer):
     """
-    Serializes the PoliticalRelation model
+    Serializes the AtomicPolygon model
     """
 
     stvs = PrimaryKeyRelatedField(many=True, read_only=True)
@@ -116,6 +116,14 @@ class NarrationSerializer(ModelSerializer):
     """
     Serializes the Narration model
     """
+
+    attached_events = CachedDataSerializer(many=True, read_only=True)
+    attached_events_ids = PrimaryKeyRelatedField(
+        source="attached_events",
+        queryset=CachedData.objects.all(),
+        many=True,
+        write_only=True,
+    )
 
     class Meta:
         model = Narration
