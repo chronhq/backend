@@ -469,7 +469,7 @@ class APITest(APITestCase):
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(TerritorialEntity.objects.count(), 11)
-        self.assertEqual(TerritorialEntity.objects.get(pk=9).admin_level, 4)
+        self.assertEqual(TerritorialEntity.objects.last().admin_level, 4)
 
     def test_api_can_update_te(self):
         """
@@ -490,7 +490,7 @@ class APITest(APITestCase):
         url = reverse("territorialentity-list")
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]["wikidata_id"], self.european_union.pk)
+        self.assertEqual(response.data[0]["id"], self.european_union.pk)
 
     def test_api_can_query_te(self):
         """
