@@ -32,7 +32,7 @@ class TerritorialEntity(models.Model):
     Holds an additional color information.
     """
 
-    wikidata_id = models.PositiveIntegerField(primary_key=True)  # Excluding the Q
+    wikidata_id = models.PositiveIntegerField()  # Excluding the Q
     color = ColorField()
     admin_level = models.PositiveIntegerField()
     relations = models.ManyToManyField(
