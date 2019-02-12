@@ -15,7 +15,7 @@ services:
     volumes:
       - ./project:/src
       - ./config/nginx/allowed_ips.conf:/etc/nginx/allowed_ips.conf
-      - ./config/nginx.${ENV:-prod}:/etc/nginx/conf.d
+      - ./config/nginx.${ENV:-dev}:/etc/nginx/conf.d
     depends_on:
       - web
   web:
