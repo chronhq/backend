@@ -146,3 +146,6 @@ project/graph.svg
 
 # dbdumps
 project/dump.json
+
+# IP whitelist
+config/nginx/allowed_ips.conf

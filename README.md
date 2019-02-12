@@ -40,3 +40,7 @@ pip install -r config/requirements.txt
 cd project
 python manage.py runserver # must be executed from the project directory
 ```
+
+## Production
+
+Set `ENV=prod` in a production environment to ensure production nginx configurations will be used. This may require a restart of the nginx container. Additionally, run `cp config/nginx/allowed_ips.conf.sample config/nginx/allowed_ips.conf` and edit the new file to whitelist IPs that should have access to the API.
