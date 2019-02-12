@@ -63,6 +63,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.RemoteUserMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "chron.middleware.IPWhitelistMiddleware"
 ]
 
 ROOT_URLCONF = "chron.urls"
@@ -95,7 +96,7 @@ DATABASES = {
         "NAME": os.environ.get("POSTGRES_DB", "postgres"),
         "USER": os.environ.get("POSTGRES_USER", "postgres"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "postgres"),
-        "HOST": "db",
+        "HOST": "localhost",
         "PORT": 5432,
     }
 }
