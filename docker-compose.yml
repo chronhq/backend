@@ -14,7 +14,8 @@ services:
       - '80:80'
     volumes:
       - ./project:/src
-      - ./config/nginx:/etc/nginx/conf.d
+      - ./config/nginx/django.${ENV:-prod}.conf:/etc/nginx.d/django.conf
+      - ./config/nginx/allowed_ips.conf:/etc/nginx/allowed_ips.conf
     depends_on:
       - web
   web:
