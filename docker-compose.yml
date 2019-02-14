@@ -7,6 +7,11 @@ services:
       - '5432'
     env_file:
       - postgres.env
+    ports:
+    - "25432:5432"
+    volumes:
+    - ./data:/docker-entrypoint-initdb.d
+
   nginx:
     image: nginx:1.13-alpine
     container_name: nginx01
