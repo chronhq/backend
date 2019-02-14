@@ -26,6 +26,7 @@ from .models import (
     SpacetimeVolume,
     CachedData,
     Narration,
+    City,
 )
 
 # Register your models here.
@@ -35,3 +36,4 @@ admin.site.register(AtomicPolygon)
 admin.site.register(SpacetimeVolume)
 admin.site.register(CachedData)
 admin.site.register(Narration)
+admin.site.register(City)

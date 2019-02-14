@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import pysupercluster
+import numpy as np
 from requests import get
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
@@ -166,6 +168,8 @@ class City(models.Model):
     dissolution_date = models.DateField(blank=True, null=True)
     history = HistoricalRecords()
 
+    index = None
+
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
         if self.dissolution_date and self.inception_date > self.dissolution_date:
             raise ValidationError(
@@ -176,6 +180,23 @@ class City(models.Model):
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
         super(City, self).save(*args, **kwargs)
+
+        # Update the cluster
+        points = np.array(
+            list(
+                map(
+                    lambda pt: pt.coords,
+                    City.objects.all().values_list("location", flat=True),
+                )
+            )
+        )
+        City.index = pysupercluster.SuperCluster(
+            points,
+            min_zoom=3,
+            max_zoom=16,
+            radius=40,  # TODO: play around with these last two values
+            extent=512,
+        )
 
 
 class AtomicPolygon(models.Model):

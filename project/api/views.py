@@ -180,6 +180,14 @@ def mvt_cities(request, zoom, x_cor, y_cor):
     Custom view to serve Mapbox Vector Tiles for Cities.
     """
 
+    # Cluster cities
+    clusters = City().index.getClusters(
+        top_left=(-x_cor, y_cor), # TODO: this is botched, TileBBox.sql shows the proper alg
+        bottom_right=(x_cor, -y_cor),
+        zoom=zoom
+    )
+    print(clusters)
+
     with connection.cursor() as cursor:
         cursor.execute(
             (
