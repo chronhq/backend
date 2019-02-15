@@ -1,0 +1,6 @@
+# docker-compose.yml (tag: v4)
+version: '2'
+services:
+  nginx:
+      ports:
+        - '3030:80'
