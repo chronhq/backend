@@ -32,7 +32,7 @@ SECRET_KEY = os.environ.get("SECRET", "dummy")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("ENV", "dev") == "dev"
 
-ALLOWED_HOSTS = ["web", "127.0.0.1"]
+ALLOWED_HOSTS = ["web", "127.0.0.1", "localhost"]
 
 
 # Application definition
