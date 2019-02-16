@@ -6,3 +6,6 @@ services:
     volumes:
       - ./config/nginx/allowed_ips.conf:/etc/nginx/allowed_ips.conf
       - ./config/nginx.prod:/etc/nginx/conf.d
+  web:
+    environment:
+      - ENV=prod
