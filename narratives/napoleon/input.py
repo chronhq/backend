@@ -65,6 +65,7 @@ narrative_data = {
         "napoleon",
         "late modern era",
     ],
+    "url": "napoleon",
 }
 r_narrative = requests.post(
     os.getenv("API_ROOT", "http://localhost/api/") + "/narratives/",
