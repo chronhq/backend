@@ -24,7 +24,8 @@ import os
 URL = "https://query.wikidata.org/sparql"
 QUERY = """
 SELECT DISTINCT ?city ?cityLabel ?inception (SAMPLE(?location) AS ?location) ?dissolution WHERE {
-  ?city (wdt:P31/wdt:P279*) wd:Q515.
+  ?country wdt:P31 wd:Q3624078 .
+  ?country wdt:P36 ?city.
   ?city wdt:P625 ?location.
   OPTIONAL { ?city wdt:P571 ?inception. }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
@@ -36,20 +37,62 @@ R_CITIES = requests.get(URL, params={"format": "json", "query": QUERY})
 CITIES = R_CITIES.json()
 
 for city in CITIES["results"]["bindings"]:
+    if city["cityLabel"]["value"][1:].isdigit():
+        print(f"Skipped {city['cityLabel']['value']}")
+        continue
+
+    inception = "0001-01-01"
+    if "inception" in city and not city["inception"]["value"].startswith("-"):
+        inception = city["inception"]["value"]
+
+        # date parsing
+        year = inception.split("-")[0]
+        if len(year) < 4:
+            inception = "0" * (4 - len(year)) + year + "-" + inception.split("-", 1)[1]
+
+        if inception.startswith("t"):
+            inception = datetime.fromtimestamp(int(inception[1:])).strftime("%Y-%m-%d")
+        else:
+            inception = datetime.strptime(inception[:-1], "%Y-%m-%dT%H:%M:%S").strftime(
+                "%Y-%m-%d"
+            )
+
+        year = inception.split("-")[0]
+        if len(year) < 4:
+            inception = "0" * (4 - len(year)) + year + "-" + inception.split("-", 1)[1]
+
+    dissolution = None
+    if "dissolution" in city and not city["dissolution"]["value"].startswith("-"):
+        dissolution = city["dissolution"]["value"]
+
+        # date parsing
+        year = dissolution.split("-")[0]
+        if len(year) < 4:
+            dissolution = (
+                "0" * (4 - len(year)) + year + "-" + dissolution.split("-", 1)[1]
+            )
+
+        if dissolution.startswith("t"):
+            dissolution = datetime.fromtimestamp(int(dissolution[1:])).strftime(
+                "%Y-%m-%d"
+            )
+        else:
+            dissolution = datetime.strptime(
+                dissolution[:-1], "%Y-%m-%dT%H:%M:%S"
+            ).strftime("%Y-%m-%d")
+
+        year = dissolution.split("-")[0]
+        if len(year) < 4:
+            dissolution = (
+                "0" * (4 - len(year)) + year + "-" + dissolution.split("-", 1)[1]
+            )
+
     data = {
         "wikidata_id": int(city["city"]["value"].split("Q", 1)[1]),
         "label": city["cityLabel"]["value"],
         "location": city["location"]["value"],
-        "inception_date": datetime.strptime(
-            city["inception"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
-        ).strftime("%Y-%m-%d")
-        if "inception" in city
-        else "0001-01-01",
-        "dissolution_date": datetime.strptime(
-            city["dissolution"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
-        ).strftime("%Y-%m-%d")
-        if "dissolution" in city
-        else "",
+        "inception_date": inception,
+        "dissolution_date": dissolution,
     }
     r_city = requests.post(
         os.getenv("API_ROOT", "http://localhost/api/") + "/cities/",
@@ -57,3 +100,7 @@ for city in CITIES["results"]["bindings"]:
         params={"format": "json"},
     )
     print(str(r_city.status_code) + ": " + r_city.reason)
+
+    if r_city.status_code != 201:
+        print(data)
+        print(r_city.json())
