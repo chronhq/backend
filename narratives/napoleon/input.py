@@ -28,7 +28,9 @@ def populate_cd(wid, is_battle):
     event_info = requests.get(URL, params={"format": "json", "query": QUERY}).json()[
         "results"
     ]["bindings"]
-    if event_info and "start_time" in event_info and "point_in_time" in event_info:
+    if len(event_info) > 0 and (
+        "start_time" in event_info[0] or "point_in_time" in event_info[0]
+    ):
         event_info = event_info[0]
     else:
         return None
@@ -49,7 +51,7 @@ def populate_cd(wid, is_battle):
         cd_data,
         params={"format": "json"},
     )
-    return new_cd.json()["id"]
+    return int(new_cd.json()["id"])
 
 
 narrative_data = {
