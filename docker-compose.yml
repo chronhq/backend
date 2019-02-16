@@ -2,30 +2,20 @@ version: '3'
 services:
   db:
     image: mdillon/postgis:10-alpine
-    container_name: postgres01
     ports:
       - '5432'
     env_file:
       - postgres.env
-    ports:
-    - "25432:5432"
     volumes:
-    - ./data:/docker-entrypoint-initdb.d
-
+      - ./data:/docker-entrypoint-initdb.d
   nginx:
     image: nginx:1.13-alpine
-    container_name: nginx01
-    ports:
-      - '80:80'
     volumes:
       - ./project:/src
-      - ./config/nginx/allowed_ips.conf:/etc/nginx/allowed_ips.conf
-      - ./config/nginx.${ENV:-dev}:/etc/nginx/conf.d
     depends_on:
       - web
   web:
     build: .
-    container_name: django01
     depends_on:
       - db
     volumes:
