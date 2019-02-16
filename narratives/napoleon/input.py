@@ -101,7 +101,7 @@ with open("data.csv", mode="r") as narrative_file:
         )
 
         first_year = row["year"].split("-")[0] if "-" in row["year"] else row["year"]
-        first_year_dt = datetime.strptime(first_year, "%Y")
+        first_year_dt = datetime.strptime(first_year, "%Y").isoformat()
         battle_events = []
         treaty_events = []
         for battle in row["battles"].splitlines():
@@ -200,14 +200,16 @@ with open("data.csv", mode="r") as narrative_file:
             + "/cached-data?wikidata_id="
             + wid
         ).json()
-        narration_data["attached_events"] = filter(
-            (None).__ne__,
-            map(
-                lambda wid: int(get_cd_by_wid(wid)[0]["id"])
-                if get_cd_by_wid(wid)
-                else populate_cd(wid, wid in battle_events),
-                battle_events + treaty_events,
-            ),
+        narration_data["attached_events_ids"] = list(
+            filter(
+                (None).__ne__,
+                map(
+                    lambda wid: int(get_cd_by_wid(wid)[0]["id"])
+                    if get_cd_by_wid(wid)
+                    else populate_cd(wid, wid in battle_events),
+                    battle_events + treaty_events,
+                ),
+            )
         )
 
         r_narration = requests.post(
