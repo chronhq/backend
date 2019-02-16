@@ -24,12 +24,14 @@ import os
 URL = "https://query.wikidata.org/sparql"
 QUERY = """
 SELECT ?treaty ?treatyLabel ?time ?location ?coors
-WHERE 
-{ 
+WHERE
+{
   ?treaty wdt:P31 wd:Q625298.
   ?treaty wdt:P585 ?time.
-  ?treaty wdt:P276 ?location.
-  ?location wdt:P625 ?coors
+  OPTIONAL {
+    ?treaty wdt:P276 ?location.
+    ?location wdt:P625 ?coors
+  }
   FILTER (?time > "1789-01-01T00:00:00Z"^^xsd:dateTime)
   FILTER (?time < "1816-01-01T00:00:00Z"^^xsd:dateTime)
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
@@ -39,20 +41,21 @@ R_TREATIES = requests.get(URL, params={"format": "json", "query": QUERY})
 TREATIES = R_TREATIES.json()
 
 for treaty in TREATIES["results"]["bindings"]:
-    try:
-        data = {
-            "event_type": 131569,
-            "wikidata_id": int(treaty["treaty"]["value"].split("Q", 1)[1]),
-            "location": treaty["coors"]["value"],
-            "date": datetime.strptime(
-                treaty["time"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
-            ).strftime("%Y-%m-%d"),
-        }
-        r_treaty = requests.post(
-            os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
-            data,
-            params={"format": "json"},
-        )
-        print(str(r_treaty.status_code) + ": " + r_treaty.reason)
-    except KeyError:
-        print("No coordinates for " + treaty["treatyLabel"]["value"])
+    if treaty["treatyLabel"]["value"][1:].isdigit():
+        print(f"Skipped {treaty['treatyLabel']['value']}")
+        continue
+
+    data = {
+        "event_type": 131_569,
+        "wikidata_id": int(treaty["treaty"]["value"].split("Q", 1)[1]),
+        "location": treaty["coors"]["value"] if "coors" in treaty else None,
+        "date": datetime.strptime(
+            treaty["time"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
+        ).strftime("%Y-%m-%d"),
+    }
+    r_treaty = requests.post(
+        os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
+        data,
+        params={"format": "json"},
+    )
+    print(str(r_treaty.status_code) + ": " + r_treaty.reason)

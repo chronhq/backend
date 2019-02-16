@@ -36,20 +36,19 @@ R_BATTLES = requests.get(URL, params={"format": "json", "query": QUERY})
 BATTLES = R_BATTLES.json()
 
 for battle in BATTLES["results"]["bindings"]:
-    try:
-        data = {
-            "event_type": 178561,
-            "wikidata_id": int(battle["battle"]["value"].split("Q", 1)[1]),
-            "location": battle["coordinate_location"]["value"],
-            "date": datetime.strptime(
-                battle["point_in_time"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
-            ).strftime("%Y-%m-%d"),
-        }
-        r_battle = requests.post(
-            os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
-            data,
-            params={"format": "json"},
-        )
-        print(str(r_battle.status_code) + ": " + r_battle.reason)
-    except KeyError:
-        print("No coordiantes for " + battle["battleLabel"]["value"])
+    data = {
+        "event_type": 178561,
+        "wikidata_id": int(battle["battle"]["value"].split("Q", 1)[1]),
+        "location": battle["coordinate_location"]["value"]
+        if "cooridinate_location" in battle
+        else None,
+        "date": datetime.strptime(
+            battle["point_in_time"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
+        ).strftime("%Y-%m-%d"),
+    }
+    r_battle = requests.post(
+        os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
+        data,
+        params={"format": "json"},
+    )
+    print(str(r_battle.status_code) + ": " + r_battle.reason)

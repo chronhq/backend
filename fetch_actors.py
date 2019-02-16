@@ -25,62 +25,60 @@ URL = "https://query.wikidata.org/sparql"
 QUERY = """
 SELECT ?person ?personLabel ?dateOfBirth ?dateOfDeath ?placeOfBirth ?placeOfBirthLabel ?placeOfDeath ?placeOfDeathLabel ?coorBirth ?coorDeath
 
-WHERE 
+WHERE
 { ?person wdt:P31 wd:Q5.
   ?person wdt:P569 ?dateOfBirth.
   ?person wdt:P570 ?dateOfDeath.
   ?person wdt:P19 ?placeOfBirth.
   ?person wdt:P20 ?placeOfDeath.
- 
+
   ?placeOfDeath wdt:P30 wd:Q46.
   ?placeOfBirth wdt:P30 wd:Q46
   OPTIONAL {?placeOfBirth wdt:P625 ?coorBirth}
-  OPTIONAL {?placeOfDeath wdt:P625 ?coorDeath}       
+  OPTIONAL {?placeOfDeath wdt:P625 ?coorDeath}
     FILTER (?dateOfBirth < "1815-01-01T00:00:00Z"^^xsd:dateTime)
     FILTER (?dateOfBirth > "1750-01-01T00:00:00Z"^^xsd:dateTime)
         FILTER (?dateOfDeath < "1815-01-01T00:00:00Z"^^xsd:dateTime)
- 
+
         SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
-        
-    
+
+
   }
 """
 R_ACTORS = requests.get(URL, params={"format": "json", "query": QUERY})
 ACTORS = R_ACTORS.json()
 
 for actor in ACTORS["results"]["bindings"]:
-    try:
-        birth_data = {
-            "event_type": 569,
-            "wikidata_id": int(actor["person"]["value"].split("Q", 1)[1]),
-            "location": actor["coorBirth"]["value"],
-            "date": datetime.strptime(
-                actor["dateOfBirth"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
-            ).strftime("%Y-%m-%d"),
-        }
-        r_birth = requests.post(
-            os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
-            birth_data,
-            params={"format": "json"},
-        )
-        print("Birth: " + str(r_birth.status_code) + ": " + r_birth.reason)
-    except KeyError:
-        print("No birth coordinates for " + actor["personLabel"]["value"])
+    if actor["personLabel"]["value"][1:].isdigit():
+        print(f"Skipped {actor['personLabel']['value']}")
+        continue
 
-    try:
-        death_data = {
-            "event_type": 570,
-            "wikidata_id": int(actor["person"]["value"].split("Q", 1)[1]),
-            "location": actor["coorDeath"]["value"],
-            "date": datetime.strptime(
-                actor["dateOfDeath"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
-            ).strftime("%Y-%m-%d"),
-        }
-        r_death = requests.post(
-            os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
-            death_data,
-            params={"format": "json"},
-        )
-        print("Death: " + str(r_death.status_code) + ": " + r_death.reason)
-    except KeyError:
-        print("No death coordinates for " + actor["personLabel"]["value"])
+    birth_data = {
+        "event_type": 569,
+        "wikidata_id": int(actor["person"]["value"].split("Q", 1)[1]),
+        "location": actor["coorBirth"]["value"] if "coorBirth" in actor else None,
+        "date": datetime.strptime(
+            actor["dateOfBirth"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
+        ).strftime("%Y-%m-%d"),
+    }
+    r_birth = requests.post(
+        os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
+        birth_data,
+        params={"format": "json"},
+    )
+    print("Birth: " + str(r_birth.status_code) + ": " + r_birth.reason)
+
+    death_data = {
+        "event_type": 570,
+        "wikidata_id": int(actor["person"]["value"].split("Q", 1)[1]),
+        "location": actor["coorDeath"]["value"] if "coorDeath" in actor else None,
+        "date": datetime.strptime(
+            actor["dateOfDeath"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
+        ).strftime("%Y-%m-%d"),
+    }
+    r_death = requests.post(
+        os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
+        death_data,
+        params={"format": "json"},
+    )
+    print("Death: " + str(r_death.status_code) + ": " + r_death.reason)
