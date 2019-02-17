@@ -34,6 +34,8 @@ DEBUG = os.environ.get("ENV", "dev") == "dev"
 
 ALLOWED_HOSTS = ["web", "127.0.0.1", "localhost"]
 
+INTERNAL_IPS = ["172.20.0.1", "127.0.0.1"]
+
 
 # Application definition
 
@@ -52,6 +54,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_gis",
     "ordered_model",
+    "debug_toolbar",
+    "cacheops",
 ]
 
 MIDDLEWARE = [
@@ -63,6 +67,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.RemoteUserMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
 ROOT_URLCONF = "chron.urls"
@@ -133,6 +138,24 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
+# Caching
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/0",
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+    }
+}
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
+CACHEOPS_REDIS = "redis://redis:6379/0"
+CACHEOPS_DEFAULTS = {"timeout": 60 * 15}
+CACHEOPS = {"*.*": {"ops": "all"}}
+
 
 # Rest Framework
 
