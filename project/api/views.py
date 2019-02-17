@@ -162,10 +162,16 @@ def mvt_cacheddata(request, zoom, x_cor, y_cor):
     with connection.cursor() as cursor:
         cursor.execute(
             (
-                "SELECT ST_AsMVT(tile) FROM ("
-                "SELECT id, wikidata_id, rank, EXTRACT(year from date), "
-                "ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) "
-                "FROM api_cacheddata ORDER BY rank DESC LIMIT 20) AS tile"
+                " SELECT ST_AsMVT(tile, 'events') as events FROM ("
+                " SELECT wikidata_id, event_type, rank, year, geom FROM ("
+                " SELECT *, row_number() OVER (PARTITION BY year order by rank desc) as i"
+                " FROM ( SELECT * FROM ("
+                " SELECT *, EXTRACT(year from date) as year,"
+                " ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) as geom"
+                " FROM api_cacheddata"
+                " ORDER BY rank DESC"
+                " ) as foo WHERE geom IS NOT NULL ) as foo) as foo"
+                " WHERE i <= 20) AS tile"
             ),
             [zoom, x_cor, y_cor],
         )
@@ -183,8 +189,10 @@ def mvt_cities(request, zoom, x_cor, y_cor):
     with connection.cursor() as cursor:
         cursor.execute(
             (
-                "SELECT ST_AsMVT(tile) FROM ("
-                "SELECT id, wikidata_id, label, inception_date, dissolution_date, "
+                "SELECT ST_AsMVT(tile, 'cities') as cities FROM ("
+                "SELECT id, wikidata_id, label,"
+                "EXTRACT(year from inception_date) as inception_date,"
+                "EXTRACT(year from dissolution_date) as dissolution_date,"
                 "ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) "
                 "FROM api_city) AS tile"
             ),
@@ -204,8 +212,8 @@ def mvt_narration_events(request, narration, zoom, x_cor, y_cor):
     with connection.cursor() as cursor:
         cursor.execute(
             (
-                "SELECT ST_AsMVT(tile) FROM ("
-                "SELECT id, wikidata_id, rank, EXTRACT(year from date), "
+                "SELECT ST_AsMVT(tile, 'narrative') FROM ("
+                "SELECT id, wikidata_id, rank, EXTRACT(year from date) as date, "
                 "ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) "
                 "FROM api_cacheddata WHERE id = ("
                 "SELECT cacheddata_id FROM api_narration_attached_events "

@@ -21,6 +21,9 @@ build: ## Builds and tags containers
 run: ## Builds, starts, and runs containers
 	docker-compose up --build -d
 
+run_prod: ## Builds, starts, and runs containers with production config
+	docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+
 stop: ## Stops running containers
 	docker-compose stop
 

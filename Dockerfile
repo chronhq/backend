@@ -30,4 +30,4 @@ RUN pip install -r /config/requirements.txt
 RUN mkdir /src
 WORKDIR /src
 EXPOSE 80
-CMD ["/bin/ash", "./init.sh", "gunicorn chron.wsgi -b 0.0.0.0:80"]
+CMD ["/bin/ash", "./init.sh", "gunicorn chron.wsgi -b 0.0.0.0:80 -t 300"]
