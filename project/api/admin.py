@@ -28,7 +28,7 @@ from .models import (
     Narration,
     Narrative,
     MapSettings,
-    City
+    City,
 )
 
 # Register your models here.
