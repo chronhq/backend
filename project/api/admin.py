@@ -27,7 +27,8 @@ from .models import (
     CachedData,
     Narration,
     Narrative,
-    MapSettings
+    MapSettings,
+    City
 )
 
 # Register your models here.
@@ -39,3 +40,4 @@ admin.site.register(CachedData)
 admin.site.register(Narration)
 admin.site.register(Narrative)
 admin.site.register(MapSettings)
+admin.site.register(City)
