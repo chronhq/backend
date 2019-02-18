@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from django.db import connection
 from django.http import Http404, HttpResponse
 from rest_framework import viewsets
+from silk.profiling.profiler import silk_profile
 
 from .models import (
     TerritorialEntity,
@@ -108,8 +109,17 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
     ViewSet for SpacetimeVolumes
     """
 
-    queryset = SpacetimeVolume.objects.all()
+    queryset = (
+        SpacetimeVolume.objects.all()
+        .select_related("entity")
+        .prefetch_related("related_events", "territory")
+    )
     serializer_class = SpacetimeVolumeSerializer
+
+    @silk_profile(name="SpacetimeVolumeViewSet")
+    def list(self, request, *args, **kwargs):
+        print("*")
+        return super(SpacetimeVolumeViewSet, self).list(request, *args, **kwargs)
 
 
 class NarrativeViewSet(viewsets.ModelViewSet):
