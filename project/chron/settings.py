@@ -54,9 +54,14 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_gis",
     "ordered_model",
-    "debug_toolbar",
-    "cacheops",
+    "silk",
 ]
+
+if DEBUG:
+    INSTALLED_APPS.append("debug_toolbar")
+else:
+    INSTALLED_APPS.append("cacheops")
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -67,8 +72,16 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.RemoteUserMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
+
+if DEBUG:
+    MIDDLEWARE.extend(
+        [
+            "debug_toolbar.middleware.DebugToolbarMiddleware",
+            "silk.middleware.SilkyMiddleware",
+        ]
+    )
+
 
 ROOT_URLCONF = "chron.urls"
 
@@ -170,3 +183,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
     "DEFAULT_RENDERER_CLASSES": DEFAULT_RENDERER_CLASSES,
 }
+
+SILKY_PYTHON_PROFILER = True
+SILKY_PYTHON_PROFILER_BINARY = True
+SILKY_PYTHON_PROFILER_RESULT_PATH = "profiles/"
