@@ -27,10 +27,10 @@ urlpatterns = [
     path("doc/", include("django.contrib.admindocs.urls")),
 ]
 
-if settings.DEBUG:
+if settings.DEBUG and 'silk' in settings.INSTALLED_APPS:
     import debug_toolbar
 
     urlpatterns = [
         path("__debug__/", include(debug_toolbar.urls)),
-        path("silk/", include("silk.urls")),
+        path("silk/", include("silk.urls", namespace="silk")),
     ] + urlpatterns
