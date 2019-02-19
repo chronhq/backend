@@ -64,19 +64,20 @@ else:
 
 
 MIDDLEWARE = [
-    #    "django.middleware.security.SecurityMiddleware",
-    #    "django.contrib.sessions.middleware.SessionMiddleware",
+    # "django.middleware.security.SecurityMiddleware",
+    # "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    #    "django.middleware.csrf.CsrfViewMiddleware",
-    #    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    #    "django.contrib.auth.middleware.RemoteUserMiddleware",
-    #    "django.contrib.messages.middleware.MessageMiddleware",
-    #    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # "django.middleware.csrf.CsrfViewMiddleware",
+    # "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # "django.contrib.auth.middleware.RemoteUserMiddleware",
+    # "django.contrib.messages.middleware.MessageMiddleware",
+    # "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 if DEBUG:
     MIDDLEWARE.extend(
         [
+            "django.contrib.sessions.middleware.SessionMiddleware",
             "debug_toolbar.middleware.DebugToolbarMiddleware",
             "silk.middleware.SilkyMiddleware",
         ]
@@ -167,7 +168,7 @@ SESSION_CACHE_ALIAS = "default"
 
 CACHEOPS_REDIS = "redis://redis:6379/0"
 CACHEOPS_DEFAULTS = {"timeout": 60 * 15}
-CACHEOPS = {"*.*": {"ops": "all"}}
+CACHEOPS = {"api.*": {"ops": "all"}}
 
 
 # Rest Framework

@@ -34,7 +34,6 @@ ROUTER.register(r"map-settings", views.MapSettingsViewSet)
 ROUTER.register(r"narrations", views.NarrationViewSet)
 
 urlpatterns = [
-    path("", include(ROUTER.urls)),
     path(
         "mvt/cached-data/<int:zoom>/<int:x_cor>/<int:y_cor>",
         views.mvt_cacheddata,
@@ -50,4 +49,7 @@ urlpatterns = [
         views.mvt_narration_events,
         name="mvt-narrationevents",
     ),
+    path("spacetime-volumes/", views.get_stvs, name="spacetimevolume-list"),
+    path("atomic-polygons/", views.get_stvs, name="atomicpolygon-list"),
+    path("", include(ROUTER.urls)),
 ]
