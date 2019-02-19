@@ -18,8 +18,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.db import connection
-from django.http import Http404, HttpResponse
-from rest_framework import viewsets, mixins
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.urls import reverse
+from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from silk.profiling.profiler import silk_profile
@@ -105,6 +106,12 @@ class AtomicPolygonViewSet(viewsets.ModelViewSet):
     queryset = AtomicPolygon.objects.all()
     serializer_class = AtomicPolygonSerializer
 
+    def list(self, request):  # pylint: disable=W0221
+        """
+        Redirect to the function view for increased performance
+        """
+        return HttpResponseRedirect(reverse("spacetimevolume-list-fast"))
+
 
 @api_view(["GET"])
 @silk_profile(name="AtomicPolyNoSer")
@@ -117,13 +124,7 @@ def get_aps(request):
     return Response(data)
 
 
-class SpacetimeVolumeViewSet(
-    mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
-):
+class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
     """
     ViewSet for SpacetimeVolumes
     """
@@ -135,6 +136,12 @@ class SpacetimeVolumeViewSet(
         .defer("visual_center")
     )
     serializer_class = SpacetimeVolumeSerializer
+
+    def list(self, request):  # pylint: disable=W0221
+        """
+        Redirect to the function view for increased performance
+        """
+        return HttpResponseRedirect(reverse("spacetimevolume-list-fast"))
 
 
 @api_view(["GET"])

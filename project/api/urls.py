@@ -49,7 +49,7 @@ urlpatterns = [
         views.mvt_narration_events,
         name="mvt-narrationevents",
     ),
-    path("spacetime-volumes/", views.get_stvs, name="spacetimevolume-list"),
-    path("atomic-polygons/", views.get_stvs, name="atomicpolygon-list"),
+    path("spacetime-volumes/all/", views.get_stvs, name="spacetimevolume-list-fast"),
+    path("atomic-polygons/all/", views.get_stvs, name="atomicpolygon-list-fast"),
     path("", include(ROUTER.urls)),
 ]
