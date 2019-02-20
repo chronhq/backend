@@ -153,6 +153,9 @@ class CachedData(models.Model):
 
         super(CachedData, self).save(*args, **kwargs)
 
+    class Meta:
+        unique_together = ("wikidata_id", "event_type")
+
 
 class City(models.Model):
     """
