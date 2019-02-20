@@ -28,3 +28,8 @@ services:
       - django.env
       - postgres.env
     restart: always
+  redis:
+    restart: always
+    image: redis:alpine
+    expose:
+      - '6379'

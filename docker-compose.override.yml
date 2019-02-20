@@ -12,3 +12,5 @@ services:
       - ./config/nginx.dev:/etc/nginx/conf.d
   web:
     container_name: django01
+    environment:
+      - ENV=dev

@@ -34,6 +34,8 @@ DEBUG = os.environ.get("ENV", "dev") == "dev"
 
 ALLOWED_HOSTS = ["web", "127.0.0.1", "localhost"]
 
+INTERNAL_IPS = ["172.20.0.1", "127.0.0.1"]
+
 
 # Application definition
 
@@ -52,18 +54,35 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_gis",
     "ordered_model",
+    "silk",
 ]
 
+if DEBUG:
+    INSTALLED_APPS.append("debug_toolbar")
+else:
+    INSTALLED_APPS.append("cacheops")
+
+
 MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
+    # "django.middleware.security.SecurityMiddleware",
+    # "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.auth.middleware.RemoteUserMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # "django.middleware.csrf.CsrfViewMiddleware",
+    # "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # "django.contrib.auth.middleware.RemoteUserMiddleware",
+    # "django.contrib.messages.middleware.MessageMiddleware",
+    # "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+if DEBUG:
+    MIDDLEWARE.extend(
+        [
+            "django.contrib.sessions.middleware.SessionMiddleware",
+            "debug_toolbar.middleware.DebugToolbarMiddleware",
+            "silk.middleware.SilkyMiddleware",
+        ]
+    )
+
 
 ROOT_URLCONF = "chron.urls"
 
@@ -134,6 +153,24 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
+# Caching
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/0",
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+    }
+}
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
+CACHEOPS_REDIS = "redis://redis:6379/0"
+CACHEOPS_DEFAULTS = {"timeout": 60 * 60 * 24}
+CACHEOPS = {"api.*": {"ops": "all"}}
+
+
 # Rest Framework
 
 DEFAULT_RENDERER_CLASSES = ("rest_framework.renderers.JSONRenderer",)
@@ -147,3 +184,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
     "DEFAULT_RENDERER_CLASSES": DEFAULT_RENDERER_CLASSES,
 }
+
+SILKY_PYTHON_PROFILER = True
+SILKY_PYTHON_PROFILER_BINARY = True
+SILKY_PYTHON_PROFILER_RESULT_PATH = "profiles/"

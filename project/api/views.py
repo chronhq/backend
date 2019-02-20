@@ -18,8 +18,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.db import connection
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.urls import reverse
 from rest_framework import viewsets
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from silk.profiling.profiler import silk_profile
 
 from .models import (
     TerritorialEntity,
@@ -102,14 +106,65 @@ class AtomicPolygonViewSet(viewsets.ModelViewSet):
     queryset = AtomicPolygon.objects.all()
     serializer_class = AtomicPolygonSerializer
 
+    def list(self, request):  # pylint: disable=W0221
+        """
+        Redirect to the function view for increased performance
+        """
+        return HttpResponseRedirect(reverse("spacetimevolume-list-fast"))
+
+
+@api_view(["GET"])
+@silk_profile(name="AtomicPolyNoSer")
+def get_aps(request):
+    """
+    List view for APs, optimized for speed
+    """
+
+    data = AtomicPolygon.objects.values("id", "geom")
+    return Response(data)
+
 
 class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
     """
     ViewSet for SpacetimeVolumes
     """
 
-    queryset = SpacetimeVolume.objects.all()
+    queryset = (
+        SpacetimeVolume.objects.all()
+        .select_related("entity")
+        .prefetch_related("related_events", "territory")
+        .defer("visual_center")
+    )
     serializer_class = SpacetimeVolumeSerializer
+
+    def list(self, request):  # pylint: disable=W0221
+        """
+        Redirect to the function view for increased performance
+        """
+        return HttpResponseRedirect(reverse("spacetimevolume-list-fast"))
+
+
+@api_view(["GET"])
+@silk_profile(name="SpacetimeVolumeNoSer")
+def get_stvs(request):
+    """
+    List view for STVs, optimized for speed
+    """
+
+    data = (
+        SpacetimeVolume.objects.select_related("entity")
+        .prefetch_related("territory", "related_events")
+        .values(
+            "id",
+            "start_date",
+            "end_date",
+            "territory",
+            "entity",
+            "references",
+            "related_events",
+        )
+    )
+    return Response(data)
 
 
 class NarrativeViewSet(viewsets.ModelViewSet):

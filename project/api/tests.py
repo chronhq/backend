@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from datetime import date
 from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import Point, Polygon, MultiPoint
 from django.db import transaction
@@ -680,7 +681,7 @@ class APITest(APITestCase):
         Ensure we can query for all AtomicPolygons
         """
 
-        url = reverse("atomicpolygon-list")
+        url = reverse("atomicpolygon-list-fast")
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]["id"], self.alsace_geom.pk)
@@ -700,7 +701,7 @@ class APITest(APITestCase):
         Ensure we can create SpacetimeVolumes
         """
 
-        url = reverse("spacetimevolume-list")
+        url = "/api/spacetime-volumes/"  # reverse("spacetimevolume-list")
         data = {
             "start_date": "0001-01-01",
             "end_date": "0002-01-01",
@@ -737,10 +738,10 @@ class APITest(APITestCase):
         Ensure we can query for all SpacetimeVolumes
         """
 
-        url = reverse("spacetimevolume-list")
+        url = reverse("spacetimevolume-list-fast")
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]["end_date"], "0002-01-01")
+        self.assertEqual(response.data[0]["end_date"], date(2, 1, 1))
 
     def test_api_can_query_stv(self):
         """
