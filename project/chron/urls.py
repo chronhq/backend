@@ -27,7 +27,6 @@ urlpatterns = [
     path("doc/", include("django.contrib.admindocs.urls")),
 ]
 
-print(settings.DEBUG)
 if settings.DEBUG and "silk" in settings.INSTALLED_APPS:
     import debug_toolbar
 
