@@ -259,22 +259,25 @@ def mvt_cities(request, zoom, x_cor, y_cor):
     return HttpResponse(tile, content_type="application/x-protobuf")
 
 
-def mvt_narration_events(request, narration, zoom, x_cor, y_cor):
+def mvt_narration_events(request, narrative, zoom, x_cor, y_cor):
     """
-    Custom view to serve Mapbox Vector Tiles for attached_events in a given Narration.
+    Custom view to serve Mapbox Vector Tiles for attached_events in a given Narrative.
     """
 
     with connection.cursor() as cursor:
         cursor.execute(
             (
-                "SELECT ST_AsMVT(tile, 'narrative') FROM ("
-                "SELECT id, wikidata_id, rank, EXTRACT(year from date) as date, "
-                "ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) "
-                "FROM api_cacheddata WHERE id = ("
-                "SELECT cacheddata_id FROM api_narration_attached_events "
-                "WHERE narration_id = %s)) AS tile"
+                " SELECT ST_AsMVT(tile, 'events') FROM ("
+                " SELECT wikidata_id, rank, EXTRACT(year from date) as year, event_type,"
+                " ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) as geom"
+                " FROM (SELECT api_cacheddata.* FROM api_narration"
+                " JOIN api_narration_attached_events ON"
+                " (api_narration.id = api_narration_attached_events.narration_id)"
+                " JOIN api_cacheddata ON"
+                " (api_narration_attached_events.cacheddata_id = api_cacheddata.id)"
+                " WHERE narrative_id = %s) AS foo) AS tile"
             ),
-            [zoom, x_cor, y_cor, narration],
+            [zoom, x_cor, y_cor, narrative],
         )
         tile = bytes(cursor.fetchone()[0])
         if not tile:

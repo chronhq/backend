@@ -45,7 +45,7 @@ urlpatterns = [
         name="mvt-cities",
     ),
     path(
-        "mvt/narrations/<int:narration>/<int:zoom>/<int:x_cor>/<int:y_cor>",
+        "mvt/narratives/<int:narrative>/<int:zoom>/<int:x_cor>/<int:y_cor>",
         views.mvt_narration_events,
         name="mvt-narrationevents",
     ),
