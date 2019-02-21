@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from django.db import connection
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
+from django.contrib.postgres.aggregates.general import ArrayAgg
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -154,15 +155,9 @@ def get_stvs(request):
     data = (
         SpacetimeVolume.objects.select_related("entity")
         .prefetch_related("territory", "related_events")
-        .values(
-            "id",
-            "start_date",
-            "end_date",
-            "territory",
-            "entity",
-            "references",
-            "related_events",
-        )
+        .values("id", "start_date", "end_date", "entity", "references")
+        .annotate(territory=ArrayAgg("territory"))
+        .annotate(related_events=ArrayAgg("related_events"))
     )
     return Response(data)
 
