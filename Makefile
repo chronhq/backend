@@ -50,10 +50,10 @@ test: ## Builds, starts, and runs containers, running the django tests
 	docker-compose run --service-ports web sh init.sh python manage.py test
 
 exec_test: ## Executes django tests in a running container
-	docker-compose exec web python manage.py test
+	docker-compose exec web python manage.py test --debug-mode
 
 exec_testk: ## Executes django tests in a running container, keeping the database schema from the previous test run
-	docker-compose exec web python manage.py test -k
+	docker-compose exec web python manage.py test -k --debug-mode
 
 lint: ## Lints python files to pass CI
 	docker-compose exec web black . --exclude /migrations/
