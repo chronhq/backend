@@ -43,4 +43,4 @@ python manage.py runserver # must be executed from the project directory
 
 ## Production
 
-Set `ENV=prod` in a production environment to ensure production nginx configurations will be used. This may require a restart of the nginx container. Additionally, run `cp config/nginx/allowed_ips.conf.sample config/nginx/allowed_ips.conf` and edit the new file to whitelist IPs that should have access to the API.
+`make run_prod` can be used to configure the containers for a production setup. Additionally, run `cp config/nginx/allowed_ips.conf.sample config/nginx/allowed_ips.conf` and edit the new file to whitelist IPs that should have write access to the API.
