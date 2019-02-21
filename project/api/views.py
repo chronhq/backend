@@ -155,14 +155,9 @@ def get_stvs(request):
     data = (
         SpacetimeVolume.objects.select_related("entity")
         .prefetch_related("territory", "related_events")
-        .values(
-            "id",
-            "start_date",
-            "end_date",
-            "entity",
-            "references",
-        ).annotate(territory=ArrayAgg('territory')
-        ).annotate(related_events=ArrayAgg('related_events'))
+        .values("id", "start_date", "end_date", "entity", "references")
+        .annotate(territory=ArrayAgg("territory"))
+        .annotate(related_events=ArrayAgg("related_events"))
     )
     return Response(data)
 
