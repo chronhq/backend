@@ -32,8 +32,8 @@ WHERE
     ?treaty wdt:P276 ?location.
     ?location wdt:P625 ?coors
   }
-  FILTER (?time > "1789-01-01T00:00:00Z"^^xsd:dateTime)
-  FILTER (?time < "1816-01-01T00:00:00Z"^^xsd:dateTime)
+  FILTER (?time > "1700-01-01T00:00:00Z"^^xsd:dateTime)
+  FILTER (?time < "2019-01-01T00:00:00Z"^^xsd:dateTime)
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
 }
 """
