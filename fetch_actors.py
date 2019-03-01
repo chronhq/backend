@@ -50,32 +50,38 @@ for actor in ACTORS["results"]["bindings"]:
         print(f"Skipped {actor['personLabel']['value']}")
         continue
 
-    birth_data = {
-        "event_type": 569,
-        "wikidata_id": int(actor["person"]["value"].split("Q", 1)[1]),
-        "location": actor["coorBirth"]["value"] if "coorBirth" in actor else None,
-        "date": datetime.strptime(
-            actor["dateOfBirth"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
-        ).strftime("%Y-%m-%d"),
-    }
-    r_birth = requests.post(
-        os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
-        birth_data,
-        params={"format": "json"},
-    )
-    print("Birth: " + str(r_birth.status_code) + ": " + r_birth.reason)
+    try:
+        birth_data = {
+            "event_type": 569,
+            "wikidata_id": int(actor["person"]["value"].split("Q", 1)[1]),
+            "location": actor["coorBirth"]["value"] if "coorBirth" in actor else None,
+            "date": datetime.strptime(
+                actor["dateOfBirth"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
+            ).strftime("%Y-%m-%d"),
+        }
+        r_birth = requests.post(
+            os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
+            birth_data,
+            params={"format": "json"},
+        )
+        print("Birth: " + str(r_birth.status_code) + ": " + r_birth.reason)
+    except KeyError:
+        print("Birth: unknown")
 
-    death_data = {
-        "event_type": 570,
-        "wikidata_id": int(actor["person"]["value"].split("Q", 1)[1]),
-        "location": actor["coorDeath"]["value"] if "coorDeath" in actor else None,
-        "date": datetime.strptime(
-            actor["dateOfDeath"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
-        ).strftime("%Y-%m-%d"),
-    }
-    r_death = requests.post(
-        os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
-        death_data,
-        params={"format": "json"},
-    )
-    print("Death: " + str(r_death.status_code) + ": " + r_death.reason)
+    try:
+        death_data = {
+            "event_type": 570,
+            "wikidata_id": int(actor["person"]["value"].split("Q", 1)[1]),
+            "location": actor["coorDeath"]["value"] if "coorDeath" in actor else None,
+            "date": datetime.strptime(
+                actor["dateOfDeath"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
+            ).strftime("%Y-%m-%d"),
+        }
+        r_death = requests.post(
+            os.getenv("API_ROOT", "http://localhost/api/") + "/cached-data/",
+            death_data,
+            params={"format": "json"},
+        )
+        print("Death: " + str(r_death.status_code) + ": " + r_death.reason)
+    except KeyError:
+        print("Death: unknown")
