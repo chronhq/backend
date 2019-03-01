@@ -27,8 +27,8 @@ SELECT ?battle ?battleLabel ?point_in_time ?coordinate_location WHERE {
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
   ?battle (wdt:P31/wdt:P279*) wd:Q178561.
   ?battle wdt:P585 ?point_in_time.
-  FILTER(?point_in_time < "1816-01-01T00:00:00Z"^^xsd:dateTime)
-  FILTER(?point_in_time >= "1789-01-01T00:00:00Z"^^xsd:dateTime)
+  FILTER(?point_in_time < "2019-01-01T00:00:00Z"^^xsd:dateTime)
+  FILTER(?point_in_time >= "1700-01-01T00:00:00Z"^^xsd:dateTime)
   OPTIONAL { ?battle wdt:P625 ?coordinate_location. }
 }
 """
@@ -40,7 +40,7 @@ for battle in BATTLES["results"]["bindings"]:
         "event_type": 178561,
         "wikidata_id": int(battle["battle"]["value"].split("Q", 1)[1]),
         "location": battle["coordinate_location"]["value"]
-        if "cooridinate_location" in battle
+        if "coordinate_location" in battle
         else None,
         "date": datetime.strptime(
             battle["point_in_time"]["value"][:-1], "%Y-%m-%dT%H:%M:%S"
