@@ -27,8 +27,8 @@ SELECT ?battle ?battleLabel ?point_in_time ?coordinate_location WHERE {
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
   ?battle (wdt:P31/wdt:P279*) wd:Q178561.
   ?battle wdt:P585 ?point_in_time.
-  FILTER(?point_in_time < "1700-01-01T00:00:00Z"^^xsd:dateTime)
-  FILTER(?point_in_time >= "2019-01-01T00:00:00Z"^^xsd:dateTime)
+  FILTER(?point_in_time < "2019-01-01T00:00:00Z"^^xsd:dateTime)
+  FILTER(?point_in_time >= "1700-01-01T00:00:00Z"^^xsd:dateTime)
   OPTIONAL { ?battle wdt:P625 ?coordinate_location. }
 }
 """
