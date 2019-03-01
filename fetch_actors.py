@@ -23,27 +23,24 @@ import os
 
 URL = "https://query.wikidata.org/sparql"
 QUERY = """
-SELECT ?person ?personLabel ?dateOfBirth ?dateOfDeath ?placeOfBirth ?placeOfBirthLabel ?placeOfDeath ?placeOfDeathLabel ?coorBirth ?coorDeath
-
-WHERE
-{ ?person wdt:P31 wd:Q5.
-  ?person wdt:P569 ?dateOfBirth.
-  ?person wdt:P570 ?dateOfDeath.
-  ?person wdt:P19 ?placeOfBirth.
-  ?person wdt:P20 ?placeOfDeath.
-
-  ?placeOfDeath wdt:P30 wd:Q46.
-  ?placeOfBirth wdt:P30 wd:Q46
-  OPTIONAL {?placeOfBirth wdt:P625 ?coorBirth}
-  OPTIONAL {?placeOfDeath wdt:P625 ?coorDeath}
-    FILTER (?dateOfBirth < "1815-01-01T00:00:00Z"^^xsd:dateTime)
-    FILTER (?dateOfBirth > "1750-01-01T00:00:00Z"^^xsd:dateTime)
-        FILTER (?dateOfDeath < "1815-01-01T00:00:00Z"^^xsd:dateTime)
-
-        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
-
-
+SELECT ?person ?personLabel ?dateOfBirth ?dateOfDeath ?placeOfBirth ?placeOfDeath ?coorBirth ?coorDeath ?occupation WHERE {
+  ?person wdt:P31 wd:Q5.
+  OPTIONAL {
+    ?person wdt:P569 ?dateOfBirth.
+    ?person wdt:P19 ?placeOfBirth.
+    ?placeOfBirth wdt:P625 ?coorBirth.
+    FILTER(?dateOfBirth > "1700-01-01T00:00:00Z"^^xsd:dateTime)
   }
+  OPTIONAL {
+    ?person wdt:P570 ?dateOfDeath.
+    ?person wdt:P20 ?placeOfDeath.
+    ?placeOfDeath wdt:P625 ?coorDeath.
+  }
+  ?person wdt:P106 ?occupation.
+  FILTER(?occupation IN(wd:Q116, wd:Q30461, wd:Q1097498, wd:Q372436))
+  FILTER(?dateOfBirth > "1700-01-01T00:00:00Z"^^xsd:dateTime || ?dateOfDeath > "1700-01-01T00:00:00Z"^^xsd:dateTime)
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
 """
 R_ACTORS = requests.get(URL, params={"format": "json", "query": QUERY})
 ACTORS = R_ACTORS.json()
