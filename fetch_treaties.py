@@ -18,8 +18,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from datetime import datetime
-import requests
 import os
+import requests
 
 URL = "https://query.wikidata.org/sparql"
 QUERY = """
