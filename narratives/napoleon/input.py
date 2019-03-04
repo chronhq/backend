@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from datetime import datetime
+from time import time
 import os
 import csv
 import re
@@ -215,9 +216,7 @@ with open("data.csv", mode="r") as narrative_file:
             "img": row["pics"].splitlines()[0] if row["pics"] else "",
         }
         get_cd_by_wid = lambda wid: requests.get(
-            os.getenv("API_ROOT", "http://localhost/api/")
-            + "/cached-data?wikidata_id="
-            + wid
+            f"{os.getenv('API_ROOT', 'http://localhost/api/')}/cached-data?wikidata_id={wid}&{int(time())}"
         ).json()
         narration_data["attached_events_ids"] = list(
             filter(
