@@ -1,3 +1,22 @@
+#!/bin/bash
+
+# Chron.
+# Copyright (C) 2019 Alisa Belyaeva, Ata Ali Kilicli, Amaury Martiny,
+# Daniil Mordasov, Liam O’Flynn, Mikhail Orlov.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 psql='psql -U postgres -t -c'
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
@@ -38,7 +57,7 @@ function feature() {
 SEPARATOR=""
 
 echo '{"type": "FeatureCollection","features": [' > $FCFILE
-for id in `$psql "select id from $TABLE"`; do
+for id in $($psql "select id from $TABLE"); do
   # echo This is id: $id;
   feature $id
   $psql "$query" >> $FCFILE
