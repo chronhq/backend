@@ -21,8 +21,11 @@ psql='psql -U postgres -t -c'
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 DATA="${DIR}/../data"
+MVT="${DIR}/../mbtiles"
 mkdir -p $DATA
-FCFILE="${DATA}/ap.json"
+LAYER='ap'
+FCFILE="${DATA}/${LAYER}.json"
+MVTFILE="${MVT}/${LAYER}.mbtiles"
 
 TABLE='api_atomicpolygon'
 
@@ -59,9 +62,12 @@ SEPARATOR=""
 echo '{"type": "FeatureCollection","features": [' > $FCFILE
 for id in $($psql "select id from $TABLE"); do
   # echo This is id: $id;
+  echo -n $SEPARATOR >> $FCFILE
   feature $id
   $psql "$query" >> $FCFILE
-  echo -n $SEPARATOR >> $FCFILE
   SEPARATOR=","
 done
 echo ']}' >> $FCFILE
+
+echo 'To build MVT execute'
+echo "tippecanoe -o ${MVTFILE} -f -z10 -s EPSG:4326 ${FCFILE}"

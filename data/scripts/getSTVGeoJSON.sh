@@ -21,8 +21,11 @@ psql='psql -U postgres -t -c'
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 DATA="${DIR}/../data"
+MVT="${DIR}/../mbtiles"
 mkdir -p $DATA
-FCFILE="${DATA}/stv.json"
+LAYER='stv'
+FCFILE="${DATA}/${LAYER}.json"
+MVTFILE="${MVT}/${LAYER}.mbtiles"
 
 TABLE='api_spacetimevolume'
 
@@ -37,7 +40,15 @@ function feature() {
       'geometry',   ST_AsGeoJSON(geom)::json,
       'properties', to_jsonb(row) - 'geom'
     ) FROM (
-      SELECT api_spacetimevolume.*, geom.geom,
+      SELECT
+        api_spacetimevolume.id,
+        api_spacetimevolume.start_date,
+        api_spacetimevolume.end_date,
+        api_spacetimevolume.references,
+        api_spacetimevolume.visual_center,
+        EXTRACT(year from api_spacetimevolume.start_date) as start,
+        EXTRACT(year from api_spacetimevolume.end_date) as end,
+        geom.geom,
         api_territorialentity.wikidata_id, api_territorialentity.color,
         api_territorialentity.admin_level
         FROM api_spacetimevolume
@@ -58,9 +69,12 @@ SEPARATOR=""
 echo '{"type": "FeatureCollection","features": [' > $FCFILE
 for id in $($psql "select id from $TABLE"); do
   # echo This is id: $id;
+  echo -n $SEPARATOR >> $FCFILE
   feature $id
   $psql "$query" >> $FCFILE
-  echo -n $SEPARATOR >> $FCFILE
   SEPARATOR=","
 done
 echo ']}' >> $FCFILE
+
+echo 'To build MVT execute'
+echo "tippecanoe -o ${MVTFILE} -f -z10 -s EPSG:4326 ${FCFILE}"
