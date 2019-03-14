@@ -25,7 +25,6 @@ MVT="${DIR}/../mbtiles"
 mkdir -p $DATA
 LAYER='ap'
 FCFILE="${DATA}/${LAYER}.json"
-MVTFILE="${MVT}/${LAYER}.mbtiles"
 
 TABLE='api_atomicpolygon'
 
