@@ -21,7 +21,6 @@ psql='psql -U postgres -t -c'
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 DATA="${DIR}/../data"
-MVT="${DIR}/../mbtiles"
 mkdir -p $DATA
 LAYER='ap'
 FCFILE="${DATA}/${LAYER}.json"
