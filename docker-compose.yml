@@ -6,6 +6,7 @@ services:
       - '5432'
     env_file:
       - postgres.env
+      - mbtiles.env
     volumes:
       - ./data:/docker-entrypoint-initdb.d
   nginx:
@@ -34,9 +35,8 @@ services:
     expose:
       - '6379'
   mbtiles:
-    environment:
-      - CACHE=/root/mbtiles
-      - DATA=/data
+    env_file:
+      - mbtiles.env
     build:
       context: .
       dockerfile: Dockerfile-mbtiles

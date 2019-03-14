@@ -70,4 +70,4 @@ done
 echo ']}' >> $FCFILE
 
 echo 'To build MVT execute'
-echo "tippecanoe -o ${MVTFILE} -f -z10 -s EPSG:4326 ${FCFILE}"
+echo "tippecanoe -o ${CACHE}/${LAYER}.mbtiles -f -z10 -s EPSG:4326 ${DATA}/${LAYER}.json"
