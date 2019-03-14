@@ -35,7 +35,7 @@ services:
       - '6379'
   mbtiles:
     environment:
-      - CACHE=/mbtiles
+      - CACHE=/root/mbtiles
       - DATA=/data
     build:
       context: .
@@ -43,6 +43,6 @@ services:
     ports:
     - "5000:5000"
     volumes:
-    - ./data/mbtiles:/mbtiles
+    - ./data/mbtiles:/root/mbtiles
     - ./data/scripts:/scripts
     - ./data/data:/data

@@ -28,10 +28,10 @@ RUN make \
 WORKDIR ../mbtiles
 RUN yarn
 
-RUN mkdir -p /mbtiles
+RUN mkdir -p /root/mbtiles
 
 # Enables customized options using environment variables
-ENV CACHE='/mbtiles'
+ENV CACHE='/root/mbtiles'
 ENV PROTOCOL='http'
 ENV DOMAIN='localhost'
 ENV PORT='5000'
