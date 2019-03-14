@@ -33,3 +33,16 @@ services:
     image: redis:alpine
     expose:
       - '6379'
+  mbtiles:
+    environment:
+      - CACHE=/mbtiles
+      - DATA=/data
+    build:
+      context: .
+      dockerfile: Dockerfile-mbtiles
+    ports:
+    - "5000:5000"
+    volumes:
+    - ./data/mbtiles:/mbtiles
+    - ./data/scripts:/scripts
+    - ./data/data:/data
