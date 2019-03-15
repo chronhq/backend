@@ -1,5 +1,6 @@
-#FROM deniscarriere/mbtiles-server
 FROM mhart/alpine-node:8
+# deniscarriere/mbtiles-server
+# Failed with apline-node:10
 
 LABEL maintainer="Mikhail Orlov <miklergm@gmail.com>"
 
@@ -31,6 +32,7 @@ RUN yarn
 RUN mkdir -p /root/mbtiles
 
 # Enables customized options using environment variables
+ENV ZOOM='8'
 ENV CACHE='/root/mbtiles'
 ENV PROTOCOL='http'
 ENV DOMAIN='localhost'

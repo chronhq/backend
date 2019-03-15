@@ -70,3 +70,11 @@ dbshell: ## Open postgres
 
 admin: ## Creates a super user in the running `web` container based on the values supplied in the configuration file [NOT WORKING ATM]
 	docker-compose exec web ./manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('$(ADMIN_USER)', '$(ADMIN_EMAIL)', '$(ADMIN_PASS)')"
+
+mvt-ap:
+	docker-compose exec -u postgres db bash /docker-entrypoint-initdb.d/scripts/getAPGeoJSON.sh
+	docker-compose exec mbtiles bash /scripts/buildMVT.sh ap
+
+mvt-stv:
+	docker-compose exec -u postgres db bash /docker-entrypoint-initdb.d/scripts/getSTVGeoJSON.sh
+	docker-compose exec mbtiles bash /scripts/buildMVT.sh stv
