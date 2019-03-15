@@ -73,6 +73,3 @@ for id in $($psql "select id from $TABLE"); do
   SEPARATOR=","
 done
 echo ']}' >> $FCFILE
-
-echo 'To build MVT execute'
-echo "tippecanoe -o ${CACHE}/${LAYER}.mbtiles -f -z10 -s EPSG:4326 ${DATA}/${LAYER}.json"
