@@ -1,4 +1,4 @@
-black~=18.9b0
+black~=19.3b0
 django-extensions~=2.1.6
 Django~=2.1.7
 gunicorn~=19.9.0
