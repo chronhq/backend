@@ -240,9 +240,9 @@ class SpacetimeVolume(models.Model):
             SpacetimeVolume.objects.filter(
                 start_date__lte=self.end_date,
                 end_date__gte=self.start_date,
-                entity__exact=self.entity,
+                entity=self.entity,
             )
-            .exclude(pk__exact=self.pk)
+            .exclude(pk=self.pk)
             .exists()
         ):
             raise ValidationError(
