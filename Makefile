@@ -74,7 +74,13 @@ admin: ## Creates a super user in the running `web` container based on the value
 mvt-ap:
 	docker-compose exec -u postgres db bash /docker-entrypoint-initdb.d/scripts/getAPGeoJSON.sh
 	docker-compose exec mbtiles bash /scripts/buildMVT.sh ap
+	docker-compose exec mbtiles /bin/rm -f /root/mbtiles/ap.mbtiles
+	docker-compose restart mbtiles
+	docker-compose exec mbtiles /bin/mv /tmp/ap.mbtiles /root/mbtiles/ap.mbtiles
 
 mvt-stv:
 	docker-compose exec -u postgres db bash /docker-entrypoint-initdb.d/scripts/getSTVGeoJSON.sh
 	docker-compose exec mbtiles bash /scripts/buildMVT.sh stv
+	docker-compose exec mbtiles /bin/rm -f /root/mbtiles/stv.mbtiles
+	docker-compose restart mbtiles
+	docker-compose exec mbtiles /bin/mv /tmp/stv.mbtiles /root/mbtiles/stv.mbtiles

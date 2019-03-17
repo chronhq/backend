@@ -34,4 +34,5 @@ MVT="${CACHE}/${LAYER}.mbtiles"
 
 tippecanoe -o $TMP -f -z${ZOOM} -s EPSG:4326 $IN
 
-/bin/mv $TMP $MVT
+# Can't be done from here because of the filesystem lock issues
+# /bin/mv $TMP $MVT
