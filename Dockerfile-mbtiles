@@ -6,13 +6,13 @@ LABEL maintainer="Mikhail Orlov <miklergm@gmail.com>"
 
 RUN apk update \
   && apk add --virtual build-dependencies \
-    build-base \
-    gcc \
-    sqlite-dev \
-    zlib-dev \
-    git \
+  build-base \
+  gcc \
+  sqlite-dev \
+  zlib-dev \
+  git \
   && apk add \
-    bash
+  bash
 
 RUN mkdir -p /src
 WORKDIR /src
