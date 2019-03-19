@@ -73,14 +73,14 @@ admin: ## Creates a super user based on the values supplied in the configuration
 
 # Geometry
 mvt-ap: ## Generates mbtiles for APs
-	docker-compose exec -u postgres db bash /docker-entrypoint-initdb.d/scripts/getAPGeoJSON.sh
+	docker-compose exec db bash /docker-entrypoint-initdb.d/scripts/getAPGeoJSON.sh
 	docker-compose exec mbtiles bash /scripts/buildMVT.sh ap
 	docker-compose exec mbtiles /bin/rm -f /root/mbtiles/ap.mbtiles
 	docker-compose restart mbtiles
 	docker-compose exec mbtiles /bin/mv /tmp/ap.mbtiles /root/mbtiles/ap.mbtiles
 
 mvt-stv: ## Generates mbtiles for STVs
-	docker-compose exec -u postgres db bash /docker-entrypoint-initdb.d/scripts/getSTVGeoJSON.sh
+	docker-compose exec db bash /docker-entrypoint-initdb.d/scripts/getSTVGeoJSON.sh
 	docker-compose exec mbtiles bash /scripts/buildMVT.sh stv
 	docker-compose exec mbtiles /bin/rm -f /root/mbtiles/stv.mbtiles
 	docker-compose restart mbtiles

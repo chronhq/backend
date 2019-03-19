@@ -28,7 +28,6 @@ mkdir -p /tmp
 
 IN="${DATA}/${LAYER}.json"
 TMP="/tmp/${LAYER}.mbtiles"
-MVT="${CACHE}/${LAYER}.mbtiles"
 
 /bin/rm -f $TMP
 
