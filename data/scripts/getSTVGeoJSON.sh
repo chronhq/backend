@@ -43,7 +43,7 @@ function feature() {
         api_spacetimevolume.start_date,
         api_spacetimevolume.end_date,
         api_spacetimevolume.references,
-        api_spacetimevolume.visual_center,
+        ST_AsGeoJSON(api_spacetimevolume.visual_center)::json as visual_center,
         EXTRACT(year from api_spacetimevolume.start_date) as start,
         EXTRACT(year from api_spacetimevolume.end_date) as end,
         geom.geom,
