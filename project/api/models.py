@@ -263,11 +263,11 @@ def check_visual_center(sender, instance, **kwargs):  # pylint: disable=W0613
     """
     atomic_set = instance.territory.all()
 
-    if atomic_set.exists():
+    #if atomic_set.exists():
 
-        combined = atomic_set.aggregate(models.Collect("geom"))
-        if combined["geom__collect"].contains(instance.visual_center) is False:
-            raise ValidationError("Visual center is not inside the territory")
+        #combined = atomic_set.aggregate(models.Collect("geom"))
+        #if combined["geom__collect"].contains(instance.visual_center) is False:
+        #    raise ValidationError("Visual center is not inside the territory")
 
 
 class Narrative(models.Model):
