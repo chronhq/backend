@@ -147,7 +147,7 @@ class CachedData(models.Model):
             incoming = int(data["incoming"]["value"])
             sitelinks = int(data["sitelinks"]["value"])
             outcoming = int(data["outcoming"]["value"])
-            self.rank = incoming * sitelinks * outcoming
+            self.rank = incoming + sitelinks + outcoming
         except IndexError:
             self.rank = 0
 
