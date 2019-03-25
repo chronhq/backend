@@ -18,6 +18,7 @@ RUN set -ex \
     proj4-dev \
     && apk add --no-cache --virtual .build-deps \
     gcc \
+    musl \
     libc-dev \
     musl-dev \
     postgresql-dev \
