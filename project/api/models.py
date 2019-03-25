@@ -21,8 +21,6 @@ from requests import get
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
-from django.db.models.signals import m2m_changed
-from django.dispatch import receiver
 from ordered_model.models import OrderedModel
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
@@ -254,20 +252,6 @@ class SpacetimeVolume(models.Model):
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
         super(SpacetimeVolume, self).save(*args, **kwargs)
-
-
-@receiver(m2m_changed, sender=SpacetimeVolume.territory.through)
-def check_visual_center(sender, instance, **kwargs):  # pylint: disable=W0613
-    """
-    Signal function to calculate visual center when a new atomic polygon is added.
-    """
-    atomic_set = instance.territory.all()
-
-    #if atomic_set.exists():
-
-        #combined = atomic_set.aggregate(models.Collect("geom"))
-        #if combined["geom__collect"].contains(instance.visual_center) is False:
-        #    raise ValidationError("Visual center is not inside the territory")
 
 
 class Narrative(models.Model):
