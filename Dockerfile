@@ -9,6 +9,7 @@ RUN echo "${ALPINE_MIRROR}/edge/main" >> /etc/apk/repositories
 RUN apk add --update libressl2.7-libcrypto
 
 RUN set -ex \
+    && apk --update upgrade \
     && apk add --no-cache alpine-sdk \
     && apk add --no-cache --virtual .build-deps-testing \
     --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
