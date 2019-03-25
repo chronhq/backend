@@ -20,7 +20,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from datetime import date
 from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import Point, Polygon, MultiPoint
-from django.db import transaction
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -236,17 +235,6 @@ class ModelTest(TestCase):
         """
         Ensure non overlapping timeframe constraint works
         """
-        with self.assertRaises(ValidationError):
-            alsace = SpacetimeVolume.objects.create(
-                start_date="0005-01-01",
-                end_date="0006-01-01",
-                entity=self.france,
-                references=["ref"],
-                visual_center=Point(0, 1.8),
-            )
-            with transaction.atomic():
-                alsace.territory.add(self.alsace_geom)
-
         with self.assertRaises(ValidationError):
             SpacetimeVolume.objects.create(
                 start_date="0001-01-01",
