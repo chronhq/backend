@@ -77,6 +77,7 @@ class PoliticalRelation(models.Model):
     CONTROL_TYPES = ((DIRECT, "direct"), (INDIRECT, "indirect"), (GROUP, "group"))
     control_type = models.PositiveIntegerField(choices=CONTROL_TYPES)
 
+    user_created = models.BooleanField(default=False)
     history = HistoricalRecords()
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
