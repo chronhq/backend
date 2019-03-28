@@ -26,7 +26,7 @@ LAYER=$1
 
 mkdir -p /tmp
 
-IN="${DATA}/${LAYER}.json"
+IN="/data/${LAYER}.json"
 TMP="/tmp/${LAYER}.mbtiles"
 
 /bin/rm -f $TMP
