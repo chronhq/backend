@@ -17,23 +17,29 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from datetime import date
 from django.contrib.gis.db import models
 from jdcal import gcal2jd
 
+
 class JDNField(models.DateField):
-  description = "A field to save JDN values as postgres `date` types"
+    description = "A field to save JDN values as postgres `date` types"
 
-  def get_db_prep_value(self, value, *args, **kwargs):
-    if value is None:
-      return None
-    jd = gcal2jd(*value)[0] + gcal2jd(*value)[1] + 0.5
-    return f'J{jd}'
+    def get_db_prep_value(self, value, *args, **kwargs):
+        if value is None:
+            return None
+        if isinstance(value, date):
+            return value
+        jd = gcal2jd(*value)[0] + gcal2jd(*value)[1] + 0.5
+        return f"J{jd}"
 
-  def to_python(self, value):
-    if value is None:
-      return None
-    return 
+    def to_python(self, value):
+        if value is None:
+            return None
+        if isinstance(value, date):
+            pass
+        return value
 
-  def from_db_value(self, value, expression, connection, context):
-    return self.to_python(value)
+    def from_db_value(self, value, expression, connection, context):
+        return self.to_python(value)
 

@@ -25,6 +25,8 @@ from ordered_model.models import OrderedModel
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
 
+from .fields import JDNField
+
 
 class TerritorialEntity(models.Model):
     """
@@ -103,7 +105,7 @@ class CachedData(models.Model):
 
     wikidata_id = models.PositiveIntegerField()  # Excluding the Q
     location = models.PointField(blank=True, null=True)
-    date = models.DateField()
+    date = JDNField()
     rank = models.PositiveIntegerField()
 
     BATTLE = 178561
