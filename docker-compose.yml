@@ -6,6 +6,7 @@ services:
       - '5432'
     env_file:
       - postgres.env
+      - mbtiles.env
     volumes:
       - ./data:/docker-entrypoint-initdb.d
   nginx:
@@ -33,3 +34,15 @@ services:
     image: redis:alpine
     expose:
       - '6379'
+  mbtiles:
+    env_file:
+      - mbtiles.env
+    build:
+      context: .
+      dockerfile: Dockerfile-mbtiles
+    ports:
+    - "5000:5000"
+    volumes:
+    - ./data/mbtiles:/root/mbtiles
+    - ./data/scripts:/scripts
+    - ./data/data:/data

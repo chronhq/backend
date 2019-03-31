@@ -16,6 +16,7 @@ cd backend
 # Create env files, remember to update accordingly
 cp django.env.sample django.env
 cp postgres.env.sample postgres.env
+cp mbtiles.env.sample mbtiles.env
 
 # Build and start the docker containers
 make run
