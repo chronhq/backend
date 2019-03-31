@@ -11,6 +11,7 @@ services:
 install:
   - mv django.env.sample django.env
   - mv postgres.env.sample postgres.env
+  - mv mbtiles.env.sample mbtiles.env
   - docker-compose build
 
 script:
