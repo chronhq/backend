@@ -213,7 +213,8 @@ def mvt_cacheddata(request, zoom, x_cor, y_cor):
         cursor.execute(
             (
                 " SELECT ST_AsMVT(tile, 'events') as events FROM ("
-                " SELECT wikidata_id, event_type, rank, year, geom FROM ("
+                " SELECT wikidata_id, event_type, rank, year, geom,"
+                " CAST (TO_CHAR(date, 'J') AS INTEGER) AS date FROM ("
                 " SELECT *, row_number() OVER (PARTITION BY year order by rank desc) as i"
                 " FROM ( SELECT * FROM ("
                 " SELECT *, EXTRACT(year from date) as year,"
@@ -241,8 +242,8 @@ def mvt_cities(request, zoom, x_cor, y_cor):
             (
                 "SELECT ST_AsMVT(tile, 'cities') as cities FROM ("
                 "SELECT id, wikidata_id, label,"
-                "EXTRACT(year from inception_date) as inception_date,"
-                "EXTRACT(year from dissolution_date) as dissolution_date,"
+                " CAST (TO_CHAR(inception_date, 'J') AS INTEGER) AS inception_date,"
+                " CAST (TO_CHAR(dissolution_date, 'J') AS INTEGER) AS dissolution_date,"
                 "ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) "
                 "FROM api_city) AS tile"
             ),
@@ -263,7 +264,7 @@ def mvt_narration_events(request, narrative, zoom, x_cor, y_cor):
         cursor.execute(
             (
                 " SELECT ST_AsMVT(tile, 'events') FROM ("
-                " SELECT wikidata_id, rank, EXTRACT(year from date) as year, event_type,"
+                " SELECT wikidata_id, rank, event_type,"
                 " ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) as geom"
                 " FROM (SELECT api_cacheddata.* FROM api_narration"
                 " JOIN api_narration_attached_events ON"
