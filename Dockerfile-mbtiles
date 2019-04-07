@@ -1,33 +1,12 @@
-FROM deniscarriere/mbtiles-server
+FROM jskeates/tippecanoe
 
 LABEL maintainer="Mikhail Orlov <miklergm@gmail.com>"
 
-RUN apk update \
-  && apk add --virtual build-dependencies \
-  build-base \
-  gcc \
-  sqlite-dev \
-  zlib-dev \
-  git \
-  && apk add \
-  bash
-
-RUN git clone --depth 1 https://github.com/mapbox/tippecanoe.git /opt/tippecanoe-src
-
-WORKDIR /opt/tippecanoe-src
-# failed to make with LDFLAGS=-static 
-RUN make \
-  && PREFIX=/opt/tippecanoe make install
-
-####
-#### Stage 1
 FROM deniscarriere/mbtiles-server
 
-COPY --from=0 /opt/tippecanoe/bin/* /usr/bin/
+COPY --from=0 /usr/local/bin/tippe* /usr/local/bin/
 
 RUN apk add --no-cache libgcc libstdc++ sqlite-libs
-
-RUN mkdir -p /root/mbtiles
 
 # Enables customized options using environment variables
 # Maximum zoom for tippecanoe output
@@ -38,4 +17,3 @@ ENV MBTILES_SERVER_PROTOCOL='http'
 ENV MBTILES_SERVER_DOMAIN='localhost'
 ENV MBTILES_SERVER_PORT='5000'
 ENV MBTILES_SERVER_VERBOSE='true'
-
