@@ -1,6 +1,4 @@
-FROM mhart/alpine-node:8
-# deniscarriere/mbtiles-server
-# Failed with apline-node:10
+FROM deniscarriere/mbtiles-server
 
 LABEL maintainer="Mikhail Orlov <miklergm@gmail.com>"
 
@@ -17,7 +15,6 @@ RUN apk update \
 WORKDIR /opt
 
 RUN git clone --depth 1 https://github.com/mapbox/tippecanoe.git tippecanoe-src
-RUN git clone --depth 1 https://github.com/DenisCarriere/mbtiles-server.git mbtiles
 
 WORKDIR /opt/tippecanoe-src
 # failed to make with LDFLAGS=-static 
@@ -25,31 +22,22 @@ RUN make \
   && PREFIX=/opt/tippecanoe make install
 
 
-FROM mhart/alpine-node:8
+FROM deniscarriere/mbtiles-server
+
+
 
 COPY --from=0 /opt/tippecanoe/bin/* /usr/bin/
-COPY --from=0 /opt/mbtiles/ /opt/mbtiles
 
-COPY --from=0 /lib/ld-musl* /lib/
-COPY --from=0 /lib/libz.so* /lib/
-COPY --from=0 /usr/lib/libsqlite3* /usr/lib/
-COPY --from=0 /usr/lib/libstdc++.so* /usr/lib/
-COPY --from=0 /usr/lib/libgcc_s.so* /usr/lib/
-COPY --from=0 /lib/ld-musl-x86_64.so* /lib/
+RUN apk add --no-cache libgcc libstdc++ sqlite-libs
 
-WORKDIR /opt/mbtiles
-RUN yarn
 
 RUN mkdir -p /root/mbtiles
 
 # Enables customized options using environment variables
 ENV ZOOM='8'
-ENV CACHE='/root/mbtiles'
-ENV PROTOCOL='http'
-ENV DOMAIN='localhost'
-ENV PORT='5000'
-ENV VERBOSE='true'
+ENV MBTILES_SERVER_CACHE='/root/mbtiles'
+ENV MBTILES_SERVER_PROTOCOL='http'
+ENV MBTILES_SERVER_DOMAIN='localhost'
+ENV MBTILES_SERVER_PORT='5000'
+ENV MBTILES_SERVER_VERBOSE='true'
 
-# Run App
-EXPOSE 5000
-CMD ["yarn", "start"]
