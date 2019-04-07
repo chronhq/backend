@@ -39,7 +39,7 @@ services:
       - mbtiles.env
     build:
       context: .
-      dockerfile: Dockerfile-mbtiles
+      dockerfile: Dockerfile.mbtiles
     ports:
     - "5000:5000"
     volumes:
