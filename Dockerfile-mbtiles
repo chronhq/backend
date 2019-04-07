@@ -14,19 +14,30 @@ RUN apk update \
   && apk add \
   bash
 
-RUN mkdir -p /src
-WORKDIR /src
+WORKDIR /opt
 
-RUN git clone https://github.com/mapbox/tippecanoe.git tippecanoe
-RUN git clone https://github.com/DenisCarriere/mbtiles-server.git mbtiles
+RUN git clone --depth 1 https://github.com/mapbox/tippecanoe.git tippecanoe-src
+RUN git clone --depth 1 https://github.com/DenisCarriere/mbtiles-server.git mbtiles
 
-WORKDIR ./tippecanoe
+WORKDIR /opt/tippecanoe-src
+# failed to make with LDFLAGS=-static 
 RUN make \
-  && make install
+  && PREFIX=/opt/tippecanoe make install
 
-# RUN make test
 
-WORKDIR ../mbtiles
+FROM mhart/alpine-node:8
+
+COPY --from=0 /opt/tippecanoe/bin/* /usr/bin/
+COPY --from=0 /opt/mbtiles/ /opt/mbtiles
+
+COPY --from=0 /lib/ld-musl* /lib/
+COPY --from=0 /lib/libz.so* /lib/
+COPY --from=0 /usr/lib/libsqlite3* /usr/lib/
+COPY --from=0 /usr/lib/libstdc++.so* /usr/lib/
+COPY --from=0 /usr/lib/libgcc_s.so* /usr/lib/
+COPY --from=0 /lib/ld-musl-x86_64.so* /lib/
+
+WORKDIR /opt/mbtiles
 RUN yarn
 
 RUN mkdir -p /root/mbtiles
