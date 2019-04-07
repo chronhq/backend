@@ -12,29 +12,27 @@ RUN apk update \
   && apk add \
   bash
 
-WORKDIR /opt
-
-RUN git clone --depth 1 https://github.com/mapbox/tippecanoe.git tippecanoe-src
+RUN git clone --depth 1 https://github.com/mapbox/tippecanoe.git /opt/tippecanoe-src
 
 WORKDIR /opt/tippecanoe-src
 # failed to make with LDFLAGS=-static 
 RUN make \
   && PREFIX=/opt/tippecanoe make install
 
-
+####
+#### Stage 1
 FROM deniscarriere/mbtiles-server
-
-
 
 COPY --from=0 /opt/tippecanoe/bin/* /usr/bin/
 
 RUN apk add --no-cache libgcc libstdc++ sqlite-libs
 
-
 RUN mkdir -p /root/mbtiles
 
 # Enables customized options using environment variables
+# Maximum zoom for tippecanoe output
 ENV ZOOM='8'
+
 ENV MBTILES_SERVER_CACHE='/root/mbtiles'
 ENV MBTILES_SERVER_PROTOCOL='http'
 ENV MBTILES_SERVER_DOMAIN='localhost'
