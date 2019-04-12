@@ -19,8 +19,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from requests import get
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User
 from django.contrib.gis.db import models
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField, JSONField
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from ordered_model.models import OrderedModel
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
@@ -317,3 +320,20 @@ class Narration(OrderedModel):
     history = HistoricalRecords()
 
     order_with_respect_to = "narrative"
+
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    location = models.PointField(blank=True, null=True)
+    votes = JSONField(default=dict, blank=True)
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()

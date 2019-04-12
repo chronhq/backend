@@ -156,3 +156,6 @@ data/
 
 # silk profiles
 project/profiles/
+
+# firebase secrets
+config/firebase.json

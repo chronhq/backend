@@ -115,7 +115,6 @@ class AtomicPolygonViewSet(viewsets.ModelViewSet):
 
 
 @api_view(["GET"])
-@silk_profile(name="AtomicPolyNoSer")
 def get_aps(request):
     """
     List view for APs, optimized for speed
@@ -146,7 +145,6 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
 
 
 @api_view(["GET"])
-@silk_profile(name="SpacetimeVolumeNoSer")
 def get_stvs(request):
     """
     List view for STVs, optimized for speed
