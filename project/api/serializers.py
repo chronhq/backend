@@ -34,6 +34,7 @@ from .models import (
     Narrative,
     MapSettings,
     Narration,
+    Profile
 )
 
 
@@ -159,3 +160,12 @@ class NarrativeSerializer(ModelSerializer):
         if obj.narration_set.last() is not None:
             return obj.narration_set.last().map_datetime.year
         return None
+
+class ProfileSerializer(ModelSerializer):
+    """
+    Serializes the UserProfile
+    """
+
+    class Meta:
+        model = Profile
+        fields = "__all__"

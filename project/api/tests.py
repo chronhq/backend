@@ -309,7 +309,7 @@ class ModelTest(TestCase):
             title="Test Narration2",
             description="This is another narration point",
             date_label="test2",
-            map_datetime="0002-05-01 00:00",
+            map_datetime=JD_0002,
             settings=test_settings2,
         )
 
@@ -465,7 +465,7 @@ class APITest(APITestCase):
             title="Test Narration",
             description="This is a narration point",
             date_label="test",
-            map_datetime="0002-01-01 00:00",
+            map_datetime=JD_0002,
             settings=cls.norman_conquest_settings,
         )
 
@@ -852,7 +852,7 @@ class APITest(APITestCase):
             "title": "Test Narration",
             "description": "This is a narration point",
             "date_label": "test",
-            "map_datetime": "0002-01-01 00:00",
+            "map_datetime": JD_0002,
             "settings": self.norman_conquest_settings.pk,
             "attached_events_ids": [self.hastings.pk],
         }
@@ -872,7 +872,7 @@ class APITest(APITestCase):
             "title": "Test Narration 2",
             "description": "This is a narration point",
             "date_label": "test",
-            "map_datetime": "0002-01-01 00:00",
+            "map_datetime": JD_0002,
             "settings": self.norman_conquest_settings.pk,
             "attached_events_ids": [self.hastings.pk],
         }
