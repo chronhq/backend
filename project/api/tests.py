@@ -285,7 +285,7 @@ class ModelTest(TestCase):
         balaclava = CachedData.objects.create(
             wikidata_id=2,
             location=Point(0, 0),
-            date="0002-02-02",
+            date=JD_0002,
             event_type=CachedData.BATTLE,
         )
 
@@ -294,7 +294,7 @@ class ModelTest(TestCase):
             title="Test Narration",
             description="This is a narration point",
             date_label="test",
-            map_datetime="0002-01-01 00:00",
+            map_datetime=JD_0002,
             settings=test_settings,
         )
 
