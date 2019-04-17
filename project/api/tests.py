@@ -51,11 +51,11 @@ from .models import (
 )
 
 # Constants
-JD_0001 = ceil(sum(gcal2jd(1, 1, 1)))
-JD_0002 = ceil(sum(gcal2jd(2, 1, 1)))
-JD_0003 = ceil(sum(gcal2jd(3, 1, 1)))
-JD_0004 = ceil(sum(gcal2jd(4, 1, 1)))
-JD_0005 = ceil(sum(gcal2jd(5, 1, 1)))
+JD_0001 = ceil(sum(gcal2jd(1, 1, 1))) + 0.0
+JD_0002 = ceil(sum(gcal2jd(2, 1, 1))) + 0.0
+JD_0003 = ceil(sum(gcal2jd(3, 1, 1))) + 0.0
+JD_0004 = ceil(sum(gcal2jd(4, 1, 1))) + 0.0
+JD_0005 = ceil(sum(gcal2jd(5, 1, 1))) + 0.0
 
 # Tests
 class ModelTest(TestCase):

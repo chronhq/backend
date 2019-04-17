@@ -311,7 +311,7 @@ class Narration(OrderedModel):
     title = models.TextField()
     description = models.TextField()
     date_label = models.TextField(max_length=100)
-    map_datetime = models.DecimalField(decimal_places=2, max_digits=8)
+    map_datetime = models.DecimalField(decimal_places=2, max_digits=9)
     attached_events = models.ManyToManyField(CachedData, blank=True)
     img = models.URLField(blank=True, null=True)
     video = models.URLField(blank=True, null=True)

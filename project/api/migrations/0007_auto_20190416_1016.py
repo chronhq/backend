@@ -79,7 +79,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="narration",
             name="map_datetime",
-            field=models.DecimalField(decimal_places=2, default=1, max_digits=8),
+            field=models.DecimalField(decimal_places=2, default=1, max_digits=9),
             preserve_default=False,
         ),
         migrations.AddField(
