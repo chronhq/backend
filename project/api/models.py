@@ -68,8 +68,8 @@ class PoliticalRelation(models.Model):
     child = models.ForeignKey(
         TerritorialEntity, related_name="parents", on_delete=models.CASCADE
     )
-    start_date = models.DecimalField(decimal_places=1, max_digits=8)
-    end_date = models.DecimalField(decimal_places=1, max_digits=8)
+    start_date = models.DecimalField(decimal_places=1, max_digits=10)
+    end_date = models.DecimalField(decimal_places=1, max_digits=10)
 
     DIRECT = 10
     INDIRECT = 20
@@ -103,7 +103,7 @@ class CachedData(models.Model):
 
     wikidata_id = models.PositiveIntegerField()  # Excluding the Q
     location = models.PointField(blank=True, null=True)
-    date = models.DecimalField(decimal_places=1, max_digits=8)
+    date = models.DecimalField(decimal_places=1, max_digits=10)
     rank = models.PositiveIntegerField()
 
     BATTLE = 178561
@@ -164,9 +164,9 @@ class City(models.Model):
     wikidata_id = models.PositiveIntegerField()  # Excluding the Q
     label = models.TextField(max_length=90)
     location = models.PointField()
-    inception_date = models.DecimalField(decimal_places=1, max_digits=8)
+    inception_date = models.DecimalField(decimal_places=1, max_digits=10)
     dissolution_date = models.DecimalField(
-        decimal_places=1, max_digits=8, blank=True, null=True
+        decimal_places=1, max_digits=10, blank=True, null=True
     )
     history = HistoricalRecords()
 
@@ -227,8 +227,8 @@ class SpacetimeVolume(models.Model):
     Maps a set of AtomicPolygons to a TerritorialEntity at a specific time
     """
 
-    start_date = models.DecimalField(decimal_places=1, max_digits=8)
-    end_date = models.DecimalField(decimal_places=1, max_digits=8)
+    start_date = models.DecimalField(decimal_places=1, max_digits=10)
+    end_date = models.DecimalField(decimal_places=1, max_digits=10)
     territory = models.ManyToManyField(AtomicPolygon, related_name="stvs")
     entity = models.ForeignKey(TerritorialEntity, on_delete=models.CASCADE)
     references = ArrayField(models.TextField(max_length=500))
@@ -311,7 +311,7 @@ class Narration(OrderedModel):
     title = models.TextField()
     description = models.TextField()
     date_label = models.TextField(max_length=100)
-    map_datetime = models.DecimalField(decimal_places=2, max_digits=9)
+    map_datetime = models.DecimalField(decimal_places=2, max_digits=11)
     attached_events = models.ManyToManyField(CachedData, blank=True)
     img = models.URLField(blank=True, null=True)
     video = models.URLField(blank=True, null=True)

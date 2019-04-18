@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from datetime import date
 from math import ceil
 from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import Point, Polygon, MultiPoint
@@ -722,7 +721,7 @@ class APITest(APITestCase):
         }
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["end_date"], JD_0005)
+        self.assertEqual(response.data["end_date"], str(JD_0005))
 
     def test_api_can_query_stvs(self):
         """
@@ -732,7 +731,7 @@ class APITest(APITestCase):
         url = reverse("spacetimevolume-list-fast")
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]["end_date"], date(2, 1, 1))
+        self.assertEqual(response.data[0]["end_date"], JD_0002)
 
     def test_api_can_query_stv(self):
         """
@@ -742,7 +741,7 @@ class APITest(APITestCase):
         url = reverse("spacetimevolume-detail", args=[self.alsace_stv.pk])
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["end_date"], JD_0002)
+        self.assertEqual(response.data["end_date"], str(JD_0002))
 
     def test_api_can_create_narrative(self):
         """
