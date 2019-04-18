@@ -36,6 +36,7 @@ from .models import (
     Narrative,
     MapSettings,
     Narration,
+    Profile
 )
 from .serializers import (
     TerritorialEntitySerializer,
@@ -47,6 +48,7 @@ from .serializers import (
     NarrativeSerializer,
     MapSettingsSerializer,
     NarrationSerializer,
+    ProfileSerializer
 )
 
 
@@ -276,3 +278,12 @@ def mvt_narration_events(request, narrative, zoom, x_cor, y_cor):
         if not tile:
             raise Http404()
     return HttpResponse(tile, content_type="application/x-protobuf")
+
+
+class ProfileViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Profile
+    """
+
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer

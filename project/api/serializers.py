@@ -35,6 +35,7 @@ from .models import (
     Narrative,
     MapSettings,
     Narration,
+    Profile
 )
 
 
@@ -160,3 +161,13 @@ class NarrativeSerializer(ModelSerializer):
         if obj.narration_set.last() is not None:
             return jd2gcal(obj.narration_set.last().map_datetime, 0)[0]
         return None
+
+
+class ProfileSerializer(ModelSerializer):
+    """
+    Serializes the Profile model
+    """
+
+    class Meta:
+        model = Profile
+        fields = "__all__"
