@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from jdcal import jd2gcal
 from rest_framework.serializers import (
     ModelSerializer,
     IntegerField,
@@ -148,7 +149,7 @@ class NarrativeSerializer(ModelSerializer):
         """
 
         if obj.narration_set.first() is not None:
-            return obj.narration_set.first().map_datetime.year
+            return jd2gcal(obj.narration_set.first().map_datetime, 0)[0]
         return None
 
     def get_end_year(self, obj):  # pylint: disable=R0201
@@ -157,5 +158,5 @@ class NarrativeSerializer(ModelSerializer):
         """
 
         if obj.narration_set.last() is not None:
-            return obj.narration_set.last().map_datetime.year
+            return jd2gcal(obj.narration_set.last().map_datetime, 0)[0]
         return None
