@@ -47,7 +47,7 @@ graph: ## Builds a UML class diagram of the models
 
 # Misc
 test: ## Builds, starts, and runs containers, running the django tests
-	docker-compose run --service-ports web sh init.sh python manage.py test
+	docker-compose run --service-ports web sh init.sh python manage.py test --debug-mode
 
 exec_test: ## Executes django tests in a running container
 	docker-compose exec web python manage.py test --debug-mode
