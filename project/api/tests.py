@@ -17,13 +17,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from datetime import date
+from math import ceil
 from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import Point, Polygon, MultiPoint
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from jdcal import gcal2jd
 
 from .factories import (
     TerritorialEntityFactory,
@@ -48,7 +49,14 @@ from .models import (
     City,
 )
 
-# Create your tests here.
+# Constants
+JD_0001 = ceil(sum(gcal2jd(1, 1, 1))) + 0.0
+JD_0002 = ceil(sum(gcal2jd(2, 1, 1))) + 0.0
+JD_0003 = ceil(sum(gcal2jd(3, 1, 1))) + 0.0
+JD_0004 = ceil(sum(gcal2jd(4, 1, 1))) + 0.0
+JD_0005 = ceil(sum(gcal2jd(5, 1, 1))) + 0.0
+
+# Tests
 class ModelTest(TestCase):
     """
     Tests model constraints directly
@@ -102,22 +110,22 @@ class ModelTest(TestCase):
 
         # GROUP
         PoliticalRelation.objects.create(
-            start_date="0001-01-01",
-            end_date="0002-01-01",
+            start_date=JD_0001,
+            end_date=JD_0002,
             parent=self.european_union,
             child=self.france,
             control_type=PoliticalRelation.GROUP,
         )
         PoliticalRelation.objects.create(
-            start_date="0001-01-01",
-            end_date="0002-01-01",
+            start_date=JD_0001,
+            end_date=JD_0002,
             parent=self.european_union,
             child=self.germany,
             control_type=PoliticalRelation.GROUP,
         )
         PoliticalRelation.objects.create(
-            start_date="0001-01-01",
-            end_date="0002-01-01",
+            start_date=JD_0001,
+            end_date=JD_0002,
             parent=self.nato,
             child=self.france,
             control_type=PoliticalRelation.GROUP,
@@ -129,15 +137,15 @@ class ModelTest(TestCase):
 
         # DIRECT
         PoliticalRelation.objects.create(
-            start_date="0001-01-01",
-            end_date="0002-01-01",
+            start_date=JD_0001,
+            end_date=JD_0002,
             parent=self.france,
             child=self.alsace,
             control_type=PoliticalRelation.DIRECT,
         )
         PoliticalRelation.objects.create(
-            start_date="0001-01-01",
-            end_date="0002-01-01",
+            start_date=JD_0001,
+            end_date=JD_0002,
             parent=self.france,
             child=self.lorraine,
             control_type=PoliticalRelation.DIRECT,
@@ -166,8 +174,8 @@ class ModelTest(TestCase):
 
         with self.assertRaises(ValidationError):
             PoliticalRelation.objects.create(
-                start_date="0005-01-01",
-                end_date="0002-01-01",
+                start_date=JD_0005,
+                end_date=JD_0002,
                 parent=self.european_union,
                 child=self.germany,
                 control_type=PoliticalRelation.GROUP,
@@ -175,8 +183,8 @@ class ModelTest(TestCase):
 
         with self.assertRaises(ValidationError):
             PoliticalRelation.objects.create(
-                start_date="0001-01-01",
-                end_date="0002-01-01",
+                start_date=JD_0001,
+                end_date=JD_0002,
                 parent=self.germany,
                 child=self.european_union,
                 control_type=PoliticalRelation.DIRECT,
@@ -210,8 +218,8 @@ class ModelTest(TestCase):
         """
 
         alsace = SpacetimeVolume.objects.create(
-            start_date="0001-01-01",
-            end_date="0002-01-01",
+            start_date=JD_0001,
+            end_date=JD_0002,
             entity=self.france,
             references=["ref"],
             visual_center=Point(1.2, 1.8),
@@ -237,15 +245,15 @@ class ModelTest(TestCase):
         """
         with self.assertRaises(ValidationError):
             SpacetimeVolume.objects.create(
-                start_date="0001-01-01",
-                end_date="0003-01-01",
+                start_date=JD_0001,
+                end_date=JD_0003,
                 entity=self.france,
                 references=["ref"],
                 visual_center=Point(2, 2),
             )
             SpacetimeVolume.objects.create(
-                start_date="0002-01-01",
-                end_date="0004-01-01",
+                start_date=JD_0002,
+                end_date=JD_0004,
                 entity=self.france,
                 references=["ref"],
                 visual_center=Point(1, 1),
@@ -270,14 +278,14 @@ class ModelTest(TestCase):
         hastings = CachedData.objects.create(
             wikidata_id=1,
             location=Point(0, 0),
-            date="0001-01-01",
+            date=JD_0001,
             event_type=CachedData.BATTLE,
         )
 
         balaclava = CachedData.objects.create(
             wikidata_id=2,
             location=Point(0, 0),
-            date="0002-02-02",
+            date=JD_0002,
             event_type=CachedData.BATTLE,
         )
 
@@ -286,7 +294,7 @@ class ModelTest(TestCase):
             title="Test Narration",
             description="This is a narration point",
             date_label="test",
-            map_datetime="0002-01-01 00:00",
+            map_datetime=JD_0002,
             settings=test_settings,
             location=Point(0,0)
         )
@@ -302,7 +310,7 @@ class ModelTest(TestCase):
             title="Test Narration2",
             description="This is another narration point",
             date_label="test2",
-            map_datetime="0002-05-01 00:00",
+            map_datetime=JD_0002,
             settings=test_settings2,
             location=Point(0,0)
         )
@@ -343,12 +351,12 @@ class ModelTest(TestCase):
         hastings = CachedData.objects.create(
             wikidata_id=1,
             location=Point(0, 0),
-            date="0001-01-01",
+            date=JD_0001,
             event_type=CachedData.BATTLE,
         )
 
         self.assertTrue(hastings.rank >= 0)
-        self.assertEqual(hastings.date, "0001-01-01")
+        self.assertEqual(hastings.date, JD_0001)
         self.assertEqual(CachedData.objects.count(), 1)
 
     def test_model_can_create_city(self):
@@ -357,10 +365,7 @@ class ModelTest(TestCase):
         """
 
         paris = City.objects.create(
-            wikidata_id=1,
-            label="Paris",
-            location=Point(0, 0),
-            inception_date="0001-01-01",
+            wikidata_id=1, label="Paris", location=Point(0, 0), inception_date=JD_0001
         )
 
         self.assertEqual(paris.label, "Paris")
@@ -407,8 +412,8 @@ class APITest(APITestCase):
         cls.EU_germany = PoliticalRelationFactory(
             parent=cls.european_union,
             child=cls.germany,
-            start_date="0001-01-01",
-            end_date="0002-01-01",
+            start_date=JD_0001,
+            end_date=JD_0002,
             control_type=PoliticalRelation.INDIRECT,
         )
 
@@ -416,14 +421,14 @@ class APITest(APITestCase):
         cls.hastings = CachedDataFactory(
             wikidata_id=1,
             location=Point(0, 0),
-            date="0001-01-01",
+            date=JD_0001,
             event_type=CachedData.BATTLE,
         )
 
         # SpacetimeVolumes
         cls.alsace_stv = SpacetimeVolumeFactory(
-            start_date="0001-01-01",
-            end_date="0002-01-01",
+            start_date=JD_0001,
+            end_date=JD_0002,
             entity=cls.france,
             references=["ref"],
             visual_center=Point(1.2, 1.8),
@@ -450,17 +455,14 @@ class APITest(APITestCase):
             title="Test Narration",
             description="This is a narration point",
             date_label="test",
-            map_datetime="0002-01-01 00:00",
+            map_datetime=JD_0002,
             settings=cls.norman_conquest_settings,
             location=Point(0,0)
         )
 
         # Cities
         cls.paris = CityFactory(
-            wikidata_id=1,
-            label="Paris",
-            location=Point(0, 0),
-            inception_date="0001-01-01",
+            wikidata_id=1, label="Paris", location=Point(0, 0), inception_date=JD_0001
         )
 
     def test_api_can_create_te(self):
@@ -513,8 +515,8 @@ class APITest(APITestCase):
 
         url = reverse("politicalrelation-list")
         data = {
-            "start_date": "0001-01-01",
-            "end_date": "0002-01-01",
+            "start_date": JD_0001,
+            "end_date": JD_0002,
             "parent": self.european_union.pk,
             "child": self.france.pk,
             "control_type": PoliticalRelation.GROUP,
@@ -533,8 +535,8 @@ class APITest(APITestCase):
 
         url = reverse("politicalrelation-detail", args=[self.EU_germany.pk])
         data = {
-            "start_date": "0001-01-01",
-            "end_date": "0002-01-01",
+            "start_date": JD_0001,
+            "end_date": JD_0002,
             "parent": self.european_union.pk,
             "child": self.france.pk,
             "control_type": PoliticalRelation.GROUP,
@@ -572,7 +574,7 @@ class APITest(APITestCase):
         data = {
             "wikidata_id": 2,
             "location": "Point(0 1)",
-            "date": "0001-01-01",
+            "date": JD_0001,
             "event_type": CachedData.DOCUMENT,
         }
         response = self.client.post(url, data, format="json")
@@ -589,7 +591,7 @@ class APITest(APITestCase):
         data = {
             "wikidata_id": 2,
             "location": "Point(0 1)",
-            "date": "0001-01-01",
+            "date": JD_0001,
             "event_type": 555,
         }
         response = self.client.post(url, data, format="json")
@@ -606,7 +608,7 @@ class APITest(APITestCase):
         data = {
             "wikidata_id": 1,
             "location": "Point(0 0)",
-            "date": "0001-01-01",
+            "date": JD_0001,
             "event_type": CachedData.DOCUMENT,
         }
         response = self.client.put(url, data, format="json")
@@ -682,8 +684,8 @@ class APITest(APITestCase):
 
         url = "/api/spacetime-volumes/"  # reverse("spacetimevolume-list")
         data = {
-            "start_date": "0001-01-01",
-            "end_date": "0002-01-01",
+            "start_date": JD_0001,
+            "end_date": JD_0002,
             "entity": self.germany.pk,
             "references": ["ref"],
             "territory": [self.alsace_geom.pk],
@@ -701,8 +703,8 @@ class APITest(APITestCase):
 
         url = reverse("spacetimevolume-detail", args=[self.alsace_stv.pk])
         data = {
-            "start_date": "0001-01-01",
-            "end_date": "0005-01-01",
+            "start_date": JD_0001,
+            "end_date": JD_0005,
             "entity": self.france.pk,
             "references": ["ref"],
             "territory": [self.alsace_geom.pk],
@@ -710,7 +712,7 @@ class APITest(APITestCase):
         }
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["end_date"], "0005-01-01")
+        self.assertEqual(response.data["end_date"], str(JD_0005))
 
     def test_api_can_query_stvs(self):
         """
@@ -720,7 +722,7 @@ class APITest(APITestCase):
         url = reverse("spacetimevolume-list-fast")
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]["end_date"], date(2, 1, 1))
+        self.assertEqual(response.data[0]["end_date"], JD_0002)
 
     def test_api_can_query_stv(self):
         """
@@ -730,7 +732,7 @@ class APITest(APITestCase):
         url = reverse("spacetimevolume-detail", args=[self.alsace_stv.pk])
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["end_date"], "0002-01-01")
+        self.assertEqual(response.data["end_date"], str(JD_0002))
 
     def test_api_can_create_narrative(self):
         """
@@ -841,7 +843,7 @@ class APITest(APITestCase):
             "title": "Test Narration",
             "description": "This is a narration point",
             "date_label": "test",
-            "map_datetime": "0002-01-01 00:00",
+            "map_datetime": JD_0002,
             "settings": self.norman_conquest_settings.pk,
             "attached_events_ids": [self.hastings.pk],
             "location": "POINT (0 0)"
@@ -863,7 +865,7 @@ class APITest(APITestCase):
             "title": "Test Narration 2",
             "description": "This is a narration point",
             "date_label": "test",
-            "map_datetime": "0002-01-01 00:00",
+            "map_datetime": JD_0002,
             "settings": self.norman_conquest_settings.pk,
             "attached_events_ids": [self.hastings.pk],
             "location": "POINT (0 0)"
@@ -903,7 +905,7 @@ class APITest(APITestCase):
             "wikidata_id": 2,
             "label": "London",
             "location": "POINT (10 10)",
-            "inception_date": "0001-01-01",
+            "inception_date": JD_0001,
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -920,7 +922,7 @@ class APITest(APITestCase):
             "wikidata_id": 2,
             "label": "London",
             "location": "POINT (10 10)",
-            "inception_date": "0001-01-01",
+            "inception_date": JD_0001,
         }
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
