@@ -6,6 +6,8 @@
 
 ## Getting Started
 
+For API authentication to work, a Firebase service account key is required. Create a new project and obtain a key as described [in the docs](https://firebase.google.com/docs/admin/setup#initialize_the_sdk), saving it as `config/firebase.json`.
+
 ### Docker
 
 ```bash
@@ -42,6 +44,6 @@ cd project
 python manage.py runserver # must be executed from the project directory
 ```
 
-## Production
+## Production Setup
 
 First, run `cp config/nginx/allowed_ips.conf.sample config/nginx/allowed_ips.conf` and edit the new file to whitelist IPs that should have write access to the API. This is required for the time being to run the API in production. After this, `make run_prod` can then be used to configure the containers for a production setup. 

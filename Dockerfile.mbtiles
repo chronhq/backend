@@ -1,0 +1,19 @@
+FROM jskeates/tippecanoe
+
+LABEL maintainer="Mikhail Orlov <miklergm@gmail.com>"
+
+FROM deniscarriere/mbtiles-server
+
+COPY --from=0 /usr/local/bin/tippe* /usr/local/bin/
+
+RUN apk add --no-cache libgcc libstdc++ sqlite-libs
+
+# Enables customized options using environment variables
+# Maximum zoom for tippecanoe output
+ENV ZOOM='8'
+
+ENV MBTILES_SERVER_CACHE='/root/mbtiles'
+ENV MBTILES_SERVER_PROTOCOL='http'
+ENV MBTILES_SERVER_DOMAIN='localhost'
+ENV MBTILES_SERVER_PORT='5000'
+ENV MBTILES_SERVER_VERBOSE='true'
