@@ -44,8 +44,6 @@ function feature() {
         api_spacetimevolume.end_date,
         api_spacetimevolume.references,
         ST_AsGeoJSON(api_spacetimevolume.visual_center)::json as visual_center,
-        CAST (TO_CHAR(start_date, 'J') AS INTEGER) AS start,
-        CAST (TO_CHAR(end_date, 'J') AS INTEGER) AS end,
         geom.geom,
         api_territorialentity.wikidata_id, api_territorialentity.color,
         api_territorialentity.admin_level

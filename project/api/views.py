@@ -80,13 +80,16 @@ class CachedDataViewSet(viewsets.ModelViewSet):
         queryset = self.queryset
         wid = self.request.query_params.get("wikidata_id", None)
         has_location = self.request.query_params.get("has_location", None)
-        year = self.request.query_params.get("year", None)
+        # Dates should be provided in JDN format
+        # With values of Jan 01 and Dec 31 for year period
+        start_date = self.request.query_params.get("start_date", None)
+        end_date = self.request.query_params.get("end_date", None)
         if wid is not None:
             queryset = queryset.filter(wikidata_id=wid)
         if has_location == "false":
             queryset = queryset.filter(location__isnull=True)
-        if year is not None:
-            queryset = queryset.filter(date__year=year)
+        if start_date is not None and end_date is not None:
+            queryset = queryset.filter(date__range=(start_date, end_date))
         return queryset
 
 
@@ -213,11 +216,12 @@ def mvt_cacheddata(request, zoom, x_cor, y_cor):
         cursor.execute(
             (
                 " SELECT ST_AsMVT(tile, 'events') as events FROM ("
-                " SELECT wikidata_id, event_type, rank, year, geom,"
-                " CAST (TO_CHAR(date, 'J') AS INTEGER) AS date FROM ("
+                " SELECT wikidata_id, event_type, rank, year, geom, date"
+                " FROM ("
                 " SELECT *, row_number() OVER (PARTITION BY year order by rank desc) as i"
                 " FROM ( SELECT * FROM ("
-                " SELECT *, EXTRACT(year from date) as year,"
+                " SELECT *,"
+                " EXTRACT(year from TO_DATE(TO_CHAR(date, '9999999999.9'), 'J')) as year,"
                 " ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) as geom"
                 " FROM api_cacheddata"
                 " ORDER BY rank DESC"
@@ -241,9 +245,7 @@ def mvt_cities(request, zoom, x_cor, y_cor):
         cursor.execute(
             (
                 "SELECT ST_AsMVT(tile, 'cities') as cities FROM ("
-                "SELECT id, wikidata_id, label,"
-                " CAST (TO_CHAR(inception_date, 'J') AS INTEGER) AS inception_date,"
-                " CAST (TO_CHAR(dissolution_date, 'J') AS INTEGER) AS dissolution_date,"
+                "SELECT id, wikidata_id, label, inception_date, dissolution_date "
                 "ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) "
                 "FROM api_city) AS tile"
             ),
