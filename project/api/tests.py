@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from math import ceil
 from django.core.exceptions import ValidationError
-from django.contrib.gis.geos import Point, Polygon, MultiPoint
+from django.contrib.gis.geos import Point, Polygon
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -271,9 +271,7 @@ class ModelTest(TestCase):
             tags=["test", "tags"],
         )
 
-        test_settings = MapSettings.objects.create(
-            bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=1, zoom_max=12
-        )
+        test_settings = MapSettings.objects.create(zoom_min=1, zoom_max=12)
 
         hastings = CachedData.objects.create(
             wikidata_id=1,
@@ -296,13 +294,12 @@ class ModelTest(TestCase):
             date_label="test",
             map_datetime=JD_0002,
             settings=test_settings,
+            location=Point(0, 0),
         )
 
         narration1.attached_events.add(hastings)
 
-        test_settings2 = MapSettings.objects.create(
-            bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=1, zoom_max=12
-        )
+        test_settings2 = MapSettings.objects.create(zoom_min=1, zoom_max=12)
 
         narration2 = Narration.objects.create(
             narrative=test_narrative,
@@ -311,6 +308,7 @@ class ModelTest(TestCase):
             date_label="test2",
             map_datetime=JD_0002,
             settings=test_settings2,
+            location=Point(0, 0),
         )
 
         narration2.attached_events.add(balaclava)
@@ -327,31 +325,13 @@ class ModelTest(TestCase):
         """
 
         with self.assertRaises(ValidationError):
-            MapSettings.objects.create(
-                bbox=MultiPoint(Point(0, 0)), zoom_min=1, zoom_max=2
-            )
+            MapSettings.objects.create(zoom_min=-0.1, zoom_max=2)
 
         with self.assertRaises(ValidationError):
-            MapSettings.objects.create(
-                bbox=MultiPoint(Point(0, 0), Point(1, 1), Point(0, 1)),
-                zoom_min=1,
-                zoom_max=2,
-            )
+            MapSettings.objects.create(zoom_min=1, zoom_max=22.1)
 
         with self.assertRaises(ValidationError):
-            MapSettings.objects.create(
-                bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=-0.1, zoom_max=2
-            )
-
-        with self.assertRaises(ValidationError):
-            MapSettings.objects.create(
-                bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=1, zoom_max=22.1
-            )
-
-        with self.assertRaises(ValidationError):
-            MapSettings.objects.create(
-                bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=5, zoom_max=3
-            )
+            MapSettings.objects.create(zoom_min=5, zoom_max=3)
 
     def test_model_can_create_cd(self):
         """
@@ -455,9 +435,7 @@ class APITest(APITestCase):
         )
 
         # MapSettings
-        cls.norman_conquest_settings = MapSettingsFactory(
-            bbox=MultiPoint(Point(0, 0), Point(1, 1)), zoom_min=1, zoom_max=12
-        )
+        cls.norman_conquest_settings = MapSettingsFactory(zoom_min=1, zoom_max=12)
 
         # Narrations
         cls.hastings_narration = NarrationFactory(
@@ -467,6 +445,7 @@ class APITest(APITestCase):
             date_label="test",
             map_datetime=JD_0002,
             settings=cls.norman_conquest_settings,
+            location=Point(0, 0),
         )
 
         # Cities
@@ -804,7 +783,7 @@ class APITest(APITestCase):
         """
 
         url = reverse("mapsettings-list")
-        data = {"bbox": "MULTIPOINT ((0 0), (1 1))", "zoom_min": 1, "zoom_max": 13}
+        data = {"zoom_min": 1, "zoom_max": 13}
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(MapSettings.objects.count(), 2)
@@ -816,7 +795,7 @@ class APITest(APITestCase):
         """
 
         url = reverse("mapsettings-detail", args=[self.norman_conquest_settings.pk])
-        data = {"bbox": "MULTIPOINT ((0 0), (1 1))", "zoom_min": 5, "zoom_max": 13}
+        data = {"zoom_min": 5, "zoom_max": 13}
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["zoom_min"], 5)
@@ -855,6 +834,7 @@ class APITest(APITestCase):
             "map_datetime": JD_0002,
             "settings": self.norman_conquest_settings.pk,
             "attached_events_ids": [self.hastings.pk],
+            "location": "POINT (0 0)",
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -875,6 +855,7 @@ class APITest(APITestCase):
             "map_datetime": JD_0002,
             "settings": self.norman_conquest_settings.pk,
             "attached_events_ids": [self.hastings.pk],
+            "location": "POINT (0 0)",
         }
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)

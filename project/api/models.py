@@ -275,15 +275,11 @@ class MapSettings(models.Model):
     Stores settings to be used when a narration is active.
     """
 
-    # [[Left, Top], [Right, Bottom]]
-    bbox = models.MultiPointField()
     zoom_min = models.FloatField()
     zoom_max = models.FloatField()
     history = HistoricalRecords()
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
-        if self.bbox.num_points != 2:  # pylint: disable=E1101
-            raise ValidationError("Bounding box needs exactly two coordinates.")
 
         if self.zoom_min < 0.0 or self.zoom_max > 22.0:
             raise ValidationError(
@@ -317,5 +313,6 @@ class Narration(OrderedModel):
     video = models.URLField(blank=True, null=True)
     settings = models.ForeignKey(MapSettings, on_delete=models.CASCADE)
     history = HistoricalRecords()
+    location = models.PointField(blank=True, null=True)
 
     order_with_respect_to = "narrative"
