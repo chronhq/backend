@@ -30,7 +30,6 @@ from .models import (
     PoliticalRelation,
     CachedData,
     City,
-    AtomicPolygon,
     SpacetimeVolume,
     Narrative,
     MapSettings,
@@ -78,18 +77,6 @@ class CitySerializer(ModelSerializer):
 
     class Meta:
         model = City
-        fields = "__all__"
-
-
-class AtomicPolygonSerializer(ModelSerializer):
-    """
-    Serializes the AtomicPolygon model
-    """
-
-    stvs = PrimaryKeyRelatedField(many=True, read_only=True)
-
-    class Meta:
-        model = AtomicPolygon
         fields = "__all__"
 
 

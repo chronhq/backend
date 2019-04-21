@@ -182,54 +182,14 @@ class City(models.Model):
         super(City, self).save(*args, **kwargs)
 
 
-class AtomicPolygon(models.Model):
-    """
-    Stores geometric data corresponding to a wikidata ID
-    """
-
-    geom = models.GeometryField()
-    history = HistoricalRecords()
-
-    def clean(self, *args, **kwargs):  # pylint: disable=W0221
-        if not self.geom is None:
-            if (
-                self.geom.geom_type != "Polygon"
-                and self.geom.geom_type != "MultiPolygon"
-            ):
-                raise ValidationError(
-                    "Only Polygon and MultiPolygon objects are acceptable geometry types."
-                )
-
-            if (
-                AtomicPolygon.objects.filter(geom__intersects=self.geom)
-                .exclude(pk=self.pk)
-                .exists()
-            ):
-                raise ValidationError(
-                    "Another AtomicPolygon overlaps this polygon: "
-                    + "\n".join(
-                        str(i)
-                        for i in AtomicPolygon.objects.filter(
-                            geom__intersects=self.geom
-                        )
-                    )
-                )
-
-        super(AtomicPolygon, self).clean(*args, **kwargs)
-
-    def save(self, *args, **kwargs):  # pylint: disable=W0221
-        self.full_clean()
-        super(AtomicPolygon, self).save(*args, **kwargs)
-
-
 class SpacetimeVolume(models.Model):
     """
-    Maps a set of AtomicPolygons to a TerritorialEntity at a specific time
+    Maps a set of Territories to a TerritorialEntity at a specific time
     """
 
     start_date = models.DecimalField(decimal_places=1, max_digits=10)
     end_date = models.DecimalField(decimal_places=1, max_digits=10)
-    territory = models.ManyToManyField(AtomicPolygon, related_name="stvs")
+    territory = models.GeometryField()
     entity = models.ForeignKey(TerritorialEntity, on_delete=models.CASCADE)
     references = ArrayField(models.TextField(max_length=500))
     visual_center = models.PointField()
@@ -249,6 +209,34 @@ class SpacetimeVolume(models.Model):
             raise ValidationError(
                 "Another STV for this entity exists in the same timeframe"
             )
+
+        if not self.territory is None:
+            if (
+                self.territory.geom_type != "Polygon"
+                and self.territory.geom_type != "MultiPolygon"
+            ):
+                raise ValidationError(
+                    "Only Polygon and MultiPolygon objects are acceptable geometry types."
+                )
+
+            if (
+                SpacetimeVolume.objects.filter(
+                    start_date__lte=self.end_date,
+                    end_date__gte=self.start_date,
+                    territory__intersects=self.territory,
+                )
+                .exclude(pk=self.pk)
+                .exists()
+            ):
+                raise ValidationError(
+                    "Another SpaceTimeVolume overlaps this polygon: "
+                    + "\n".join(
+                        str(i)
+                        for i in SpacetimeVolume.objects.filter(
+                            territory__intersects=self.territory
+                        )
+                    )
+                )
 
         super(SpacetimeVolume, self).clean(*args, **kwargs)
 

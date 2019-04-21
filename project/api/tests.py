@@ -28,7 +28,6 @@ from jdcal import gcal2jd
 
 from .factories import (
     TerritorialEntityFactory,
-    AtomicPolygonFactory,
     PoliticalRelationFactory,
     CachedDataFactory,
     SpacetimeVolumeFactory,
@@ -40,7 +39,6 @@ from .factories import (
 from .models import (
     PoliticalRelation,
     TerritorialEntity,
-    AtomicPolygon,
     SpacetimeVolume,
     Narrative,
     MapSettings,
@@ -86,10 +84,6 @@ class ModelTest(TestCase):
 
         cls.alsace = TerritorialEntityFactory(wikidata_id=30, color=1, admin_level=3)
         cls.lorraine = TerritorialEntityFactory(wikidata_id=31, color=1, admin_level=3)
-
-        cls.alsace_geom = AtomicPolygonFactory(
-            geom=Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
-        )
 
     def test_model_can_create_te(self):
         """
@@ -190,51 +184,53 @@ class ModelTest(TestCase):
                 control_type=PoliticalRelation.DIRECT,
             )
 
-    def test_model_can_create_ap(self):
-        """
-        Ensure we can create AtomicPolygons
-        """
+    # def test_model_can_create_ap(self):
+    #     """
+    #     Ensure we can create AtomicPolygons
+    #     """
 
-        AtomicPolygon.objects.create(geom=Polygon(((3, 3), (3, 4), (4, 4), (3, 3))))
+    #     AtomicPolygon.objects.create(geom=Polygon(((3, 3), (3, 4), (4, 4), (3, 3))))
 
-        self.assertEqual(AtomicPolygon.objects.count(), 2)
+    #     self.assertEqual(AtomicPolygon.objects.count(), 2)
 
-    def test_model_can_not_create_ap(self):
-        """
-        Ensure the AtomicPolygon validations work
-        """
+    # def test_model_can_not_create_ap(self):
+    #     """
+    #     Ensure the AtomicPolygon validations work
+    #     """
 
-        # Geometry type validation
-        with self.assertRaises(ValidationError):
-            AtomicPolygon.objects.create(geom=Point(2.5, 2.5))
+    #     # Geometry type validation
+    #     with self.assertRaises(ValidationError):
+    #         AtomicPolygon.objects.create(geom=Point(2.5, 2.5))
 
-        # Non overlapping childless AP constraint
-        with self.assertRaises(ValidationError):
-            AtomicPolygon.objects.create(geom=Polygon(((1, 1), (1, 3), (2, 2), (1, 1))))
+    #     # Non overlapping childless AP constraint
+    #     with self.assertRaises(ValidationError):
+    #         AtomicPolygon.objects.create(geom=Polygon(((1, 1), (1, 3), (2, 2), (1, 1))))
 
     def test_model_can_create_stv(self):
         """
         Ensure we can create SpacetimeVolumes
         """
 
-        alsace = SpacetimeVolume.objects.create(
+        SpacetimeVolume.objects.create(
             start_date=JD_0001,
             end_date=JD_0002,
             entity=self.france,
             references=["ref"],
             visual_center=Point(1.2, 1.8),
+            territory=Polygon(((1, 1), (1, 2), (2, 2), (1, 1))),
         )
-        alsace.territory.add(self.alsace_geom)
 
         self.assertTrue(
-            SpacetimeVolume.objects.filter(territory__in=[self.alsace_geom]).exists()
+            SpacetimeVolume.objects.filter(
+                territory=Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
+            ).exists()
         )
 
         self.assertEqual(
             str(
-                SpacetimeVolume.objects.filter(territory__in=[self.alsace_geom])[
-                    0
-                ].visual_center
+                SpacetimeVolume.objects.filter(
+                    territory=Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
+                )[0].visual_center
             ),
             "SRID=4326;POINT (1.2 1.8)",
         )
@@ -250,6 +246,7 @@ class ModelTest(TestCase):
                 entity=self.france,
                 references=["ref"],
                 visual_center=Point(2, 2),
+                territory=Polygon(((1, 1), (1, 2), (2, 2), (1, 1))),
             )
             SpacetimeVolume.objects.create(
                 start_date=JD_0002,
@@ -257,6 +254,26 @@ class ModelTest(TestCase):
                 entity=self.france,
                 references=["ref"],
                 visual_center=Point(1, 1),
+                territory=Polygon(((3, 3), (3, 4), (4, 4), (3, 3))),
+            )
+
+        # Ensure that polygons of different TEs are not overlapped in the same time frame.
+        with self.assertRaises(ValidationError):
+            SpacetimeVolume.objects.create(
+                start_date=JD_0003,
+                end_date=JD_0004,
+                entity=self.british_empire,
+                references=["ref"],
+                visual_center=Point(2, 2),
+                territory=Polygon(((6, 6), (6, 7), (7, 7), (6, 6))),
+            )
+            SpacetimeVolume.objects.create(
+                start_date=JD_0002,
+                end_date=JD_0004,
+                entity=self.italy,
+                references=["ref"],
+                visual_center=Point(1, 1),
+                territory=Polygon(((6, 6), (6, 7), (7, 7), (6, 6))),
             )
 
     def test_model_can_create_narrative(self):
@@ -393,11 +410,6 @@ class APITest(APITestCase):
         cls.alsace = TerritorialEntityFactory(wikidata_id=30, color=1, admin_level=3)
         cls.lorraine = TerritorialEntityFactory(wikidata_id=31, color=1, admin_level=3)
 
-        # AtomicPolygons
-        cls.alsace_geom = AtomicPolygonFactory(
-            geom=Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
-        )
-
         # PoliticalRelations
         cls.EU_germany = PoliticalRelationFactory(
             parent=cls.european_union,
@@ -422,8 +434,8 @@ class APITest(APITestCase):
             entity=cls.france,
             references=["ref"],
             visual_center=Point(1.2, 1.8),
+            territory=Polygon(((1, 1), (1, 2), (2, 2), (1, 1))),
         )
-        cls.alsace_stv.territory.add(cls.alsace_geom)
 
         # Narratives
         cls.norman_conquest = NarrativeFactory(
@@ -623,47 +635,47 @@ class APITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["event_type"], CachedData.BATTLE)
 
-    def test_api_can_create_ap(self):
-        """
-        Ensure we can create AtomicPolygons
-        """
+    # def test_api_can_create_ap(self):
+    #     """
+    #     Ensure we can create AtomicPolygons
+    #     """
 
-        url = reverse("atomicpolygon-list")
-        data = {"geom": "POLYGON((3 3, 3 4, 4 4, 3 3))"}
-        response = self.client.post(url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(AtomicPolygon.objects.count(), 2)
+    #     url = reverse("atomicpolygon-list")
+    #     data = {"geom": "POLYGON((3 3, 3 4, 4 4, 3 3))"}
+    #     response = self.client.post(url, data, format="json")
+    #     self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    #     self.assertEqual(AtomicPolygon.objects.count(), 2)
 
-    def test_api_can_update_ap(self):
-        """
-        Ensure we can update AtomicPolygon
-        """
+    # def test_api_can_update_ap(self):
+    #     """
+    #     Ensure we can update AtomicPolygon
+    #     """
 
-        url = reverse("atomicpolygon-detail", args=[self.alsace_geom.pk])
-        data = {"geom": "POLYGON((3 3, 3 4, 4 4, 3 3))"}
-        response = self.client.put(url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["id"], self.alsace_geom.pk)
+    #     url = reverse("atomicpolygon-detail", args=[self.alsace_geom.pk])
+    #     data = {"geom": "POLYGON((3 3, 3 4, 4 4, 3 3))"}
+    #     response = self.client.put(url, data, format="json")
+    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
+    #     self.assertEqual(response.data["id"], self.alsace_geom.pk)
 
-    def test_api_can_query_aps(self):
-        """
-        Ensure we can query for all AtomicPolygons
-        """
+    # def test_api_can_query_aps(self):
+    #     """
+    #     Ensure we can query for all AtomicPolygons
+    #     """
 
-        url = reverse("atomicpolygon-list-fast")
-        response = self.client.get(url, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]["id"], self.alsace_geom.pk)
+    #     url = reverse("atomicpolygon-list-fast")
+    #     response = self.client.get(url, format="json")
+    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
+    #     self.assertEqual(response.data[0]["id"], self.alsace_geom.pk)
 
-    def test_api_can_query_ap(self):
-        """
-        Ensure we can query for individual AtomicPolygons
-        """
+    # def test_api_can_query_ap(self):
+    #     """
+    #     Ensure we can query for individual AtomicPolygons
+    #     """
 
-        url = reverse("atomicpolygon-detail", args=[self.alsace_geom.pk])
-        response = self.client.get(url, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["id"], self.alsace_geom.pk)
+    #     url = reverse("atomicpolygon-detail", args=[self.alsace_geom.pk])
+    #     response = self.client.get(url, format="json")
+    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
+    #     self.assertEqual(response.data["id"], self.alsace_geom.pk)
 
     def test_api_can_create_stv(self):
         """
@@ -676,7 +688,7 @@ class APITest(APITestCase):
             "end_date": JD_0002,
             "entity": self.germany.pk,
             "references": ["ref"],
-            "territory": [self.alsace_geom.pk],
+            "territory": "POLYGON((3 3, 3 4, 4 4, 3 3))",
             "visual_center": "POINT(1.2 1.8)",
         }
         response = self.client.post(url, data, format="json")
@@ -695,7 +707,7 @@ class APITest(APITestCase):
             "end_date": JD_0005,
             "entity": self.france.pk,
             "references": ["ref"],
-            "territory": [self.alsace_geom.pk],
+            "territory": "POLYGON((1 1, 1 2, 2 2, 1 1))",
             "visual_center": "POINT (0.7 0.7)",
         }
         response = self.client.put(url, data, format="json")

@@ -31,7 +31,6 @@ from .models import (
     PoliticalRelation,
     CachedData,
     City,
-    AtomicPolygon,
     SpacetimeVolume,
     Narrative,
     MapSettings,
@@ -42,7 +41,6 @@ from .serializers import (
     PoliticalRelationSerializer,
     CachedDataSerializer,
     CitySerializer,
-    AtomicPolygonSerializer,
     SpacetimeVolumeSerializer,
     NarrativeSerializer,
     MapSettingsSerializer,
@@ -97,32 +95,6 @@ class CityViewSet(viewsets.ModelViewSet):
 
     queryset = City.objects.all()
     serializer_class = CitySerializer
-
-
-class AtomicPolygonViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for AtomicPolygons
-    """
-
-    queryset = AtomicPolygon.objects.all()
-    serializer_class = AtomicPolygonSerializer
-
-    def list(self, request):  # pylint: disable=W0221
-        """
-        Redirect to the function view for increased performance
-        """
-        return HttpResponseRedirect(reverse("spacetimevolume-list-fast"))
-
-
-@api_view(["GET"])
-@silk_profile(name="AtomicPolyNoSer")
-def get_aps(request):
-    """
-    List view for APs, optimized for speed
-    """
-
-    data = AtomicPolygon.objects.values("id", "geom")
-    return Response(data)
 
 
 class SpacetimeVolumeViewSet(viewsets.ModelViewSet):

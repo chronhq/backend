@@ -21,7 +21,6 @@ import factory
 
 from .models import (
     TerritorialEntity,
-    AtomicPolygon,
     PoliticalRelation,
     CachedData,
     SpacetimeVolume,
@@ -39,15 +38,6 @@ class TerritorialEntityFactory(factory.django.DjangoModelFactory):
 
     class Meta:  # pylint: disable=C0111
         model = TerritorialEntity
-
-
-class AtomicPolygonFactory(factory.django.DjangoModelFactory):
-    """
-    Factory for the AtomicPolygon model
-    """
-
-    class Meta:  # pylint: disable=C0111
-        model = AtomicPolygon
 
 
 class PoliticalRelationFactory(factory.django.DjangoModelFactory):
