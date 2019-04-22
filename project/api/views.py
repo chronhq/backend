@@ -105,7 +105,7 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
     queryset = (
         SpacetimeVolume.objects.all()
         .select_related("entity")
-        .prefetch_related("related_events", "territory")
+        .prefetch_related("related_events")
         .defer("visual_center")
     )
     serializer_class = SpacetimeVolumeSerializer

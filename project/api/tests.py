@@ -682,7 +682,7 @@ class APITest(APITestCase):
         Ensure we can create SpacetimeVolumes
         """
 
-        url = "/api/spacetime-volumes/"  # reverse("spacetimevolume-list")
+        url = reverse("spacetimevolume-list")
         data = {
             "start_date": JD_0001,
             "end_date": JD_0002,
