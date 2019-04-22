@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import datetime
+import json
 from math import ceil
 from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import Point, Polygon, MultiPoint
@@ -25,6 +27,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from jdcal import gcal2jd
+from jose import jwt
 
 from .factories import (
     TerritorialEntityFactory,
@@ -58,9 +61,25 @@ JD_0005 = ceil(sum(gcal2jd(5, 1, 1))) + 0.0
 
 # Helpers
 def getUserToken():
-    jwt.encode(
-        developerClaims, certificateObject.private_key, audience=project_id
+    with open("../config/firebase.json") as cert_file:
+        cert = json.load(cert_file)
+
+    developer_claims = {
+        "one": "uno",
+        "two": "dos",
+        "aud": cert["project_id"],
+        "exp": datetime.utcnow() + 60 * 60,
+        "iss": "https://securetoken.google.com/" + cert["project_id"],
+        "sub": "someUid",
+    }
+
+    return jwt.encode(
+        developer_claims,
+        cert["private_key"],
+        algorithm="RS256",
+        headers={"kid": cert["private_key_id"]},
     )
+
 
 # Tests
 class ModelTest(TestCase):
@@ -487,6 +506,7 @@ class APITest(APITestCase):
 
         url = reverse("territorialentity-list")
         data = {"wikidata_id": 9, "color": "#fff", "admin_level": 4}
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + getUserToken())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(TerritorialEntity.objects.count(), 11)
