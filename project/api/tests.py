@@ -56,6 +56,12 @@ JD_0003 = ceil(sum(gcal2jd(3, 1, 1))) + 0.0
 JD_0004 = ceil(sum(gcal2jd(4, 1, 1))) + 0.0
 JD_0005 = ceil(sum(gcal2jd(5, 1, 1))) + 0.0
 
+# Helpers
+def getUserToken():
+    jwt.encode(
+        developerClaims, certificateObject.private_key, audience=project_id
+    )
+
 # Tests
 class ModelTest(TestCase):
     """
