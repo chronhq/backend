@@ -24,7 +24,6 @@ from django.contrib.postgres.aggregates.general import ArrayAgg
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from silk.profiling.profiler import silk_profile
 
 from .models import (
     TerritorialEntity,
@@ -36,7 +35,7 @@ from .models import (
     Narrative,
     MapSettings,
     Narration,
-    Profile
+    Profile,
 )
 from .serializers import (
     TerritorialEntitySerializer,
@@ -48,8 +47,9 @@ from .serializers import (
     NarrativeSerializer,
     MapSettingsSerializer,
     NarrationSerializer,
-    ProfileSerializer
+    ProfileSerializer,
 )
+from .permissions import IsUserOrReadOnly
 
 
 class TerritorialEntityViewSet(viewsets.ModelViewSet):
@@ -287,3 +287,4 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
+    permission_classes = (IsUserOrReadOnly,)

@@ -35,7 +35,7 @@ from .models import (
     Narrative,
     MapSettings,
     Narration,
-    Profile
+    Profile,
 )
 
 
