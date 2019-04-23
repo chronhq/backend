@@ -17,9 +17,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import datetime
 import json
 from math import ceil
+from time import time
 from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import Point, Polygon, MultiPoint
 from django.test import TestCase
@@ -68,7 +68,7 @@ def getUserToken():
         "one": "uno",
         "two": "dos",
         "aud": cert["project_id"],
-        "exp": datetime.utcnow() + 60 * 60,
+        "exp": int(time()) + 60 * 60,
         "iss": "https://securetoken.google.com/" + cert["project_id"],
         "sub": "someUid",
     }
