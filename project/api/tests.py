@@ -662,16 +662,6 @@ class APITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["end_date"], str(JD_0005))
 
-    def test_api_can_query_stvs(self):
-        """
-        Ensure we can query for all SpacetimeVolumes
-        """
-
-        url = reverse("spacetimevolume-list-fast")
-        response = self.client.get(url, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]["end_date"], JD_0002)
-
     def test_api_can_query_stv(self):
         """
         Ensure we can query for individual SpacetimeVolumes

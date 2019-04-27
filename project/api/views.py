@@ -18,13 +18,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.db import connection
-from django.http import Http404, HttpResponse, HttpResponseRedirect
-from django.urls import reverse
-from django.contrib.postgres.aggregates.general import ArrayAgg
+from django.http import Http404, HttpResponse
 from rest_framework import viewsets
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from silk.profiling.profiler import silk_profile
 
 from .models import (
     TerritorialEntity,
@@ -109,29 +104,6 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         .defer("visual_center")
     )
     serializer_class = SpacetimeVolumeSerializer
-
-    def list(self, request):  # pylint: disable=W0221
-        """
-        Redirect to the function view for increased performance
-        """
-        return HttpResponseRedirect(reverse("spacetimevolume-list-fast"))
-
-
-@api_view(["GET"])
-@silk_profile(name="SpacetimeVolumeNoSer")
-def get_stvs(request):
-    """
-    List view for STVs, optimized for speed
-    """
-
-    data = (
-        SpacetimeVolume.objects.select_related("entity")
-        .prefetch_related("territory", "related_events")
-        .values("id", "start_date", "end_date", "entity", "references")
-        .annotate(territory=ArrayAgg("territory"))
-        .annotate(related_events=ArrayAgg("related_events"))
-    )
-    return Response(data)
 
 
 class NarrativeViewSet(viewsets.ModelViewSet):

@@ -48,6 +48,5 @@ urlpatterns = [
         views.mvt_narration_events,
         name="mvt-narrationevents",
     ),
-    path("spacetime-volumes/all/", views.get_stvs, name="spacetimevolume-list-fast"),
     path("", include(ROUTER.urls)),
 ]
