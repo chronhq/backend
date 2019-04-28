@@ -27,7 +27,6 @@ ROUTER.register(r"territorial-entities", views.TerritorialEntityViewSet)
 ROUTER.register(r"political-relations", views.PoliticalRelationViewSet)
 ROUTER.register(r"cached-data", views.CachedDataViewSet)
 ROUTER.register(r"cities", views.CityViewSet)
-ROUTER.register(r"atomic-polygons", views.AtomicPolygonViewSet)
 ROUTER.register(r"spacetime-volumes", views.SpacetimeVolumeViewSet)
 ROUTER.register(r"narratives", views.NarrativeViewSet)
 ROUTER.register(r"map-settings", views.MapSettingsViewSet)
@@ -49,7 +48,5 @@ urlpatterns = [
         views.mvt_narration_events,
         name="mvt-narrationevents",
     ),
-    path("spacetime-volumes/all/", views.get_stvs, name="spacetimevolume-list-fast"),
-    path("atomic-polygons/all/", views.get_stvs, name="atomicpolygon-list-fast"),
     path("", include(ROUTER.urls)),
 ]

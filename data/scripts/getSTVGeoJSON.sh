@@ -35,8 +35,8 @@ function feature() {
     SELECT jsonb_build_object(
       'type',       'Feature',
       'id',         id,
-      'geometry',   ST_AsGeoJSON(geom)::json,
-      'properties', to_jsonb(row) - 'geom'
+      'geometry',   ST_AsGeoJSON(territory)::json,
+      'properties', to_jsonb(row) - 'territory'
     ) FROM (
       SELECT
         api_spacetimevolume.id,
@@ -44,15 +44,11 @@ function feature() {
         api_spacetimevolume.end_date,
         api_spacetimevolume.references,
         ST_AsGeoJSON(api_spacetimevolume.visual_center)::json as visual_center,
-        geom.geom,
+        api_spacetimevolume.territory,
+        api_spacetimevolume.entity_id,
         api_territorialentity.wikidata_id, api_territorialentity.color,
         api_territorialentity.admin_level
         FROM api_spacetimevolume
-        JOIN (
-            SELECT ST_COLLECT(geom) AS geom, spacetimevolume_id as id FROM api_spacetimevolume_territory
-            JOIN api_atomicpolygon ON atomicpolygon_id = api_atomicpolygon.id
-            GROUP BY (spacetimevolume_id)
-        ) as geom ON geom.id = api_spacetimevolume.id
         JOIN api_territorialentity ON api_spacetimevolume.entity_id = api_territorialentity.id
         WHERE api_spacetimevolume.id = $target
       ) row;
