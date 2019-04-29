@@ -307,7 +307,7 @@ class MapSettings(models.Model):
 
 class Narration(OrderedModel):
     """
-    Each point of narration inside a narrative commenting on events.
+    Each point of narration inside a narrative, commenting on events.
     """
 
     narrative = models.ForeignKey(Narrative, on_delete=models.CASCADE)
@@ -325,17 +325,27 @@ class Narration(OrderedModel):
 
 
 class Profile(models.Model):
+    """
+    Optional profile fields, 1-1 with User instances
+    """
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     location = models.PointField(blank=True, null=True)
     votes = JSONField(default=dict, blank=True)
 
 
 @receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
+def create_user_profile(sender, instance, created, **kwargs):  # pylint: disable=W0613
+    """
+    Creates user profile on post_save for a new User instance
+    """
     if created:
         Profile.objects.create(user=instance)
 
 
 @receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
+def save_user_profile(sender, instance, **kwargs):  # pylint: disable=W0613
+    """
+    Saves user profile on post_save for User
+    """
     instance.profile.save()

@@ -17,17 +17,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import json
+import os
 from math import ceil
-from time import time
+import requests
 from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import Point, Polygon, MultiPoint
 from django.test import TestCase
 from django.urls import reverse
+from firebase_admin import auth
 from rest_framework import status
 from rest_framework.test import APITestCase
 from jdcal import gcal2jd
-from jose import jwt
 
 from .factories import (
     TerritorialEntityFactory,
@@ -60,25 +60,35 @@ JD_0004 = ceil(sum(gcal2jd(4, 1, 1))) + 0.0
 JD_0005 = ceil(sum(gcal2jd(5, 1, 1))) + 0.0
 
 # Helpers
-def getUserToken():
-    with open("../config/firebase.json") as cert_file:
-        cert = json.load(cert_file)
+def memoize(function):  # https://stackoverflow.com/a/815160/
+    """
+    Decorator to memoize a function return
+    """
+    memo = {}
 
-    developer_claims = {
-        "one": "uno",
-        "two": "dos",
-        "aud": cert["project_id"],
-        "exp": int(time()) + 60 * 60,
-        "iss": "https://securetoken.google.com/" + cert["project_id"],
-        "sub": "someUid",
-    }
+    def wrapper(*args):
+        if args in memo:
+            return memo[args]
+        new_func = function(*args)
+        memo[args] = new_func
+        return new_func
 
-    return jwt.encode(
-        developer_claims,
-        cert["private_key"],
-        algorithm="RS256",
-        headers={"kid": cert["private_key_id"]},
-    )
+    return wrapper
+
+
+@memoize
+def get_user_token():
+    """
+    Returns an idToken for a given UID
+    """
+    custom_token = auth.create_custom_token(os.environ.get("TEST_USER_UID"))
+    return requests.post(
+        (
+            "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyCustomToken?key="
+            f"{os.environ.get('CLIENT_API_KEY')}"
+        ),
+        json={"token": str(custom_token.decode("UTF-8")), "returnSecureToken": True},
+    ).json()["idToken"]
 
 
 # Tests
@@ -506,7 +516,7 @@ class APITest(APITestCase):
 
         url = reverse("territorialentity-list")
         data = {"wikidata_id": 9, "color": "#fff", "admin_level": 4}
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + getUserToken())
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(TerritorialEntity.objects.count(), 11)
@@ -519,6 +529,7 @@ class APITest(APITestCase):
 
         url = reverse("territorialentity-detail", args=[self.european_union.pk])
         data = {"wikidata_id": 10, "color": "#fff", "admin_level": 5}
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["admin_level"], 5)
@@ -556,6 +567,7 @@ class APITest(APITestCase):
             "child": self.france.pk,
             "control_type": PoliticalRelation.GROUP,
         }
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(PoliticalRelation.objects.count(), 2)
@@ -576,6 +588,7 @@ class APITest(APITestCase):
             "child": self.france.pk,
             "control_type": PoliticalRelation.GROUP,
         }
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["control_type"], PoliticalRelation.GROUP)
@@ -612,6 +625,7 @@ class APITest(APITestCase):
             "date": JD_0001,
             "event_type": CachedData.DOCUMENT,
         }
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(CachedData.objects.count(), 2)
@@ -629,6 +643,7 @@ class APITest(APITestCase):
             "date": JD_0001,
             "event_type": 555,
         }
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(CachedData.objects.count(), 2)
@@ -646,6 +661,7 @@ class APITest(APITestCase):
             "date": JD_0001,
             "event_type": CachedData.DOCUMENT,
         }
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["event_type"], CachedData.DOCUMENT)
@@ -726,6 +742,7 @@ class APITest(APITestCase):
             "territory": [self.alsace_geom.pk],
             "visual_center": "POINT(1.2 1.8)",
         }
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(SpacetimeVolume.objects.count(), 2)
@@ -745,6 +762,7 @@ class APITest(APITestCase):
             "territory": [self.alsace_geom.pk],
             "visual_center": "POINT (0.7 0.7)",
         }
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["end_date"], str(JD_0005))
@@ -782,6 +800,7 @@ class APITest(APITestCase):
             "description": "This is a test narrative for automated testing.",
             "tags": ["test", "tags"],
         }
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Narrative.objects.count(), 2)
@@ -800,6 +819,7 @@ class APITest(APITestCase):
             "description": "This is a test narrative for automated testing.",
             "tags": ["test", "tags"],
         }
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["author"], "Other Test Author")
@@ -831,6 +851,7 @@ class APITest(APITestCase):
 
         url = reverse("mapsettings-list")
         data = {"bbox": "MULTIPOINT ((0 0), (1 1))", "zoom_min": 1, "zoom_max": 13}
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(MapSettings.objects.count(), 2)
@@ -843,6 +864,7 @@ class APITest(APITestCase):
 
         url = reverse("mapsettings-detail", args=[self.norman_conquest_settings.pk])
         data = {"bbox": "MULTIPOINT ((0 0), (1 1))", "zoom_min": 5, "zoom_max": 13}
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["zoom_min"], 5)
@@ -882,6 +904,7 @@ class APITest(APITestCase):
             "settings": self.norman_conquest_settings.pk,
             "attached_events_ids": [self.hastings.pk],
         }
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Narration.objects.count(), 2)
@@ -902,6 +925,7 @@ class APITest(APITestCase):
             "settings": self.norman_conquest_settings.pk,
             "attached_events_ids": [self.hastings.pk],
         }
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["title"], "Test Narration 2")
@@ -938,6 +962,7 @@ class APITest(APITestCase):
             "location": "POINT (10 10)",
             "inception_date": JD_0001,
         }
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(City.objects.count(), 2)
@@ -955,6 +980,7 @@ class APITest(APITestCase):
             "location": "POINT (10 10)",
             "inception_date": JD_0001,
         }
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["label"], "London")

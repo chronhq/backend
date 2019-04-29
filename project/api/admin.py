@@ -29,7 +29,7 @@ from .models import (
     Narrative,
     MapSettings,
     City,
-    Profile
+    Profile,
 )
 
 # Register your models here.
