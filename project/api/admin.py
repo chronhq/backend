@@ -22,7 +22,6 @@ from django.contrib import admin
 from .models import (
     TerritorialEntity,
     PoliticalRelation,
-    AtomicPolygon,
     SpacetimeVolume,
     CachedData,
     Narration,
@@ -35,7 +34,6 @@ from .models import (
 # Register your models here.
 admin.site.register(TerritorialEntity)
 admin.site.register(PoliticalRelation)
-admin.site.register(AtomicPolygon)
 admin.site.register(SpacetimeVolume)
 admin.site.register(CachedData)
 admin.site.register(Narration)

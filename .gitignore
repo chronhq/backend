@@ -141,6 +141,7 @@ venv.bak/
 django.env
 postgres.env
 mbtiles.env
+auth.env
 
 # docs
 project/graph.svg

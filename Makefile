@@ -47,7 +47,7 @@ graph: ## Builds a UML class diagram of the models
 
 # Misc
 test: ## Builds, starts, and runs containers, running the django tests
-	docker-compose run --service-ports web sh init.sh python manage.py test
+	docker-compose run --service-ports web sh init.sh python manage.py test --debug-mode
 
 exec_test: ## Executes django tests in a running container
 	docker-compose exec web python manage.py test --debug-mode
@@ -72,12 +72,6 @@ admin: ## Creates a super user based on the values supplied in the configuration
 	docker-compose exec web ./manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('$(ADMIN_USER)', '$(ADMIN_EMAIL)', '$(ADMIN_PASS)')"
 
 # Geometry
-mvt-ap: ## Generates mbtiles for APs
-	docker-compose exec db bash /docker-entrypoint-initdb.d/scripts/getAPGeoJSON.sh
-	docker-compose exec mbtiles bash /scripts/buildMVT.sh ap
-	docker-compose exec mbtiles /bin/rm -f /root/mbtiles/ap.mbtiles
-	docker-compose restart mbtiles
-	docker-compose exec mbtiles /bin/mv /tmp/ap.mbtiles /root/mbtiles/ap.mbtiles
 
 mvt-stv: ## Generates mbtiles for STVs
 	docker-compose exec db bash /docker-entrypoint-initdb.d/scripts/getSTVGeoJSON.sh
