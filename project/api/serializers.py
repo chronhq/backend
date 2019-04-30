@@ -37,6 +37,28 @@ from .models import (
 )
 
 
+class SpacetimeVolumeSerializerNoTerritory(ModelSerializer):
+    """
+    Serializes the SpacetimeVolume model without territory
+    """
+
+    class Meta:
+        model = SpacetimeVolume
+        exclude = ("territory",)
+
+
+class TerritorialEntitySerializer(ModelSerializer):
+    """
+    Serializes the TerritorialEntity model
+    """
+
+    stvs = SpacetimeVolumeSerializerNoTerritory(many=True, read_only=True)
+
+    class Meta:
+        model = TerritorialEntity
+        fields = "__all__"
+
+
 class PoliticalRelationSerializer(ModelSerializer):
     """
     Serializes the PoliticalRelation model
@@ -77,18 +99,6 @@ class SpacetimeVolumeSerializer(ModelSerializer):
 
     class Meta:
         model = SpacetimeVolume
-        fields = "__all__"
-
-
-class TerritorialEntitySerializer(ModelSerializer):
-    """
-    Serializes the TerritorialEntity model
-    """
-
-    stvs = SpacetimeVolumeSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = TerritorialEntity
         fields = "__all__"
 
 
