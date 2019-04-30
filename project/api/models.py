@@ -190,7 +190,7 @@ class SpacetimeVolume(models.Model):
     start_date = models.DecimalField(decimal_places=1, max_digits=10)
     end_date = models.DecimalField(decimal_places=1, max_digits=10)
     territory = models.GeometryField()
-    entity = models.ForeignKey(TerritorialEntity, on_delete=models.CASCADE)
+    entity = models.ForeignKey(TerritorialEntity, on_delete=models.CASCADE, related_name="stvs")
     references = ArrayField(models.TextField(max_length=500))
     visual_center = models.PointField()
     related_events = models.ManyToManyField(CachedData, blank=True)
