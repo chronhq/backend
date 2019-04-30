@@ -84,6 +84,7 @@ class TerritorialEntitySerializer(ModelSerializer):
     """
     Serializes the TerritorialEntity model
     """
+
     stvs = SpacetimeVolumeSerializer(many=True, read_only=True)
 
     class Meta:
