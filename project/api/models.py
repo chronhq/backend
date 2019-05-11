@@ -34,6 +34,8 @@ class TerritorialEntity(models.Model):
 
     wikidata_id = models.PositiveIntegerField()  # Excluding the Q
     color = ColorField()
+    inception_date = models.DecimalField(decimal_places=1, max_digits=10)
+    dissolution_date = models.DecimalField(decimal_places=1, max_digits=10)
     admin_level = models.PositiveIntegerField()
     relations = models.ManyToManyField(
         "self",
@@ -43,6 +45,12 @@ class TerritorialEntity(models.Model):
         related_name="political_relations",
     )
     history = HistoricalRecords()
+
+    def clean(self, *args, **kwargs):  # pylint: disable=W0221
+        if self.inception_date > self.dissolution_date:
+            raise ValidationError("Inception date cannot be later than dissolution date")
+
+        super(PoliticalRelation, self).clean(*args, **kwargs)
 
     def get_children(self):
         """
