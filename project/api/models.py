@@ -33,10 +33,12 @@ class TerritorialEntity(models.Model):
     """
 
     wikidata_id = models.PositiveIntegerField()  # Excluding the Q
+    label = models.TextField(max_length=90)
     color = ColorField()
+    admin_level = models.PositiveIntegerField()
     inception_date = models.DecimalField(decimal_places=1, max_digits=10)
     dissolution_date = models.DecimalField(decimal_places=1, max_digits=10)
-    admin_level = models.PositiveIntegerField()
+
     relations = models.ManyToManyField(
         "self",
         blank=True,
