@@ -1,0 +1,16 @@
+version: '3'
+services:
+  db:
+    container_name: postgres01
+    ports:
+      - '25432:5432'
+  nginx:
+    container_name: nginx01
+    ports:
+      - '80:80'
+    volumes:
+      - ./config/nginx.dev:/etc/nginx/conf.d
+  web:
+    container_name: django01
+    environment:
+      - ENV=dev

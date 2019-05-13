@@ -1,0 +1,25 @@
+language: python
+
+sudo: required
+
+python:
+  - '3.6'
+
+services:
+  - docker
+
+install:
+  - mv django.env.sample django.env
+  - mv postgres.env.sample postgres.env
+  - mv mbtiles.env.sample mbtiles.env
+  - docker-compose build
+
+script:
+  - docker-compose run web black . --exclude /migrations/ --diff --check
+  - docker-compose run web pylint ./api/
+  - docker-compose run -e ENV=dev web ash init.sh python manage.py test --debug-mode
+
+branches:
+  only:
+    - staging
+    - trying

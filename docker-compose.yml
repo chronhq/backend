@@ -1,0 +1,48 @@
+version: '3'
+services:
+  db:
+    image: mdillon/postgis:10-alpine
+    ports:
+      - '5432'
+    env_file:
+      - postgres.env
+      - mbtiles.env
+    volumes:
+      - ./data:/docker-entrypoint-initdb.d
+  nginx:
+    image: nginx:1.13-alpine
+    volumes:
+      - ./project:/src
+    depends_on:
+      - web
+  web:
+    build: .
+    depends_on:
+      - db
+    volumes:
+      - ./project:/src
+    expose:
+      - '80'
+    ports:
+      - '8006:81'
+    env_file:
+      - django.env
+      - postgres.env
+    restart: always
+  redis:
+    restart: always
+    image: redis:alpine
+    expose:
+      - '6379'
+  mbtiles:
+    env_file:
+      - mbtiles.env
+    build:
+      context: .
+      dockerfile: Dockerfile.mbtiles
+    ports:
+    - "5000:5000"
+    volumes:
+    - ./data/mbtiles:/root/mbtiles
+    - ./data/scripts:/scripts
+    - ./data/data:/data
