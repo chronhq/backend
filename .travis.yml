@@ -13,11 +13,15 @@ install:
   - mv postgres.env.sample postgres.env
   - mv mbtiles.env.sample mbtiles.env
   - docker-compose build
+  - pip install -r ./microservices/requirements.txt
 
 script:
   - docker-compose run web black . --exclude /migrations/ --diff --check
   - docker-compose run web pylint ./api/
   - docker-compose run -e ENV=dev web ash init.sh python manage.py test --debug-mode
+  - black ./microservices --diff --check
+  - cd microservices && pylint_runner
+
 
 branches:
   only:
