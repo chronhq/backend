@@ -291,6 +291,23 @@ class MapSettings(models.Model):
         super(MapSettings, self).save(*args, **kwargs)
 
 
+class Vote(models.Model):
+    """
+    Abstract class to store User votes
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    model = models.ForeignKey(, on_delete=models.CASCADE)
+    vote = models.BooleanField()
+
+    class Meta:
+        abstract = True
+
+class NarrativeVote(Vote):
+    """
+    Stores votes for Narratives
+    """
+
 class Narration(OrderedModel):
     """
     Each point of narration inside a narrative, commenting on events.
@@ -318,7 +335,6 @@ class Profile(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     location = models.PointField(blank=True, null=True)
-    votes = JSONField(default=dict, blank=True)
 
 
 @receiver(post_save, sender=User)
