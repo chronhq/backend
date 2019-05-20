@@ -1,5 +1,5 @@
 black~=19.3b0
-django-extensions~=2.1.6
+django-extensions~=2.1.7
 Django~=2.2
 gunicorn~=19.9.0
 ipython~=7.5.0
