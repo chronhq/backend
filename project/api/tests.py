@@ -67,23 +67,87 @@ class ModelTest(TestCase):
         """
 
         cls.european_union = TerritorialEntityFactory(
-            wikidata_id=10, label='European Union', color=1, admin_level=1, inception_date=0, dissolution_date=1
+            wikidata_id=10,
+            label="European Union",
+            color=1,
+            admin_level=1,
+            inception_date=0,
+            dissolution_date=1,
         )
-        cls.nato = TerritorialEntityFactory(wikidata_id=11, label='NATO', color=1, admin_level=1, inception_date=0, dissolution_date=1)
+        cls.nato = TerritorialEntityFactory(
+            wikidata_id=11,
+            label="NATO",
+            color=1,
+            admin_level=1,
+            inception_date=0,
+            dissolution_date=1,
+        )
 
-        cls.germany = TerritorialEntityFactory(wikidata_id=20, label='Germany', color=1, admin_level=2, inception_date=0, dissolution_date=1)
-        cls.france = TerritorialEntityFactory(wikidata_id=21, label='France', color=1, admin_level=2, inception_date=0, dissolution_date=1)
-        cls.spain = TerritorialEntityFactory(wikidata_id=22, label='Spain', color=1, admin_level=2, inception_date=0, dissolution_date=1)
-        cls.italy = TerritorialEntityFactory(wikidata_id=23, label='Italy', color=1, admin_level=2, inception_date=0, dissolution_date=1)
+        cls.germany = TerritorialEntityFactory(
+            wikidata_id=20,
+            label="Germany",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
+        )
+        cls.france = TerritorialEntityFactory(
+            wikidata_id=21,
+            label="France",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
+        )
+        cls.spain = TerritorialEntityFactory(
+            wikidata_id=22,
+            label="Spain",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
+        )
+        cls.italy = TerritorialEntityFactory(
+            wikidata_id=23,
+            label="Italy",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
+        )
         cls.british_empire = TerritorialEntityFactory(
-            wikidata_id=24, label='British Empire', color=1, admin_level=2, inception_date=0, dissolution_date=1
+            wikidata_id=24,
+            label="British Empire",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
         )
         cls.british_hk = TerritorialEntityFactory(
-            wikidata_id=25, label='British HK', color=1, admin_level=2, inception_date=0, dissolution_date=1
+            wikidata_id=25,
+            label="British HK",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
         )
 
-        cls.alsace = TerritorialEntityFactory(wikidata_id=30, label='Alsace', color=1, admin_level=3, inception_date=0, dissolution_date=1)
-        cls.lorraine = TerritorialEntityFactory(wikidata_id=31, label='Lorraine', color=1, admin_level=3, inception_date=0, dissolution_date=1)
+        cls.alsace = TerritorialEntityFactory(
+            wikidata_id=30,
+            label="Alsace",
+            color=1,
+            admin_level=3,
+            inception_date=0,
+            dissolution_date=1,
+        )
+        cls.lorraine = TerritorialEntityFactory(
+            wikidata_id=31,
+            label="Lorraine",
+            color=1,
+            admin_level=3,
+            inception_date=0,
+            dissolution_date=1,
+        )
 
     def test_model_can_create_te(self):
         """
@@ -91,9 +155,15 @@ class ModelTest(TestCase):
         """
 
         test_te = TerritorialEntity.objects.create(
-            wikidata_id=9, label='test TE', color=2, admin_level=4, inception_date=0, dissolution_date=1
+            wikidata_id=9,
+            label="test TE",
+            color=2,
+            admin_level=4,
+            inception_date=0,
+            dissolution_date=1,
         )
         test_te.save()
+        test_te.predecessor.add(self.alsace)
         self.assertTrue(TerritorialEntity.objects.filter(wikidata_id=9).exists())
 
     def test_model_can_create_pr(self):
@@ -382,23 +452,87 @@ class APITest(APITestCase):
 
         # TerritorialEntities
         cls.european_union = TerritorialEntityFactory(
-            wikidata_id=10, label='European Union', color=1, admin_level=1, inception_date=0, dissolution_date=1
+            wikidata_id=10,
+            label="European Union",
+            color=1,
+            admin_level=1,
+            inception_date=0,
+            dissolution_date=1,
         )
-        cls.nato = TerritorialEntityFactory(wikidata_id=11, label='NATO', color=1, admin_level=1, inception_date=0, dissolution_date=1)
+        cls.nato = TerritorialEntityFactory(
+            wikidata_id=11,
+            label="NATO",
+            color=1,
+            admin_level=1,
+            inception_date=0,
+            dissolution_date=1,
+        )
 
-        cls.germany = TerritorialEntityFactory(wikidata_id=20, label='Germany', color=1, admin_level=2, inception_date=0, dissolution_date=1)
-        cls.france = TerritorialEntityFactory(wikidata_id=21, label='France', color=1, admin_level=2, inception_date=0, dissolution_date=1)
-        cls.spain = TerritorialEntityFactory(wikidata_id=22, label='Spain', color=1, admin_level=2, inception_date=0, dissolution_date=1)
-        cls.italy = TerritorialEntityFactory(wikidata_id=23, label='Italy', color=1, admin_level=2, inception_date=0, dissolution_date=1)
+        cls.germany = TerritorialEntityFactory(
+            wikidata_id=20,
+            label="Germany",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
+        )
+        cls.france = TerritorialEntityFactory(
+            wikidata_id=21,
+            label="France",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
+        )
+        cls.spain = TerritorialEntityFactory(
+            wikidata_id=22,
+            label="Spain",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
+        )
+        cls.italy = TerritorialEntityFactory(
+            wikidata_id=23,
+            label="Italy",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
+        )
         cls.british_empire = TerritorialEntityFactory(
-            wikidata_id=24, label='British Empire', color=1, admin_level=2, inception_date=0, dissolution_date=1
+            wikidata_id=24,
+            label="British Empire",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
         )
         cls.british_hk = TerritorialEntityFactory(
-            wikidata_id=25, label='British HK', color=1, admin_level=2, inception_date=0, dissolution_date=1
+            wikidata_id=25,
+            label="British HK",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
         )
 
-        cls.alsace = TerritorialEntityFactory(wikidata_id=30, label='Alsace', color=1, admin_level=3, inception_date=0, dissolution_date=1)
-        cls.lorraine = TerritorialEntityFactory(wikidata_id=31, label='Lorraine', color=1, admin_level=3, inception_date=0, dissolution_date=1)
+        cls.alsace = TerritorialEntityFactory(
+            wikidata_id=30,
+            label="Alsace",
+            color=1,
+            admin_level=3,
+            inception_date=0,
+            dissolution_date=1,
+        )
+        cls.lorraine = TerritorialEntityFactory(
+            wikidata_id=31,
+            label="Lorraine",
+            color=1,
+            admin_level=3,
+            inception_date=0,
+            dissolution_date=1,
+        )
 
         # PoliticalRelations
         cls.EU_germany = PoliticalRelationFactory(
@@ -461,7 +595,14 @@ class APITest(APITestCase):
         """
 
         url = reverse("territorialentity-list")
-        data = {"wikidata_id": 9, "label": "Test TE", "color": "#fff", "admin_level": 4, "inception_date": 0, "dissolution_date": 1}
+        data = {
+            "wikidata_id": 9,
+            "label": "Test TE",
+            "color": "#fff",
+            "admin_level": 4,
+            "inception_date": 0,
+            "dissolution_date": 1,
+        }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(TerritorialEntity.objects.count(), 11)
@@ -473,7 +614,14 @@ class APITest(APITestCase):
         """
 
         url = reverse("territorialentity-detail", args=[self.european_union.pk])
-        data = {"wikidata_id": 10, "label": "Update", "color": "#fff", "admin_level": 5, "inception_date": 0, "dissolution_date": 1}
+        data = {
+            "wikidata_id": 10,
+            "label": "Update",
+            "color": "#fff",
+            "admin_level": 5,
+            "inception_date": 0,
+            "dissolution_date": 1,
+        }
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["admin_level"], 5)

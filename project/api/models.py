@@ -36,8 +36,14 @@ class TerritorialEntity(models.Model):
     label = models.TextField(max_length=90)
     color = ColorField()
     admin_level = models.PositiveIntegerField()
-    inception_date = models.DecimalField(decimal_places=1, max_digits=10)
-    dissolution_date = models.DecimalField(decimal_places=1, max_digits=10)
+    inception_date = models.DecimalField(
+        decimal_places=1, max_digits=10, blank=True, null=True
+    )
+    dissolution_date = models.DecimalField(
+        decimal_places=1, max_digits=10, blank=True, null=True
+    )
+
+    predecessor = models.ManyToManyField("self", blank=True, symmetrical=False)
 
     relations = models.ManyToManyField(
         "self",
@@ -49,10 +55,13 @@ class TerritorialEntity(models.Model):
     history = HistoricalRecords()
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
-        if self.inception_date > self.dissolution_date:
-            raise ValidationError("Inception date cannot be later than dissolution date")
+        if not self.inception_date is None and not self.dissolution_date is None:
+            if self.inception_date > self.dissolution_date:
+                raise ValidationError(
+                    "Inception date cannot be later than dissolution date"
+                )
 
-        super(PoliticalRelation, self).clean(*args, **kwargs)
+        super(TerritorialEntity, self).clean(*args, **kwargs)
 
     def get_children(self):
         """
