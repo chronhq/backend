@@ -30,6 +30,7 @@ from .models import (
     Narrative,
     MapSettings,
     Narration,
+    NarrativeVote,
     Profile,
 )
 from .serializers import (
@@ -41,7 +42,8 @@ from .serializers import (
     NarrativeSerializer,
     MapSettingsSerializer,
     NarrationSerializer,
-    ProfileSerializer,
+    NarrativeVoteSerializer,
+    ProfileSerializer
 )
 from .permissions import IsUserOrReadOnly
 
@@ -110,6 +112,15 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         .defer("visual_center")
     )
     serializer_class = SpacetimeVolumeSerializer
+
+
+class NarrativeVoteViewSet(viewsets.ModelViewSet):
+    """
+    Viewset for NarrativeVote model
+    """
+
+    queryset = NarrativeVote.objects.all()
+    serializer_class = NarrativeVoteSerializer
 
 
 class NarrativeViewSet(viewsets.ModelViewSet):

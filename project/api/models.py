@@ -260,6 +260,7 @@ class Narrative(models.Model):
     url = models.TextField(unique=True)
     description = models.TextField()
     tags = ArrayField(models.TextField(max_length=100))
+    votes = models.ManyToManyField(User, related_name="narrative_votes")
     history = HistoricalRecords()
 
 
@@ -291,23 +292,6 @@ class MapSettings(models.Model):
         super(MapSettings, self).save(*args, **kwargs)
 
 
-class Vote(models.Model):
-    """
-    Abstract class to store User votes
-    """
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    model = models.ForeignKey(, on_delete=models.CASCADE)
-    vote = models.BooleanField()
-
-    class Meta:
-        abstract = True
-
-class NarrativeVote(Vote):
-    """
-    Stores votes for Narratives
-    """
-
 class Narration(OrderedModel):
     """
     Each point of narration inside a narrative, commenting on events.
@@ -326,6 +310,26 @@ class Narration(OrderedModel):
     location = models.PointField(blank=True, null=True)
 
     order_with_respect_to = "narrative"
+
+
+class Vote(models.Model):
+    """
+    Abstract class to store User's votes
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, unique=True)
+    vote = models.BooleanField()
+
+    class Meta:
+        abstract = True
+
+
+class NarrativeVote(Vote):
+    """
+    Stores votes for Narratives. Extends Vote model
+    """
+
+    narrative = models.ForeignKey(Narrative, on_delete=models.CASCADE)
 
 
 class Profile(models.Model):
