@@ -29,6 +29,7 @@ from .models import (
     MapSettings,
     City,
     Profile,
+    NarrativeVote
 )
 
 # Register your models here.
@@ -41,3 +42,4 @@ admin.site.register(Narrative)
 admin.site.register(MapSettings)
 admin.site.register(City)
 admin.site.register(Profile)
+admin.site.register(NarrativeVote)

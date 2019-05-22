@@ -39,6 +39,26 @@ from .models import (
 )
 
 
+class NarrativeVoteSerializer(ModelSerializer):
+    """
+    Serializes User votes for Narratives
+    """
+
+    class Meta:
+        model = NarrativeVote
+        fields = "__all__"
+
+
+class ProfileSerializer(ModelSerializer):
+    """
+    Serializes the Profile model
+    """
+
+    class Meta:
+        model = Profile
+        fields = "__all__"
+
+
 class SpacetimeVolumeSerializerNoTerritory(ModelSerializer):
     """
     Serializes the SpacetimeVolume model without territory
@@ -137,8 +157,9 @@ class NarrativeSerializer(ModelSerializer):
     Serializes the Narrative model
     """
 
-    start_year = SerializerMethodField()
-    end_year = SerializerMethodField()
+    #start_year = SerializerMethodField()
+    #end_year = SerializerMethodField()
+    votes = SerializerMethodField()
 
     class Meta:
         model = Narrative
@@ -162,22 +183,11 @@ class NarrativeSerializer(ModelSerializer):
             return jd2gcal(obj.narration_set.last().map_datetime, 0)[0]
         return None
 
+    def get_votes(self, obj):  # pylint: disable=R0201
+        """
+        Nests NarrativeVote serialization
+        """
 
-class NarrativeVoteSerializer(ModelSerializer):
-    """
-    Serializes User votes for Narratives
-    """
-
-    class Meta:
-        model = NarrativeVote
-        fields = "__all__"
-
-
-class ProfileSerializer(ModelSerializer):
-    """
-    Serializes the Profile model
-    """
-
-    class Meta:
-        model = Profile
-        fields = "__all__"
+        print(self)
+        vote = NarrativeVote.objects.get(user=obj, narrative=self)
+        return NarrativeVoteSerializer(vote).data

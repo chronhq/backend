@@ -29,6 +29,55 @@ from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
 
 
+class Vote(models.Model):
+    """
+    Abstract class to store User's votes
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    vote = models.BooleanField()
+
+    class Meta:
+        abstract = True
+
+
+class NarrativeVote(Vote):
+    """
+    Stores votes for Narratives. Extends Vote model
+    """
+
+    narrative = models.ForeignKey('Narrative', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("narrative", "user")
+
+
+class Profile(models.Model):
+    """
+    Optional profile fields, 1-1 with User instances
+    """
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    location = models.PointField(blank=True, null=True)
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):  # pylint: disable=W0613
+    """
+    Creates user profile on post_save for a new User instance
+    """
+    if created:
+        Profile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):  # pylint: disable=W0613
+    """
+    Saves user profile on post_save for User
+    """
+    instance.profile.save()
+
+
 class TerritorialEntity(models.Model):
     """
     A 1-1 mapping between a https://www.wikidata.org/wiki/Q56061, and a PK in our db.
@@ -260,7 +309,7 @@ class Narrative(models.Model):
     url = models.TextField(unique=True)
     description = models.TextField()
     tags = ArrayField(models.TextField(max_length=100))
-    votes = models.ManyToManyField(User, related_name="narrative_votes")
+    votes = models.ManyToManyField(User, related_name="narrative_votes", through=NarrativeVote, blank=True)
     history = HistoricalRecords()
 
 
@@ -312,47 +361,3 @@ class Narration(OrderedModel):
     order_with_respect_to = "narrative"
 
 
-class Vote(models.Model):
-    """
-    Abstract class to store User's votes
-    """
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE, unique=True)
-    vote = models.BooleanField()
-
-    class Meta:
-        abstract = True
-
-
-class NarrativeVote(Vote):
-    """
-    Stores votes for Narratives. Extends Vote model
-    """
-
-    narrative = models.ForeignKey(Narrative, on_delete=models.CASCADE)
-
-
-class Profile(models.Model):
-    """
-    Optional profile fields, 1-1 with User instances
-    """
-
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    location = models.PointField(blank=True, null=True)
-
-
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):  # pylint: disable=W0613
-    """
-    Creates user profile on post_save for a new User instance
-    """
-    if created:
-        Profile.objects.create(user=instance)
-
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):  # pylint: disable=W0613
-    """
-    Saves user profile on post_save for User
-    """
-    instance.profile.save()
