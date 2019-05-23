@@ -43,7 +43,7 @@ from .serializers import (
     MapSettingsSerializer,
     NarrationSerializer,
     NarrativeVoteSerializer,
-    ProfileSerializer
+    ProfileSerializer,
 )
 from .permissions import IsUserOrReadOnly
 

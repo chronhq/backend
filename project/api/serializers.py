@@ -157,9 +157,11 @@ class NarrativeSerializer(ModelSerializer):
     Serializes the Narrative model
     """
 
-    #start_year = SerializerMethodField()
-    #end_year = SerializerMethodField()
-    votes = SerializerMethodField()
+    start_year = SerializerMethodField()
+    end_year = SerializerMethodField()
+    votes = NarrativeVoteSerializer(
+        source="narrativevote_set", many=True, read_only=True
+    )
 
     class Meta:
         model = Narrative
@@ -182,12 +184,3 @@ class NarrativeSerializer(ModelSerializer):
         if obj.narration_set.last() is not None:
             return jd2gcal(obj.narration_set.last().map_datetime, 0)[0]
         return None
-
-    def get_votes(self, obj):  # pylint: disable=R0201
-        """
-        Nests NarrativeVote serialization
-        """
-
-        print(self)
-        vote = NarrativeVote.objects.get(user=obj, narrative=self)
-        return NarrativeVoteSerializer(vote).data

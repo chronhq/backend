@@ -46,7 +46,7 @@ class NarrativeVote(Vote):
     Stores votes for Narratives. Extends Vote model
     """
 
-    narrative = models.ForeignKey('Narrative', on_delete=models.CASCADE)
+    narrative = models.ForeignKey("Narrative", on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ("narrative", "user")
@@ -309,7 +309,9 @@ class Narrative(models.Model):
     url = models.TextField(unique=True)
     description = models.TextField()
     tags = ArrayField(models.TextField(max_length=100))
-    votes = models.ManyToManyField(User, related_name="narrative_votes", through=NarrativeVote, blank=True)
+    votes = models.ManyToManyField(
+        User, related_name="narrative_votes", through=NarrativeVote, blank=True
+    )
     history = HistoricalRecords()
 
 
@@ -359,5 +361,3 @@ class Narration(OrderedModel):
     location = models.PointField(blank=True, null=True)
 
     order_with_respect_to = "narrative"
-
-
