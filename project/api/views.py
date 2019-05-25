@@ -121,6 +121,7 @@ class NarrativeVoteViewSet(viewsets.ModelViewSet):
 
     queryset = NarrativeVote.objects.all()
     serializer_class = NarrativeVoteSerializer
+    permission_classes = (IsUserOrReadOnly,)
 
 
 class NarrativeViewSet(viewsets.ModelViewSet):

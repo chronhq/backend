@@ -23,7 +23,7 @@ from rest_framework import permissions
 class IsUserOrReadOnly(permissions.BasePermission):
     """
     Assumes the model instance has a `user` attribute.
-    Used for Profile models
+    Used for Profile and Vote models
     """
 
     def has_object_permission(self, request, view, obj):
