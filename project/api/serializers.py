@@ -45,6 +45,10 @@ class NarrativeVoteSerializer(ModelSerializer):
     """
 
     def create(self, validated_data):
+        """
+        Updates NarrativeVote instance if it already exists
+        """
+
         narrative_vote, _ = NarrativeVote.objects.update_or_create(
             narrative=validated_data.get("narrative", None),
             user=validated_data.get("user", None),
@@ -54,6 +58,7 @@ class NarrativeVoteSerializer(ModelSerializer):
 
     class Meta:
         model = NarrativeVote
+        validators = []
         fields = "__all__"
 
 

@@ -20,7 +20,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from django.db import connection
 from django.http import Http404, HttpResponse
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import (
@@ -125,18 +124,18 @@ class NarrativeVoteViewSet(viewsets.ModelViewSet):
     serializer_class = NarrativeVoteSerializer
     permission_classes = (IsUserOrReadOnly,)
 
-    @action(detail=False, methods=["POST"])
-    def remove_vote(self, request):  # pylint: disable=R0201
+    def create(self, request, *args, **kwargs):
         """
-        Deletes NarrativeVotes based on narrative and user params
+        Deletes instance if vote is null
         """
 
-        qs = NarrativeVote.objects.get(
-            narrative=request.data["narrative"],
-            user=request.data["user"],
-        )
-        qs.delete()
-        return Response(status.HTTP_204_NO_CONTENT)
+        if "vote" in request.data and request.data["vote"] is None:
+            NarrativeVote.objects.get(
+                narrative=request.data["narrative"], user=request.data["user"]
+            ).delete()
+            return Response(status.HTTP_204_NO_CONTENT)
+
+        return super().create(request, *args, **kwargs)
 
 
 class NarrativeViewSet(viewsets.ModelViewSet):
