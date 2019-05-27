@@ -1,3 +1,5 @@
+# pylint: disable=C0302
+
 """
 Chron.
 Copyright (C) 2018 Alisa Belyaeva, Ata Ali Kilicli, Amaury Martiny,
@@ -20,9 +22,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from math import ceil
 import requests
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import Point, Polygon
-from django.test import TestCase
+from django.test import TestCase, tag
 from django.urls import reverse
 from firebase_admin import auth
 from rest_framework import status
@@ -35,19 +38,23 @@ from .factories import (
     CachedDataFactory,
     SpacetimeVolumeFactory,
     NarrativeFactory,
+    NarrativeVoteFactory,
     MapSettingsFactory,
     NarrationFactory,
     CityFactory,
+    UserFactory,
 )
 from .models import (
     PoliticalRelation,
     TerritorialEntity,
     SpacetimeVolume,
     Narrative,
+    NarrativeVote,
     MapSettings,
     Narration,
     CachedData,
     City,
+    Profile,
 )
 
 # Constants
@@ -60,7 +67,7 @@ JD_0005 = ceil(sum(gcal2jd(5, 1, 1))) + 0.0
 # Helpers
 def memoize(function):  # https://stackoverflow.com/a/815160/
     """
-    Decorator to memoize a function return
+    Decorator to memoize a function return value
     """
     memo = {}
 
@@ -321,7 +328,6 @@ class ModelTest(TestCase):
             date=JD_0001,
             event_type=CachedData.BATTLE,
         )
-
         balaclava = CachedData.objects.create(
             wikidata_id=2,
             location=Point(0, 0),
@@ -338,7 +344,6 @@ class ModelTest(TestCase):
             settings=test_settings,
             location=Point(0, 0),
         )
-
         narration1.attached_events.add(hastings)
 
         test_settings2 = MapSettings.objects.create(zoom_min=1, zoom_max=12)
@@ -352,14 +357,24 @@ class ModelTest(TestCase):
             settings=test_settings2,
             location=Point(0, 0),
         )
-
         narration2.attached_events.add(balaclava)
-
         narration1.swap(narration2)
+
+        test_user = User.objects.create(username="test_user", password="test_password")
+
+        vote1 = NarrativeVote.objects.create(
+            narrative=test_narrative, user=test_user, vote=True
+        )
 
         self.assertEqual(Narrative.objects.filter().count(), 1)
         self.assertEqual(Narration.objects.filter().count(), 2)
         self.assertEqual(narration2.next().title, "Test Narration")
+
+        self.assertTrue(vote1.vote)
+        self.assertTrue(
+            Narrative.objects.first().votes.filter(username=test_user.username).exists()
+        )
+        self.assertEqual(NarrativeVote.objects.count(), 1)
 
     def test_model_can_not_create_ms(self):
         """
@@ -402,6 +417,17 @@ class ModelTest(TestCase):
 
         self.assertEqual(paris.label, "Paris")
         self.assertEqual(City.objects.count(), 1)
+
+    def test_model_can_create_profile(self):
+        """
+        Ensures Profiles are created on User create
+        """
+        test_user = User.objects.create_user(
+            username="test_user", password="test_password"
+        )
+
+        self.assertEqual(Profile.objects.count(), 1)
+        self.assertEqual(Profile.objects.first().user, test_user)
 
 
 class APITest(APITestCase):
@@ -469,6 +495,14 @@ class APITest(APITestCase):
             url="test",
             description="This is a test narrative for automated testing.",
             tags=["test", "tags"],
+        )
+
+        # Users
+        cls.user1 = UserFactory(username="user1", password="p@55w0rd1")
+
+        # NarrativeVotes
+        cls.norman_conquest_vote = NarrativeVoteFactory(
+            narrative=cls.norman_conquest, user=cls.user1, vote=True
         )
 
         # MapSettings
@@ -773,6 +807,17 @@ class APITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["author"], "Test Author")
 
+    @tag("new")
+    def test_api_can_query_narrative_votes(self):
+        """
+        Ensure upvotes and downvotes are being returned correctly
+        """
+
+        url = reverse("narrative-detail", args=[self.norman_conquest.pk])
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["votes"], {"upvotes": 1, "downvotes": 0})
+
     def test_api_can_create_ms(self):
         """
         Ensure we can create MapSettings
@@ -935,3 +980,108 @@ class APITest(APITestCase):
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["label"], "Paris")
+
+    def test_api_can_create_narrativevote(self):
+        """
+        Ensure we can vote on Narratives
+        """
+
+        url = reverse("narrativevote-list")
+        data = {"narrative": self.norman_conquest.pk, "user": self.user1.pk, "vote": 0}
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(NarrativeVote.objects.count(), 1)
+        self.assertEqual(NarrativeVote.objects.last().vote, 0)
+
+    def test_api_can_update_narrativevote(self):
+        """
+        Ensure we can change our NarrativeVotes
+        """
+
+        url = reverse("narrativevote-list")
+        data = {"narrative": self.norman_conquest.pk, "user": self.user1.pk, "vote": 1}
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(NarrativeVote.objects.count(), 1)
+        self.assertEqual(NarrativeVote.objects.last().vote, 1)
+
+    def test_api_can_query_narrativevotes(self):
+        """
+        Ensure we can query for all NarrativeVotes
+        """
+
+        url = reverse("narrativevote-list")
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]["vote"], True)
+
+    def test_api_can_query_narrativevote(self):
+        """
+        Ensure we can query for individual NarrativeVotes
+        """
+
+        url = reverse("narrativevote-detail", args=[self.norman_conquest_vote.pk])
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["vote"], True)
+
+    def test_api_can_remove_narrativevote(self):
+        """
+        Ensure we can remove our NarrativeVote
+        """
+
+        url = reverse("narrativevote-list")
+        data = {
+            "narrative": self.norman_conquest.pk,
+            "user": self.user1.pk,
+            "vote": None,
+        }
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(NarrativeVote.objects.count(), 0)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_api_can_not_update_profile(self):
+        """
+        Ensure Profile permissions are operational
+        """
+
+        url = reverse("profile-detail", args=[self.user1.profile.pk])
+        data = {"location": "POINT (10 10)"}
+        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
+        response = self.client.put(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_api_can_update_profile(self):
+        """
+        Ensure user's own Profile can be updated
+        """
+
+        url = reverse("profile-detail", args=[self.user1.profile.pk])
+        data = {"location": "POINT (10 10)"}
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.patch(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["location"]["coordinates"], [10.0, 10.0])
+
+    def test_api_can_query_profiles(self):
+        """
+        Ensure we can query for all Profiles
+        """
+
+        url = reverse("profile-list")
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]["user"], self.user1.pk)
+
+    def test_api_can_query_profile(self):
+        """
+        Ensure we can query for individual Profiles
+        """
+
+        url = reverse("profile-detail", args=[self.user1.profile.pk])
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["user"], self.user1.pk)
