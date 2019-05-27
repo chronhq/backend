@@ -44,6 +44,14 @@ class NarrativeVoteSerializer(ModelSerializer):
     Serializes User votes for Narratives
     """
 
+    def create(self, validated_data):
+        narrative_vote, _ = NarrativeVote.objects.update_or_create(
+            narrative=validated_data.get("narrative", None),
+            user=validated_data.get("user", None),
+            defaults={"vote": validated_data.get("vote", None)},
+        )
+        return narrative_vote
+
     class Meta:
         model = NarrativeVote
         fields = "__all__"
