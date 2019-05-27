@@ -21,6 +21,7 @@ from django.db import connection
 from django.http import Http404, HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from .models import (
     TerritorialEntity,
@@ -122,7 +123,7 @@ class NarrativeVoteViewSet(viewsets.ModelViewSet):
 
     queryset = NarrativeVote.objects.all()
     serializer_class = NarrativeVoteSerializer
-    permission_classes = (IsUserOrReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly, IsUserOrReadOnly)
 
     def create(self, request, *args, **kwargs):
         """
@@ -263,4 +264,4 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
-    permission_classes = (IsUserOrReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly, IsUserOrReadOnly)
