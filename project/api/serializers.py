@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from django.db.models import Count, Case, When, Value
 from jdcal import jd2gcal
 from rest_framework.serializers import (
     ModelSerializer,
@@ -172,9 +173,7 @@ class NarrativeSerializer(ModelSerializer):
 
     start_year = SerializerMethodField()
     end_year = SerializerMethodField()
-    votes = NarrativeVoteSerializer(
-        source="narrativevote_set", many=True, read_only=True
-    )
+    votes = SerializerMethodField()
 
     class Meta:
         model = Narrative
@@ -197,3 +196,17 @@ class NarrativeSerializer(ModelSerializer):
         if obj.narration_set.last() is not None:
             return jd2gcal(obj.narration_set.last().map_datetime, 0)[0]
         return None
+
+    def get_votes(self, obj):  # pylint: disable=R0201
+        """
+        Returns dict of upvotes and downvotes
+        """
+
+        qs = NarrativeVote.objects.filter(narrative=obj)
+        upvotes = qs.aggregate(
+            upvotes=Count(Case(When(vote=True, then=1)))
+        )
+        downvotes = qs.aggregate(
+            downvotes=Count(Case(When(vote=False, then=1)))
+        )
+        return {**upvotes, **downvotes}
