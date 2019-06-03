@@ -82,18 +82,19 @@ def memoize(function):  # https://stackoverflow.com/a/815160/
 
 
 @memoize
-def get_user_token():
+def get_user_token(uid):
     """
     Returns an idToken for a given UID
     """
-    custom_token = auth.create_custom_token(os.environ.get("TEST_USER_UID"))
-    return requests.post(
+    custom_token = auth.create_custom_token(uid)
+    token_req = requests.post(
         (
             "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyCustomToken?key="
             f"{os.environ.get('CLIENT_API_KEY')}"
         ),
         json={"token": str(custom_token.decode("UTF-8")), "returnSecureToken": True},
-    ).json()["idToken"]
+    ).json()
+    return token_req["idToken"]
 
 
 # Tests
@@ -435,6 +436,14 @@ class APITest(APITestCase):
     Tests operations through the API
     """
 
+    def setUp(self):
+        """
+        Authenticate with firebase_user
+        """
+        self.client.credentials(
+            HTTP_AUTHORIZATION="JWT " + get_user_token(self.firebase_user)
+        )
+
     @classmethod
     def setUpTestData(cls):
         """
@@ -498,11 +507,20 @@ class APITest(APITestCase):
         )
 
         # Users
-        cls.user1 = UserFactory(username="user1", password="p@55w0rd1")
+        new_firebase_user = auth.create_user(
+            email="user@example.com",
+            email_verified=False,
+            phone_number="+15555550100",
+            password="secretPassword",
+            display_name="John Doe",
+            disabled=False,
+        )
+        cls.firebase_user = new_firebase_user.uid
+        cls.django_user = UserFactory(username="django_user", password="p@55w0rd1")
 
         # NarrativeVotes
         cls.norman_conquest_vote = NarrativeVoteFactory(
-            narrative=cls.norman_conquest, user=cls.user1, vote=True
+            narrative=cls.norman_conquest, user=cls.django_user, vote=True
         )
 
         # MapSettings
@@ -531,7 +549,6 @@ class APITest(APITestCase):
 
         url = reverse("territorialentity-list")
         data = {"wikidata_id": 9, "color": "#fff", "admin_level": 4}
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(TerritorialEntity.objects.count(), 11)
@@ -544,7 +561,6 @@ class APITest(APITestCase):
 
         url = reverse("territorialentity-detail", args=[self.european_union.pk])
         data = {"wikidata_id": 10, "color": "#fff", "admin_level": 5}
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["admin_level"], 5)
@@ -582,7 +598,6 @@ class APITest(APITestCase):
             "child": self.france.pk,
             "control_type": PoliticalRelation.GROUP,
         }
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(PoliticalRelation.objects.count(), 2)
@@ -603,7 +618,6 @@ class APITest(APITestCase):
             "child": self.france.pk,
             "control_type": PoliticalRelation.GROUP,
         }
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["control_type"], PoliticalRelation.GROUP)
@@ -640,7 +654,6 @@ class APITest(APITestCase):
             "date": JD_0001,
             "event_type": CachedData.DOCUMENT,
         }
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(CachedData.objects.count(), 2)
@@ -658,7 +671,6 @@ class APITest(APITestCase):
             "date": JD_0001,
             "event_type": 555,
         }
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(CachedData.objects.count(), 2)
@@ -676,7 +688,6 @@ class APITest(APITestCase):
             "date": JD_0001,
             "event_type": CachedData.DOCUMENT,
         }
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["event_type"], CachedData.DOCUMENT)
@@ -715,7 +726,6 @@ class APITest(APITestCase):
             "territory": "POLYGON((3 3, 3 4, 4 4, 3 3))",
             "visual_center": "POINT(1.2 1.8)",
         }
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(SpacetimeVolume.objects.count(), 2)
@@ -735,7 +745,6 @@ class APITest(APITestCase):
             "territory": "POLYGON((1 1, 1 2, 2 2, 1 1))",
             "visual_center": "POINT (0.7 0.7)",
         }
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["end_date"], str(JD_0005))
@@ -763,7 +772,6 @@ class APITest(APITestCase):
             "description": "This is a test narrative for automated testing.",
             "tags": ["test", "tags"],
         }
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Narrative.objects.count(), 2)
@@ -782,7 +790,6 @@ class APITest(APITestCase):
             "description": "This is a test narrative for automated testing.",
             "tags": ["test", "tags"],
         }
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["author"], "Other Test Author")
@@ -825,7 +832,6 @@ class APITest(APITestCase):
 
         url = reverse("mapsettings-list")
         data = {"zoom_min": 1, "zoom_max": 13}
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(MapSettings.objects.count(), 2)
@@ -838,7 +844,6 @@ class APITest(APITestCase):
 
         url = reverse("mapsettings-detail", args=[self.norman_conquest_settings.pk])
         data = {"zoom_min": 5, "zoom_max": 13}
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["zoom_min"], 5)
@@ -879,7 +884,6 @@ class APITest(APITestCase):
             "attached_events_ids": [self.hastings.pk],
             "location": "POINT (0 0)",
         }
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Narration.objects.count(), 2)
@@ -901,7 +905,6 @@ class APITest(APITestCase):
             "attached_events_ids": [self.hastings.pk],
             "location": "POINT (0 0)",
         }
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["title"], "Test Narration 2")
@@ -938,7 +941,6 @@ class APITest(APITestCase):
             "location": "POINT (10 10)",
             "inception_date": JD_0001,
         }
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(City.objects.count(), 2)
@@ -956,7 +958,6 @@ class APITest(APITestCase):
             "location": "POINT (10 10)",
             "inception_date": JD_0001,
         }
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["label"], "London")
@@ -987,8 +988,11 @@ class APITest(APITestCase):
         """
 
         url = reverse("narrativevote-list")
-        data = {"narrative": self.norman_conquest.pk, "user": self.user1.pk, "vote": 0}
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
+        data = {
+            "narrative": self.norman_conquest.pk,
+            "user": self.django_user.pk,
+            "vote": 0,
+        }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(NarrativeVote.objects.count(), 1)
@@ -1000,8 +1004,11 @@ class APITest(APITestCase):
         """
 
         url = reverse("narrativevote-list")
-        data = {"narrative": self.norman_conquest.pk, "user": self.user1.pk, "vote": 1}
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
+        data = {
+            "narrative": self.norman_conquest.pk,
+            "user": self.django_user.pk,
+            "vote": 1,
+        }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(NarrativeVote.objects.count(), 1)
@@ -1035,10 +1042,9 @@ class APITest(APITestCase):
         url = reverse("narrativevote-list")
         data = {
             "narrative": self.norman_conquest.pk,
-            "user": self.user1.pk,
+            "user": self.django_user.pk,
             "vote": None,
         }
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.post(url, data, format="json")
         self.assertEqual(NarrativeVote.objects.count(), 0)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1048,9 +1054,8 @@ class APITest(APITestCase):
         Ensure Profile permissions are operational
         """
 
-        url = reverse("profile-detail", args=[self.user1.profile.pk])
+        url = reverse("profile-detail", args=[self.django_user.profile.pk])
         data = {"location": "POINT (10 10)"}
-        self.client.credentials(HTTP_AUTHORIZATION="JWT " + get_user_token())
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -1059,9 +1064,9 @@ class APITest(APITestCase):
         Ensure user's own Profile can be updated
         """
 
-        url = reverse("profile-detail", args=[self.user1.profile.pk])
+        url = reverse("profile-detail", args=[self.django_user.profile.pk])
         data = {"location": "POINT (10 10)"}
-        self.client.force_authenticate(user=self.user1)
+        self.client.force_authenticate(user=self.django_user)
         response = self.client.patch(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["location"]["coordinates"], [10.0, 10.0])
@@ -1074,14 +1079,22 @@ class APITest(APITestCase):
         url = reverse("profile-list")
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]["user"], self.user1.pk)
+        self.assertEqual(response.data[0]["user"], self.django_user.pk)
 
     def test_api_can_query_profile(self):
         """
         Ensure we can query for individual Profiles
         """
 
-        url = reverse("profile-detail", args=[self.user1.profile.pk])
+        url = reverse("profile-detail", args=[self.django_user.profile.pk])
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["user"], self.user1.pk)
+        self.assertEqual(response.data["user"], self.django_user.pk)
+
+    @classmethod
+    def tearDownClass(cls):
+        """
+        Delete test user
+        """
+        auth.delete_user(cls.firebase_user)
+        super().tearDownClass()
