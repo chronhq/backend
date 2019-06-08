@@ -212,6 +212,8 @@ class ModelTest(TestCase):
             ),
             "SRID=4326;POINT (1.2 1.8)",
         )
+        
+        self.assertEqual(1, self.france.stv_count)
 
     def test_model_can_not_create_stv(self):
         """

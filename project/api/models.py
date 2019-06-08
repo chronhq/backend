@@ -24,6 +24,8 @@ from django.contrib.postgres.fields import ArrayField
 from ordered_model.models import OrderedModel
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 
 class TerritorialEntity(models.Model):
@@ -37,7 +39,8 @@ class TerritorialEntity(models.Model):
     color = ColorField()
     admin_level = models.PositiveIntegerField()
     inception_date = models.DecimalField(decimal_places=1, max_digits=10)
-    dissolution_date = models.DecimalField(decimal_places=1, max_digits=10)
+    dissolution_date = models.DecimalField(decimal_places=1, max_digits=10, blank=True, null=True)
+    stv_count = models.IntegerField(default=0, null=True, blank=True)
 
     relations = models.ManyToManyField(
         "self",
@@ -49,10 +52,11 @@ class TerritorialEntity(models.Model):
     history = HistoricalRecords()
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
-        if self.inception_date > self.dissolution_date:
-            raise ValidationError("Inception date cannot be later than dissolution date")
+        if not self.dissolution_date is None:
+            if self.inception_date > self.dissolution_date:
+                raise ValidationError("Inception date cannot be later than dissolution date")
 
-        super(PoliticalRelation, self).clean(*args, **kwargs)
+        super(TerritorialEntity, self).clean(*args, **kwargs)
 
     def get_children(self):
         """
@@ -254,8 +258,9 @@ class SpacetimeVolume(models.Model):
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
-        super(SpacetimeVolume, self).save(*args, **kwargs)
-
+        self.entity.stv_count += 1
+        self.entity.save()
+        super(SpacetimeVolume, self).save(*args, **kwargs)    
 
 class Narrative(models.Model):
     """
@@ -316,3 +321,9 @@ class Narration(OrderedModel):
     location = models.PointField(blank=True, null=True)
 
     order_with_respect_to = "narrative"
+
+
+@receiver(pre_delete, sender=SpacetimeVolume)
+def decrement_count(sender, instance, **kwargs):
+    instance.entity.stv_count -= 1
+    instance.entity.save()
