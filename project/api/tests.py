@@ -283,8 +283,6 @@ class ModelTest(TestCase):
             "SRID=4326;POINT (1.2 1.8)",
         )
 
-        self.assertEqual(1, self.france.stv_count)
-
     def test_model_can_not_create_stv(self):
         """
         Ensure non overlapping timeframe and territory constraints works
@@ -637,6 +635,7 @@ class APITest(APITestCase):
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]["id"], self.european_union.pk)
+        self.assertEqual(response.data[3]["stv_count"], 1)
 
     def test_api_can_query_te(self):
         """

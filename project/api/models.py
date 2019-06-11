@@ -21,8 +21,6 @@ from requests import get
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
-from django.db.models.signals import pre_delete
-from django.dispatch import receiver
 from ordered_model.models import OrderedModel
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
@@ -38,7 +36,6 @@ class TerritorialEntity(models.Model):
     label = models.TextField(max_length=90)
     color = ColorField()
     admin_level = models.PositiveIntegerField()
-    stv_count = models.IntegerField(default=0, null=True, blank=True)
     inception_date = models.DecimalField(decimal_places=1, max_digits=10)
     dissolution_date = models.DecimalField(
         decimal_places=1, max_digits=10, blank=True, null=True
@@ -264,8 +261,6 @@ class SpacetimeVolume(models.Model):
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
-        self.entity.stv_count += 1
-        self.entity.save()
         super(SpacetimeVolume, self).save(*args, **kwargs)
 
 
@@ -328,9 +323,3 @@ class Narration(OrderedModel):
     location = models.PointField(blank=True, null=True)
 
     order_with_respect_to = "narrative"
-
-
-@receiver(pre_delete, sender=SpacetimeVolume)
-def decrement_count(sender, instance, **kwargs):
-    instance.entity.stv_count -= 1
-    instance.entity.save()
