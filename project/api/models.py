@@ -36,7 +36,9 @@ class TerritorialEntity(models.Model):
     label = models.TextField(max_length=90)
     color = ColorField()
     admin_level = models.PositiveIntegerField()
-    inception_date = models.DecimalField(decimal_places=1, max_digits=10)
+    inception_date = models.DecimalField(
+        decimal_places=1, max_digits=10, blank=True, null=True
+    )
     dissolution_date = models.DecimalField(
         decimal_places=1, max_digits=10, blank=True, null=True
     )
