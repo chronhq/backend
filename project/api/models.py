@@ -166,7 +166,8 @@ class CachedData(models.Model):
             sitelinks = int(data["sitelinks"]["value"])
             outcoming = int(data["outcoming"]["value"])
             self.rank = incoming + sitelinks + outcoming
-        except IndexError:
+        # https://docs.python.org/3/library/json.html#json.JSONDecodeError
+        except (IndexError, ValueError):
             self.rank = 0
 
         super(CachedData, self).save(*args, **kwargs)
