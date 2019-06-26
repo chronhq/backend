@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.db import connection
+from django.db.models import Count
 from django.http import Http404, HttpResponse
 from rest_framework import viewsets
 
@@ -48,7 +49,9 @@ class TerritorialEntityViewSet(viewsets.ModelViewSet):
     ViewSet for TerritorialEntities
     """
 
-    queryset = TerritorialEntity.objects.all()
+    queryset = (
+        TerritorialEntity.objects.all().annotate(stv_count=Count("stvs")).order_by("id")
+    )
     serializer_class = TerritorialEntitySerializer
 
 
