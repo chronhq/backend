@@ -89,6 +89,7 @@ class TerritorialEntitySerializer(ModelSerializer):
     """
 
     stvs = SpacetimeVolumeSerializerNoTerritory(many=True, read_only=True)
+    stv_count = IntegerField(read_only=True)
 
     class Meta:
         model = TerritorialEntity

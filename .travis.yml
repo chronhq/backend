@@ -17,7 +17,8 @@ install:
 
 script:
   - docker-compose run web black . --exclude /migrations/ --diff --check
-  - docker-compose run web pylint ./api/
+  - docker-compose run web pylint --ignore=tests ./api/
+  - docker-compose run web pylint --rcfile=api/tests/pylintrc ./api/tests
   - docker-compose run -e ENV=dev -e TEST_USER_UID -e CLIENT_API_KEY web ash init.sh
     python manage.py test --debug-mode
 

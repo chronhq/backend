@@ -22,17 +22,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from math import ceil
 import requests
-from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import Point, Polygon
-from django.test import TestCase, tag
 from django.urls import reverse
+from django.test import tag
 from firebase_admin import auth
 from rest_framework import status
 from rest_framework.test import APITestCase
 from jdcal import gcal2jd
 
-from .factories import (
+from api.factories import (
     TerritorialEntityFactory,
     PoliticalRelationFactory,
     CachedDataFactory,
@@ -44,7 +42,7 @@ from .factories import (
     CityFactory,
     UserFactory,
 )
-from .models import (
+from api.models import (
     PoliticalRelation,
     TerritorialEntity,
     SpacetimeVolume,
@@ -54,7 +52,6 @@ from .models import (
     Narration,
     CachedData,
     City,
-    Profile,
 )
 
 # Constants
@@ -98,339 +95,6 @@ def get_user_token(uid):
 
 
 # Tests
-class ModelTest(TestCase):
-    """
-    Tests model constraints directly
-    """
-
-    @classmethod
-    def setUpTestData(cls):
-        """
-        Create basic model instances
-        """
-
-        cls.european_union = TerritorialEntityFactory(
-            wikidata_id=10, color=1, admin_level=1
-        )
-        cls.nato = TerritorialEntityFactory(wikidata_id=11, color=1, admin_level=1)
-
-        cls.germany = TerritorialEntityFactory(wikidata_id=20, color=1, admin_level=2)
-        cls.france = TerritorialEntityFactory(wikidata_id=21, color=1, admin_level=2)
-        cls.spain = TerritorialEntityFactory(wikidata_id=22, color=1, admin_level=2)
-        cls.italy = TerritorialEntityFactory(wikidata_id=23, color=1, admin_level=2)
-        cls.british_empire = TerritorialEntityFactory(
-            wikidata_id=24, color=1, admin_level=2
-        )
-        cls.british_hk = TerritorialEntityFactory(
-            wikidata_id=25, color=1, admin_level=2
-        )
-
-        cls.alsace = TerritorialEntityFactory(wikidata_id=30, color=1, admin_level=3)
-        cls.lorraine = TerritorialEntityFactory(wikidata_id=31, color=1, admin_level=3)
-
-    def test_model_can_create_te(self):
-        """
-        Ensure that we can create TerritorialEntity
-        """
-
-        test_te = TerritorialEntity.objects.create(
-            wikidata_id=9, color=2, admin_level=4
-        )
-        test_te.save()
-        self.assertTrue(TerritorialEntity.objects.filter(wikidata_id=9).exists())
-
-    def test_model_can_create_pr(self):
-        """
-        Ensure that we can create PoliticalRelations of types GROUP and DIRECT
-        Tests get_children() and get_parents() methods
-        """
-
-        # GROUP
-        PoliticalRelation.objects.create(
-            start_date=JD_0001,
-            end_date=JD_0002,
-            parent=self.european_union,
-            child=self.france,
-            control_type=PoliticalRelation.GROUP,
-        )
-        PoliticalRelation.objects.create(
-            start_date=JD_0001,
-            end_date=JD_0002,
-            parent=self.european_union,
-            child=self.germany,
-            control_type=PoliticalRelation.GROUP,
-        )
-        PoliticalRelation.objects.create(
-            start_date=JD_0001,
-            end_date=JD_0002,
-            parent=self.nato,
-            child=self.france,
-            control_type=PoliticalRelation.GROUP,
-        )
-        self.assertEqual(
-            PoliticalRelation.objects.filter(parent=self.european_union).count(), 2
-        )
-        self.assertEqual(PoliticalRelation.objects.filter(parent=self.nato).count(), 1)
-
-        # DIRECT
-        PoliticalRelation.objects.create(
-            start_date=JD_0001,
-            end_date=JD_0002,
-            parent=self.france,
-            child=self.alsace,
-            control_type=PoliticalRelation.DIRECT,
-        )
-        PoliticalRelation.objects.create(
-            start_date=JD_0001,
-            end_date=JD_0002,
-            parent=self.france,
-            child=self.lorraine,
-            control_type=PoliticalRelation.DIRECT,
-        )
-        self.assertEqual(
-            PoliticalRelation.objects.filter(parent=self.france).count(), 2
-        )
-
-        # get_parents()
-        self.assertEqual(self.lorraine.get_parents().count(), 1)
-        self.assertEqual(self.lorraine.get_parents().first(), self.france)
-        self.assertEqual(self.france.get_parents().count(), 2)  # euopean_union and nato
-        self.assertFalse(self.european_union.get_parents().exists())
-
-        # get_children()
-        self.assertEqual(
-            self.european_union.get_children().count(), 2
-        )  # france and germany
-        self.assertEqual(self.france.get_children().count(), 2)  # alsace and lorraine
-        self.assertFalse(self.lorraine.get_children().exists())
-
-    def test_model_can_not_create_pr(self):
-        """
-        Ensure PoliticalRelation validations work
-        """
-
-        with self.assertRaises(ValidationError):
-            PoliticalRelation.objects.create(
-                start_date=JD_0005,
-                end_date=JD_0002,
-                parent=self.european_union,
-                child=self.germany,
-                control_type=PoliticalRelation.GROUP,
-            )
-
-        with self.assertRaises(ValidationError):
-            PoliticalRelation.objects.create(
-                start_date=JD_0001,
-                end_date=JD_0002,
-                parent=self.germany,
-                child=self.european_union,
-                control_type=PoliticalRelation.DIRECT,
-            )
-
-    def test_model_can_create_stv(self):
-        """
-        Ensure we can create SpacetimeVolumes
-        """
-
-        SpacetimeVolume.objects.create(
-            start_date=JD_0001,
-            end_date=JD_0002,
-            entity=self.france,
-            references=["ref"],
-            visual_center=Point(1.2, 1.8),
-            territory=Polygon(((1, 1), (1, 2), (2, 2), (1, 1))),
-        )
-
-        self.assertTrue(
-            SpacetimeVolume.objects.filter(
-                territory=Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
-            ).exists()
-        )
-
-        self.assertEqual(
-            str(
-                SpacetimeVolume.objects.filter(
-                    territory=Polygon(((1, 1), (1, 2), (2, 2), (1, 1)))
-                )[0].visual_center
-            ),
-            "SRID=4326;POINT (1.2 1.8)",
-        )
-
-    def test_model_can_not_create_stv(self):
-        """
-        Ensure non overlapping timeframe and territory constraints works
-        """
-        # Timeframe
-        with self.assertRaises(ValidationError):
-            SpacetimeVolume.objects.create(
-                start_date=JD_0001,
-                end_date=JD_0003,
-                entity=self.france,
-                references=["ref"],
-                visual_center=Point(2, 2),
-                territory=Polygon(((1, 1), (1, 2), (2, 2), (1, 1))),
-            )
-            SpacetimeVolume.objects.create(
-                start_date=JD_0002,
-                end_date=JD_0004,
-                entity=self.france,
-                references=["ref"],
-                visual_center=Point(1, 1),
-                territory=Polygon(((3, 3), (3, 4), (4, 4), (3, 3))),
-            )
-
-        # Territory
-        with self.assertRaises(ValidationError):
-            SpacetimeVolume.objects.create(
-                start_date=JD_0003,
-                end_date=JD_0004,
-                entity=self.british_empire,
-                references=["ref"],
-                visual_center=Point(2, 2),
-                territory=Polygon(((6, 6), (6, 7), (7, 7), (6, 6))),
-            )
-            SpacetimeVolume.objects.create(
-                start_date=JD_0002,
-                end_date=JD_0004,
-                entity=self.italy,
-                references=["ref"],
-                visual_center=Point(1, 1),
-                territory=Polygon(((6, 6), (6, 7), (7, 7), (6, 6))),
-            )
-
-        # Geom type
-        with self.assertRaises(ValidationError):
-            SpacetimeVolume.objects.create(
-                start_date=JD_0001,
-                end_date=JD_0003,
-                entity=self.france,
-                references=["ref"],
-                visual_center=Point(2, 2),
-                territory=Point(1, 1),
-            )
-
-    def test_model_can_create_narrative(self):
-        """
-        Ensure that we can create a narrative and the ordering plugin works.
-        """
-        test_narrative = Narrative.objects.create(
-            author="Test Author",
-            title="Test Narrative",
-            url="test",
-            description="This is a test narrative for automated testing.",
-            tags=["test", "tags"],
-        )
-
-        test_settings = MapSettings.objects.create(zoom_min=1, zoom_max=12)
-
-        hastings = CachedData.objects.create(
-            wikidata_id=1,
-            location=Point(0, 0),
-            date=JD_0001,
-            event_type=CachedData.BATTLE,
-        )
-        balaclava = CachedData.objects.create(
-            wikidata_id=2,
-            location=Point(0, 0),
-            date=JD_0002,
-            event_type=CachedData.BATTLE,
-        )
-
-        narration1 = Narration.objects.create(
-            narrative=test_narrative,
-            title="Test Narration",
-            description="This is a narration point",
-            date_label="test",
-            map_datetime=JD_0002,
-            settings=test_settings,
-            location=Point(0, 0),
-        )
-        narration1.attached_events.add(hastings)
-
-        test_settings2 = MapSettings.objects.create(zoom_min=1, zoom_max=12)
-
-        narration2 = Narration.objects.create(
-            narrative=test_narrative,
-            title="Test Narration2",
-            description="This is another narration point",
-            date_label="test2",
-            map_datetime=JD_0002,
-            settings=test_settings2,
-            location=Point(0, 0),
-        )
-        narration2.attached_events.add(balaclava)
-        narration1.swap(narration2)
-
-        test_user = User.objects.create(username="test_user", password="test_password")
-
-        vote1 = NarrativeVote.objects.create(
-            narrative=test_narrative, user=test_user, vote=True
-        )
-
-        self.assertEqual(Narrative.objects.filter().count(), 1)
-        self.assertEqual(Narration.objects.filter().count(), 2)
-        self.assertEqual(narration2.next().title, "Test Narration")
-
-        self.assertTrue(vote1.vote)
-        self.assertTrue(
-            Narrative.objects.first().votes.filter(username=test_user.username).exists()
-        )
-        self.assertEqual(NarrativeVote.objects.count(), 1)
-
-    def test_model_can_not_create_ms(self):
-        """
-        Ensure that the constraints on mapsettings work.
-        """
-
-        with self.assertRaises(ValidationError):
-            MapSettings.objects.create(zoom_min=-0.1, zoom_max=2)
-
-        with self.assertRaises(ValidationError):
-            MapSettings.objects.create(zoom_min=1, zoom_max=22.1)
-
-        with self.assertRaises(ValidationError):
-            MapSettings.objects.create(zoom_min=5, zoom_max=3)
-
-    def test_model_can_create_cd(self):
-        """
-        Ensure CachedData can be created
-        """
-
-        hastings = CachedData.objects.create(
-            wikidata_id=1,
-            location=Point(0, 0),
-            date=JD_0001,
-            event_type=CachedData.BATTLE,
-        )
-
-        self.assertTrue(hastings.rank >= 0)
-        self.assertEqual(hastings.date, JD_0001)
-        self.assertEqual(CachedData.objects.count(), 1)
-
-    def test_model_can_create_city(self):
-        """
-        Ensure Cities can be created
-        """
-
-        paris = City.objects.create(
-            wikidata_id=1, label="Paris", location=Point(0, 0), inception_date=JD_0001
-        )
-
-        self.assertEqual(paris.label, "Paris")
-        self.assertEqual(City.objects.count(), 1)
-
-    def test_model_can_create_profile(self):
-        """
-        Ensures Profiles are created on User create
-        """
-        test_user = User.objects.create_user(
-            username="test_user", password="test_password"
-        )
-
-        self.assertEqual(Profile.objects.count(), 1)
-        self.assertEqual(Profile.objects.first().user, test_user)
-
-
 class APITest(APITestCase):
     """
     Tests operations through the API
@@ -452,23 +116,87 @@ class APITest(APITestCase):
 
         # TerritorialEntities
         cls.european_union = TerritorialEntityFactory(
-            wikidata_id=10, color=1, admin_level=1
+            wikidata_id=10,
+            label="European Union",
+            color=1,
+            admin_level=1,
+            inception_date=0,
+            dissolution_date=1,
         )
-        cls.nato = TerritorialEntityFactory(wikidata_id=11, color=1, admin_level=1)
+        cls.nato = TerritorialEntityFactory(
+            wikidata_id=11,
+            label="NATO",
+            color=1,
+            admin_level=1,
+            inception_date=0,
+            dissolution_date=1,
+        )
 
-        cls.germany = TerritorialEntityFactory(wikidata_id=20, color=1, admin_level=2)
-        cls.france = TerritorialEntityFactory(wikidata_id=21, color=1, admin_level=2)
-        cls.spain = TerritorialEntityFactory(wikidata_id=22, color=1, admin_level=2)
-        cls.italy = TerritorialEntityFactory(wikidata_id=23, color=1, admin_level=2)
+        cls.germany = TerritorialEntityFactory(
+            wikidata_id=20,
+            label="Germany",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
+        )
+        cls.france = TerritorialEntityFactory(
+            wikidata_id=21,
+            label="France",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
+        )
+        cls.spain = TerritorialEntityFactory(
+            wikidata_id=22,
+            label="Spain",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
+        )
+        cls.italy = TerritorialEntityFactory(
+            wikidata_id=23,
+            label="Italy",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
+        )
         cls.british_empire = TerritorialEntityFactory(
-            wikidata_id=24, color=1, admin_level=2
+            wikidata_id=24,
+            label="British Empire",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
         )
         cls.british_hk = TerritorialEntityFactory(
-            wikidata_id=25, color=1, admin_level=2
+            wikidata_id=25,
+            label="British HK",
+            color=1,
+            admin_level=2,
+            inception_date=0,
+            dissolution_date=1,
         )
 
-        cls.alsace = TerritorialEntityFactory(wikidata_id=30, color=1, admin_level=3)
-        cls.lorraine = TerritorialEntityFactory(wikidata_id=31, color=1, admin_level=3)
+        cls.alsace = TerritorialEntityFactory(
+            wikidata_id=30,
+            label="Alsace",
+            color=1,
+            admin_level=3,
+            inception_date=0,
+            dissolution_date=1,
+        )
+        cls.lorraine = TerritorialEntityFactory(
+            wikidata_id=31,
+            label="Lorraine",
+            color=1,
+            admin_level=3,
+            inception_date=0,
+            dissolution_date=1,
+        )
 
         # PoliticalRelations
         cls.EU_germany = PoliticalRelationFactory(
@@ -548,7 +276,14 @@ class APITest(APITestCase):
         """
 
         url = reverse("territorialentity-list")
-        data = {"wikidata_id": 9, "color": "#fff", "admin_level": 4}
+        data = {
+            "wikidata_id": 9,
+            "label": "Test TE",
+            "color": "#fff",
+            "admin_level": 4,
+            "inception_date": 0,
+            "dissolution_date": 1,
+        }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(TerritorialEntity.objects.count(), 11)
@@ -560,7 +295,14 @@ class APITest(APITestCase):
         """
 
         url = reverse("territorialentity-detail", args=[self.european_union.pk])
-        data = {"wikidata_id": 10, "color": "#fff", "admin_level": 5}
+        data = {
+            "wikidata_id": 10,
+            "label": "Update",
+            "color": "#fff",
+            "admin_level": 5,
+            "inception_date": 0,
+            "dissolution_date": 1,
+        }
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["admin_level"], 5)
@@ -574,6 +316,7 @@ class APITest(APITestCase):
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]["id"], self.european_union.pk)
+        self.assertEqual(response.data[3]["stv_count"], 1)
 
     def test_api_can_query_te(self):
         """
