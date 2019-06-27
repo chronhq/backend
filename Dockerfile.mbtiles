@@ -1,10 +1,10 @@
-FROM jskeates/tippecanoe
+FROM morlov/tippecanoe
 
 LABEL maintainer="Mikhail Orlov <miklergm@gmail.com>"
 
 FROM deniscarriere/mbtiles-server
 
-COPY --from=0 /usr/local/bin/tippe* /usr/local/bin/
+COPY --from=0 /usr/bin/tippe* /usr/local/bin/
 
 RUN apk add --no-cache libgcc libstdc++ sqlite-libs
 
