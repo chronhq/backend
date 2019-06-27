@@ -35,11 +35,9 @@ services:
     expose:
       - '6379'
   mbtiles:
+    image: morlov/mbtiles-server:latest
     env_file:
       - mbtiles.env
-    build:
-      context: .
-      dockerfile: Dockerfile.mbtiles
     ports:
     - "5000:5000"
     volumes:
