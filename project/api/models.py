@@ -33,8 +33,18 @@ class TerritorialEntity(models.Model):
     """
 
     wikidata_id = models.PositiveIntegerField()  # Excluding the Q
+    label = models.TextField(max_length=90)
     color = ColorField()
     admin_level = models.PositiveIntegerField()
+    inception_date = models.DecimalField(
+        decimal_places=1, max_digits=10, blank=True, null=True
+    )
+    dissolution_date = models.DecimalField(
+        decimal_places=1, max_digits=10, blank=True, null=True
+    )
+
+    predecessor = models.ManyToManyField("self", blank=True, symmetrical=False)
+
     relations = models.ManyToManyField(
         "self",
         blank=True,
@@ -43,6 +53,15 @@ class TerritorialEntity(models.Model):
         related_name="political_relations",
     )
     history = HistoricalRecords()
+
+    def clean(self, *args, **kwargs):  # pylint: disable=W0221
+        if not self.inception_date is None and not self.dissolution_date is None:
+            if self.inception_date > self.dissolution_date:
+                raise ValidationError(
+                    "Inception date cannot be later than dissolution date"
+                )
+
+        super(TerritorialEntity, self).clean(*args, **kwargs)
 
     def get_children(self):
         """
@@ -147,7 +166,8 @@ class CachedData(models.Model):
             sitelinks = int(data["sitelinks"]["value"])
             outcoming = int(data["outcoming"]["value"])
             self.rank = incoming + sitelinks + outcoming
-        except IndexError:
+        # https://docs.python.org/3/library/json.html#json.JSONDecodeError
+        except (IndexError, ValueError):
             self.rank = 0
 
         super(CachedData, self).save(*args, **kwargs)
