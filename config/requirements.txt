@@ -1,9 +1,9 @@
 black~=19.3b0
-django-extensions~=2.1.7
+django-extensions~=2.1.9
 Django~=2.2
 gunicorn~=19.9.0
 ipython~=7.5.0
-psycopg2~=2.8.2
+psycopg2~=2.8.3
 pylint-django~=2.0.9
 pylint~=2.3.1
 factory-boy~=2.12.0
