@@ -192,7 +192,7 @@ def mvt_cities(request, zoom, x_cor, y_cor):
         cursor.execute(
             (
                 "SELECT ST_AsMVT(tile, 'cities') as cities FROM ("
-                "SELECT id, wikidata_id, label, inception_date, dissolution_date "
+                "SELECT id, wikidata_id, label, inception_date, dissolution_date, "
                 "ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) "
                 "FROM api_city) AS tile"
             ),
@@ -228,3 +228,4 @@ def mvt_narration_events(request, narrative, zoom, x_cor, y_cor):
         if not tile:
             raise Http404()
     return HttpResponse(tile, content_type="application/x-protobuf")
+    
