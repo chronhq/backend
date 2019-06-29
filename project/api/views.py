@@ -161,20 +161,26 @@ def mvt_cacheddata(request, zoom, x_cor, y_cor):
 
     with connection.cursor() as cursor:
         cursor.execute(
-            (
-                " SELECT ST_AsMVT(tile, 'events') as events FROM ("
-                " SELECT wikidata_id, event_type, rank, year, geom, date"
-                " FROM ("
-                " SELECT *, row_number() OVER (PARTITION BY year order by rank desc) as i"
-                " FROM ( SELECT * FROM ("
-                " SELECT *,"
-                " EXTRACT(year from TO_DATE(TO_CHAR(date, '9999999999.9'), 'J')) as year,"
-                " ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) as geom"
-                " FROM api_cacheddata"
-                " ORDER BY rank DESC"
-                " ) as foo WHERE geom IS NOT NULL ) as foo) as foo"
-                " WHERE i <= 20) AS tile"
-            ),
+            """
+                SELECT ST_AsMVT(tile, 'events') as events
+                FROM (
+                    SELECT wikidata_id, event_type, rank, year, geom, date
+                    FROM (
+                        SELECT *, row_number() OVER (PARTITION BY year order by rank desc) as i
+                        FROM (
+                            SELECT * FROM (
+                                SELECT *,
+                                    EXTRACT(year from TO_DATE(TO_CHAR(date, '9999999999.9'), 'J')) as year,
+                                    ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) as geom
+                                FROM api_cacheddata
+                                ORDER BY rank DESC
+                            ) as foo
+                            WHERE geom IS NOT NULL
+                        ) as foo
+                    ) as foo
+                    WHERE i <= 20
+                ) AS tile
+            """,
             [zoom, x_cor, y_cor],
         )
         tile = bytes(cursor.fetchone()[0])
@@ -190,12 +196,14 @@ def mvt_cities(request, zoom, x_cor, y_cor):
 
     with connection.cursor() as cursor:
         cursor.execute(
-            (
-                "SELECT ST_AsMVT(tile, 'cities') as cities FROM ("
-                "SELECT id, wikidata_id, label, inception_date, dissolution_date, "
-                "ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) "
-                "FROM api_city) AS tile"
-            ),
+            """
+                SELECT ST_AsMVT(tile, 'cities') as cities
+                FROM (
+                    SELECT id, wikidata_id, label, inception_date, dissolution_date,
+                        ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s))
+                    FROM api_city
+                ) AS tile
+            """,
             [zoom, x_cor, y_cor],
         )
         tile = bytes(cursor.fetchone()[0])
@@ -211,21 +219,24 @@ def mvt_narration_events(request, narrative, zoom, x_cor, y_cor):
 
     with connection.cursor() as cursor:
         cursor.execute(
-            (
-                " SELECT ST_AsMVT(tile, 'events') FROM ("
-                " SELECT wikidata_id, rank, event_type,"
-                " ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) as geom"
-                " FROM (SELECT api_cacheddata.* FROM api_narration"
-                " JOIN api_narration_attached_events ON"
-                " (api_narration.id = api_narration_attached_events.narration_id)"
-                " JOIN api_cacheddata ON"
-                " (api_narration_attached_events.cacheddata_id = api_cacheddata.id)"
-                " WHERE narrative_id = %s) AS foo) AS tile"
-            ),
+            """
+                SELECT ST_AsMVT(tile, 'events')
+                FROM (
+                    SELECT wikidata_id, rank, event_type,
+                        ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) as geom
+                    FROM (
+                        SELECT api_cacheddata.* FROM api_narration
+                        JOIN api_narration_attached_events ON
+                            (api_narration.id = api_narration_attached_events.narration_id)
+                        JOIN api_cacheddata ON
+                            (api_narration_attached_events.cacheddata_id = api_cacheddata.id)
+                        WHERE narrative_id = %s
+                    ) AS foo
+                ) AS tile
+            """,
             [zoom, x_cor, y_cor, narrative],
         )
         tile = bytes(cursor.fetchone()[0])
         if not tile:
             raise Http404()
     return HttpResponse(tile, content_type="application/x-protobuf")
-    
