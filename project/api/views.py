@@ -164,7 +164,7 @@ def mvt_cacheddata(request, zoom, x_cor, y_cor):
             """
                 SELECT ST_AsMVT(tile, 'events') as events
                 FROM (
-                    SELECT wikidata_id, event_type, rank, year, geom, date
+                    SELECT wikidata_id, event_type, rank, year, geom, date::INTEGER
                     FROM (
                         SELECT *, row_number() OVER (PARTITION BY year order by rank desc) as i
                         FROM (
