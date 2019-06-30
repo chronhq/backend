@@ -272,12 +272,47 @@ def mvt_stv(request, zoom, x_cor, y_cor):
                     , api_spacetimevolume.entity_id
                     , api_territorialentity.wikidata_id
                     , api_territorialentity.color
-                    -- api_territorialentity.label,
                     , api_territorialentity.admin_level
                 FROM api_spacetimevolume
                 JOIN api_territorialentity
                 ON api_spacetimevolume.entity_id = api_territorialentity.id
                 WHERE territory && TileBBox(%s, %s, %s, 4326)
+                ) as a
+            """,
+            [zoom, x_cor, y_cor, zoom, x_cor, y_cor],
+        )
+        tile = bytes(cursor.fetchone()[0])
+        if not tile:
+            raise Http404()
+    return HttpResponse(tile, content_type="application/x-protobuf")
+
+def mvt_visual_center(request, zoom, x_cor, y_cor):
+    """
+    Custom view to serve Mapbox Vector Tiles for Country Labels.
+    """
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+                SELECT ST_AsMVT(a, 'visual_center')
+                FROM (
+                    SELECT
+                    api_spacetimevolume.id
+                    , api_spacetimevolume.start_date::INTEGER
+                    , api_spacetimevolume.end_date::INTEGER
+                    , ST_AsMVTGeom(
+                        ST_Transform(
+                            api_spacetimevolume.visual_center                                    
+                            , 3857
+                        )
+                        , TileBBox(%s, %s, %s)
+                    ) as visual_center
+                    , api_territorialentity.label
+                    , api_territorialentity.admin_level
+                FROM api_spacetimevolume
+                JOIN api_territorialentity
+                ON api_spacetimevolume.entity_id = api_territorialentity.id
+                WHERE visual_center && TileBBox(%s, %s, %s, 4326)
                 ) as a
             """,
             [zoom, x_cor, y_cor, zoom, x_cor, y_cor],
