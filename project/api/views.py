@@ -240,3 +240,49 @@ def mvt_narration_events(request, narrative, zoom, x_cor, y_cor):
         if not tile:
             raise Http404()
     return HttpResponse(tile, content_type="application/x-protobuf")
+
+def mvt_stv(request, zoom, x_cor, y_cor):
+    """
+    Custom view to serve Mapbox Vector Tiles for Political Borders.
+    """
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+                SELECT ST_AsMVT(a, 'stv')
+                FROM (
+                SELECT
+                    api_spacetimevolume.id
+                    , api_spacetimevolume.start_date::INTEGER
+                    , api_spacetimevolume.end_date::INTEGER
+                    , api_spacetimevolume.references
+                    , ST_AsMVTGeom(
+                        ST_Simplify(
+                            ST_SnapToGrid(
+                                ST_Transform(
+                                    api_spacetimevolume.territory                                    
+                                    , 3857
+                                )
+                                , 100
+                            )
+                            , 1
+                        )
+                        , TileBBox(%s, %s, %s)
+                    ) as territory
+                    , api_spacetimevolume.entity_id
+                    , api_territorialentity.wikidata_id
+                    , api_territorialentity.color
+                    -- api_territorialentity.label,
+                    , api_territorialentity.admin_level
+                FROM api_spacetimevolume
+                JOIN api_territorialentity
+                ON api_spacetimevolume.entity_id = api_territorialentity.id
+                WHERE territory && TileBBox(%s, %s, %s, 4326)
+                ) as a
+            """,
+            [zoom, x_cor, y_cor, zoom, x_cor, y_cor],
+        )
+        tile = bytes(cursor.fetchone()[0])
+        if not tile:
+            raise Http404()
+    return HttpResponse(tile, content_type="application/x-protobuf")
