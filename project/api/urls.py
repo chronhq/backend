@@ -48,11 +48,7 @@ urlpatterns = [
         views.mvt_narration_events,
         name="mvt-narrationevents",
     ),
-    path(
-        "mvt/stv/<int:zoom>/<int:x_cor>/<int:y_cor>",
-        views.mvt_stv,
-        name="mvt-stv",
-    ),
+    path("mvt/stv/<int:zoom>/<int:x_cor>/<int:y_cor>", views.mvt_stv, name="mvt-stv"),
     path(
         "mvt/visual-center/<int:zoom>/<int:x_cor>/<int:y_cor>",
         views.mvt_visual_center,

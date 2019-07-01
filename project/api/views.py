@@ -241,6 +241,7 @@ def mvt_narration_events(request, narrative, zoom, x_cor, y_cor):
             raise Http404()
     return HttpResponse(tile, content_type="application/x-protobuf")
 
+
 def mvt_stv(request, zoom, x_cor, y_cor):
     """
     Custom view to serve Mapbox Vector Tiles for Political Borders.
@@ -257,11 +258,11 @@ def mvt_stv(request, zoom, x_cor, y_cor):
     extent = 4096
 
     # Find safe tolerance for ST_Simplfy
-    tolerance = (float(resolution) / 2**zoom) / float(extent)
+    tolerance = (float(resolution) / 2 ** zoom) / float(extent)
     # Apply additional simplification for distant zoom levels
     tolerance_multiplier = 1 if zoom > 5 else 2.2 - 0.2 * zoom
     simplification = tolerance * tolerance_multiplier
-    
+
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -301,6 +302,7 @@ def mvt_stv(request, zoom, x_cor, y_cor):
         if not tile:
             raise Http404()
     return HttpResponse(tile, content_type="application/x-protobuf")
+
 
 def mvt_visual_center(request, zoom, x_cor, y_cor):
     """
