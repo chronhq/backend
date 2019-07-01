@@ -169,9 +169,13 @@ def mvt_cacheddata(request, zoom, x_cor, y_cor):
                         SELECT *, row_number() OVER (PARTITION BY year order by rank desc) as i
                         FROM (
                             SELECT * FROM (
-                                SELECT *,
-                                    EXTRACT(year from TO_DATE(TO_CHAR(date, '9999999999.9'), 'J')) as year,
-                                    ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) as geom
+                                SELECT *
+                                    , EXTRACT(
+                                        year from TO_DATE(TO_CHAR(date, '9999999999.9'), 'J')
+                                    ) as year
+                                    , ST_AsMVTGeom(
+                                        ST_Transform(location, 3857), TileBBox(%s, %s, %s)
+                                    ) as geom
                                 FROM api_cacheddata
                                 ORDER BY rank DESC
                             ) as foo
@@ -320,7 +324,7 @@ def mvt_visual_center(request, zoom, x_cor, y_cor):
                     , api_spacetimevolume.end_date::INTEGER
                     , ST_AsMVTGeom(
                         ST_Transform(
-                            api_spacetimevolume.visual_center                                    
+                            api_spacetimevolume.visual_center
                             , 3857
                         )
                         , TileBBox(%s, %s, %s)
