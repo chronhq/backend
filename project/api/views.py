@@ -246,6 +246,22 @@ def mvt_stv(request, zoom, x_cor, y_cor):
     Custom view to serve Mapbox Vector Tiles for Political Borders.
     """
 
+    # For WebMercator (3857) X coordinate bounds are ±20037508.3427892 meters
+    # For SRID 4326 X coordinated bounds are ±180 degrees
+    # resolution = (xmax - xmin) or (xmax * 2)
+    # It is 5-10 times faster work with SRID 4326,
+    # We will apply ST_Simplify before ST_Transform
+    resolution = 360
+    # https://postgis.net/docs/ST_AsMVT.html
+    # tile extent in screen space as defined by the specification
+    extent = 4096
+
+    # Find safe tolerance for ST_Simplfy
+    tolerance = (float(resolution) / 2**zoom) / float(extent)
+    # Apply additional simplification for distant zoom levels
+    tolerance_multiplier = 1 if zoom > 5 else 2.2 - 0.2 * zoom
+    simplification = tolerance * tolerance_multiplier
+    
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -257,13 +273,13 @@ def mvt_stv(request, zoom, x_cor, y_cor):
                     , api_spacetimevolume.end_date::INTEGER
                     , api_spacetimevolume.references
                     , ST_AsMVTGeom(
-                        ST_Simplify(
-                            ST_SnapToGrid(
-                                ST_Transform(
-                                    api_spacetimevolume.territory                                    
-                                    , 3857
+                        ST_SnapToGrid(
+                            ST_Transform(
+                                ST_Simplify(
+                                    api_spacetimevolume.territory
+                                    , %s
                                 )
-                                , 100
+                                , 3857
                             )
                             , 1
                         )
@@ -279,7 +295,7 @@ def mvt_stv(request, zoom, x_cor, y_cor):
                 WHERE territory && TileBBox(%s, %s, %s, 4326)
                 ) as a
             """,
-            [zoom, x_cor, y_cor, zoom, x_cor, y_cor],
+            [simplification, zoom, x_cor, y_cor, zoom, x_cor, y_cor],
         )
         tile = bytes(cursor.fetchone()[0])
         if not tile:
