@@ -133,6 +133,7 @@ class NarrativeVoteViewSet(viewsets.ModelViewSet):
         Deletes instance if vote is null
         """
 
+        request.data["user"] = request.user.id
         if "vote" in request.data and request.data["vote"] is None:
             NarrativeVote.objects.get(
                 narrative=request.data["narrative"], user=request.data["user"]
