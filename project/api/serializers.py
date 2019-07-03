@@ -175,6 +175,7 @@ class NarrativeSerializer(ModelSerializer):
     start_year = SerializerMethodField()
     end_year = SerializerMethodField()
     votes = SerializerMethodField()
+    narration_count = SerializerMethodField()
 
     class Meta:
         model = Narrative
@@ -207,3 +208,10 @@ class NarrativeSerializer(ModelSerializer):
         upvotes = qs.aggregate(upvotes=Count(Case(When(vote=True, then=1))))
         downvotes = qs.aggregate(downvotes=Count(Case(When(vote=False, then=1))))
         return {**upvotes, **downvotes}
+
+    def get_narration_count(self, obj):  # pylint: disable=R0201
+        """
+        Returns count of narrations
+        """
+
+        return obj.narration_set.count()
