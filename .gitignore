@@ -146,7 +146,7 @@ mbtiles.env
 project/graph.svg
 
 # dbdumps
-project/dump.json
+project/*.json
 
 # IP whitelist
 config/nginx/allowed_ips.conf
