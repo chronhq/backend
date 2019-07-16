@@ -296,8 +296,7 @@ class ModelTest(TestCase):
         narration1.swap(narration2)
 
         test_user = User.objects.create(
-            username="test_user",
-            password=get_random_string(length=16)
+            username="test_user", password=get_random_string(length=16)
         )
 
         vote1 = NarrativeVote.objects.create(

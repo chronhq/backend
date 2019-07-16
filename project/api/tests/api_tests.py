@@ -40,7 +40,7 @@ from api.models import PoliticalRelation, CachedData
 from .test_data import set_up_data
 
 
-class FakeUser:
+class FakeUser:  # pylint: disable=too-few-public-methods
     """
     Fake user for drf-firebase-auth
     """
@@ -55,7 +55,7 @@ class FakeUser:
     provider_data = []
 
 
-firebase_user = FakeUser()
+FIREBASE_USER = FakeUser()
 
 # Helpers
 def authorized(function):
@@ -65,7 +65,7 @@ def authorized(function):
 
     def wrapper(*args):
         with patch("drf_firebase_auth.authentication.firebase_auth") as firebase_auth:
-            firebase_auth.get_user.return_value = firebase_user
+            firebase_auth.get_user.return_value = FIREBASE_USER
             return function(args[0])
 
     return wrapper
@@ -81,9 +81,7 @@ class APITest(APITestCase):
         """
         Authenticate with firebase_user
         """
-        self.client.credentials(
-            HTTP_AUTHORIZATION="JWT MyMockedToken"
-        )
+        self.client.credentials(HTTP_AUTHORIZATION="JWT MyMockedToken")
 
     @classmethod
     @authorized
@@ -132,15 +130,15 @@ class APITest(APITestCase):
 
         # Users
         cls.django_user = UserFactory(
-            email=firebase_user.email,
+            email=FIREBASE_USER.email,
             username="django_user",
-            password=firebase_user.password
+            password=FIREBASE_USER.password,
         )
 
         cls.test_user = UserFactory(
             email="test@test.com",
             username="test_user",
-            password=get_random_string(length=16)
+            password=get_random_string(length=16),
         )
 
         # NarrativeVotes
