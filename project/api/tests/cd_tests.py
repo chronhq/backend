@@ -1,7 +1,8 @@
 from rest_framework import status
 from django.urls import reverse
 from api.models import CachedData
-from .api_tests import (APITest, authorized)
+from .api_tests import APITest, authorized
+
 
 class CDTests(APITest):
     """

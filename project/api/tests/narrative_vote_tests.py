@@ -1,7 +1,8 @@
 from rest_framework import status
 from django.urls import reverse
 from api.models import NarrativeVote
-from .api_tests import (APITest, authorized)
+from .api_tests import APITest, authorized
+
 
 class NarrativeVoteTests(APITest):
     """
@@ -15,10 +16,7 @@ class NarrativeVoteTests(APITest):
         """
 
         url = reverse("narrativevote-list")
-        data = {
-            "narrative": self.norman_conquest.pk,
-            "vote": 0,
-        }
+        data = {"narrative": self.norman_conquest.pk, "vote": 0}
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(NarrativeVote.objects.count(), 1)
@@ -31,10 +29,7 @@ class NarrativeVoteTests(APITest):
         """
 
         url = reverse("narrativevote-list")
-        data = {
-            "narrative": self.norman_conquest.pk,
-            "vote": 1,
-        }
+        data = {"narrative": self.norman_conquest.pk, "vote": 1}
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(NarrativeVote.objects.count(), 1)
@@ -69,10 +64,7 @@ class NarrativeVoteTests(APITest):
         """
 
         url = reverse("narrativevote-list")
-        data = {
-            "narrative": self.norman_conquest.pk,
-            "vote": None,
-        }
+        data = {"narrative": self.norman_conquest.pk, "vote": None}
         response = self.client.post(url, data, format="json")
         self.assertEqual(NarrativeVote.objects.count(), 0)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

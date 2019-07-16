@@ -346,7 +346,10 @@ class ModelTest(TestCase):
         """
 
         paris = City.objects.create(
-            wikidata_id=1, label="Paris", location=Point(0, 0), inception_date=self.JD_0001
+            wikidata_id=1,
+            label="Paris",
+            location=Point(0, 0),
+            inception_date=self.JD_0001,
         )
 
         self.assertEqual(paris.label, "Paris")

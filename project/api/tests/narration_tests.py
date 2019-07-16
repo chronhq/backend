@@ -1,7 +1,8 @@
 from rest_framework import status
 from django.urls import reverse
 from api.models import Narration
-from .api_tests import (APITest, authorized)
+from .api_tests import APITest, authorized
+
 
 class NarrationTests(APITest):
     """

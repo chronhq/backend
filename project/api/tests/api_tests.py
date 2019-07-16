@@ -34,26 +34,25 @@ from api.factories import (
     CityFactory,
     UserFactory,
 )
-from api.models import (
-    PoliticalRelation,
-    CachedData,
-)
+from api.models import PoliticalRelation, CachedData
 
 from .test_data import set_up_data
 
-class FakeUser():
+
+class FakeUser:
     """
     Fake user for drf-firebase-auth
     """
 
-    email="user@example.com"
-    email_verified=False
-    phone_number="+15555550100"
-    password="secretPassword"
-    display_name="John Doe"
-    disabled=False
-    uid="MyFakeUID"
+    email = "user@example.com"
+    email_verified = False
+    phone_number = "+15555550100"
+    password = "secretPassword"
+    display_name = "John Doe"
+    disabled = False
+    uid = "MyFakeUID"
     provider_data = []
+
 
 firebase_user = FakeUser()
 
@@ -62,10 +61,12 @@ def authorized(function):
     """
     Decorator to mock firebase auth
     """
+
     def wrapper(*args):
-        with patch('drf_firebase_auth.authentication.firebase_auth') as firebase_auth:
+        with patch("drf_firebase_auth.authentication.firebase_auth") as firebase_auth:
             firebase_auth.get_user.return_value = firebase_user
             return function(args[0])
+
     return wrapper
 
 
@@ -131,9 +132,7 @@ class APITest(APITestCase):
 
         # Users
         cls.django_user = UserFactory(
-            email="user@example.com",
-            username="django_user",
-            password="p@55w0rd1"
+            email="user@example.com", username="django_user", password="p@55w0rd1"
         )
 
         # NarrativeVotes
@@ -157,5 +156,8 @@ class APITest(APITestCase):
 
         # Cities
         cls.paris = CityFactory(
-            wikidata_id=1, label="Paris", location=Point(0, 0), inception_date=cls.JD_0001
+            wikidata_id=1,
+            label="Paris",
+            location=Point(0, 0),
+            inception_date=cls.JD_0001,
         )

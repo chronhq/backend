@@ -2,7 +2,8 @@ from rest_framework import status
 from django.urls import reverse
 from django.test import tag
 from api.models import Narrative
-from .api_tests import (APITest, authorized)
+from .api_tests import APITest, authorized
+
 
 class NarrativeTests(APITest):
     """

@@ -1,12 +1,14 @@
 from rest_framework import status
 from django.urls import reverse
 from api.models import City
-from .api_tests import (APITest, authorized)
+from .api_tests import APITest, authorized
+
 
 class CityTests(APITest):
     """
     City test suite
     """
+
     @authorized
     def test_api_can_create_city(self):
         """
