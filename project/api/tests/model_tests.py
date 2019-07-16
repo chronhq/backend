@@ -20,9 +20,8 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import Point, Polygon
 from django.test import TestCase
-from .test_data import set_up_data
 
-from api.factories import TerritorialEntityFactory
+# from api.factories import TerritorialEntityFactory
 
 from api.models import (
     PoliticalRelation,
@@ -36,6 +35,8 @@ from api.models import (
     City,
     Profile,
 )
+
+from .test_data import set_up_data
 
 # Tests
 class ModelTest(TestCase):
