@@ -20,7 +20,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
-from math import ceil
 import requests
 from django.contrib.gis.geos import Point, Polygon
 from django.urls import reverse
@@ -28,7 +27,7 @@ from django.test import tag
 from firebase_admin import auth
 from rest_framework import status
 from rest_framework.test import APITestCase
-from jdcal import gcal2jd
+from .test_data import set_up_data
 
 from api.factories import (
     TerritorialEntityFactory,
@@ -54,12 +53,6 @@ from api.models import (
     City,
 )
 
-# Constants
-JD_0001 = ceil(sum(gcal2jd(1, 1, 1))) + 0.0
-JD_0002 = ceil(sum(gcal2jd(2, 1, 1))) + 0.0
-JD_0003 = ceil(sum(gcal2jd(3, 1, 1))) + 0.0
-JD_0004 = ceil(sum(gcal2jd(4, 1, 1))) + 0.0
-JD_0005 = ceil(sum(gcal2jd(5, 1, 1))) + 0.0
 
 # Helpers
 def memoize(function):  # https://stackoverflow.com/a/815160/
@@ -114,96 +107,14 @@ class APITest(APITestCase):
         Create basic model instances
         """
 
-        # TerritorialEntities
-        cls.european_union = TerritorialEntityFactory(
-            wikidata_id=10,
-            label="European Union",
-            color=1,
-            admin_level=1,
-            inception_date=0,
-            dissolution_date=1,
-        )
-        cls.nato = TerritorialEntityFactory(
-            wikidata_id=11,
-            label="NATO",
-            color=1,
-            admin_level=1,
-            inception_date=0,
-            dissolution_date=1,
-        )
-
-        cls.germany = TerritorialEntityFactory(
-            wikidata_id=20,
-            label="Germany",
-            color=1,
-            admin_level=2,
-            inception_date=0,
-            dissolution_date=1,
-        )
-        cls.france = TerritorialEntityFactory(
-            wikidata_id=21,
-            label="France",
-            color=1,
-            admin_level=2,
-            inception_date=0,
-            dissolution_date=1,
-        )
-        cls.spain = TerritorialEntityFactory(
-            wikidata_id=22,
-            label="Spain",
-            color=1,
-            admin_level=2,
-            inception_date=0,
-            dissolution_date=1,
-        )
-        cls.italy = TerritorialEntityFactory(
-            wikidata_id=23,
-            label="Italy",
-            color=1,
-            admin_level=2,
-            inception_date=0,
-            dissolution_date=1,
-        )
-        cls.british_empire = TerritorialEntityFactory(
-            wikidata_id=24,
-            label="British Empire",
-            color=1,
-            admin_level=2,
-            inception_date=0,
-            dissolution_date=1,
-        )
-        cls.british_hk = TerritorialEntityFactory(
-            wikidata_id=25,
-            label="British HK",
-            color=1,
-            admin_level=2,
-            inception_date=0,
-            dissolution_date=1,
-        )
-
-        cls.alsace = TerritorialEntityFactory(
-            wikidata_id=30,
-            label="Alsace",
-            color=1,
-            admin_level=3,
-            inception_date=0,
-            dissolution_date=1,
-        )
-        cls.lorraine = TerritorialEntityFactory(
-            wikidata_id=31,
-            label="Lorraine",
-            color=1,
-            admin_level=3,
-            inception_date=0,
-            dissolution_date=1,
-        )
+        set_up_data(cls)
 
         # PoliticalRelations
         cls.EU_germany = PoliticalRelationFactory(
             parent=cls.european_union,
             child=cls.germany,
-            start_date=JD_0001,
-            end_date=JD_0002,
+            start_date=cls.JD_0001,
+            end_date=cls.JD_0002,
             control_type=PoliticalRelation.INDIRECT,
         )
 
@@ -211,14 +122,14 @@ class APITest(APITestCase):
         cls.hastings = CachedDataFactory(
             wikidata_id=1,
             location=Point(0, 0),
-            date=JD_0001,
+            date=cls.JD_0001,
             event_type=CachedData.BATTLE,
         )
 
         # SpacetimeVolumes
         cls.alsace_stv = SpacetimeVolumeFactory(
-            start_date=JD_0001,
-            end_date=JD_0002,
+            start_date=cls.JD_0001,
+            end_date=cls.JD_0002,
             entity=cls.france,
             references=["ref"],
             visual_center=Point(1.2, 1.8),
@@ -260,14 +171,14 @@ class APITest(APITestCase):
             title="Test Narration",
             description="This is a narration point",
             date_label="test",
-            map_datetime=JD_0002,
+            map_datetime=cls.JD_0002,
             settings=cls.norman_conquest_settings,
             location=Point(0, 0),
         )
 
         # Cities
         cls.paris = CityFactory(
-            wikidata_id=1, label="Paris", location=Point(0, 0), inception_date=JD_0001
+            wikidata_id=1, label="Paris", location=Point(0, 0), inception_date=cls.JD_0001
         )
 
     def test_api_can_create_te(self):
@@ -335,8 +246,8 @@ class APITest(APITestCase):
 
         url = reverse("politicalrelation-list")
         data = {
-            "start_date": JD_0001,
-            "end_date": JD_0002,
+            "start_date": self.JD_0001,
+            "end_date": self.JD_0002,
             "parent": self.european_union.pk,
             "child": self.france.pk,
             "control_type": PoliticalRelation.GROUP,
@@ -355,8 +266,8 @@ class APITest(APITestCase):
 
         url = reverse("politicalrelation-detail", args=[self.EU_germany.pk])
         data = {
-            "start_date": JD_0001,
-            "end_date": JD_0002,
+            "start_date": self.JD_0001,
+            "end_date": self.JD_0002,
             "parent": self.european_union.pk,
             "child": self.france.pk,
             "control_type": PoliticalRelation.GROUP,
@@ -394,7 +305,7 @@ class APITest(APITestCase):
         data = {
             "wikidata_id": 2,
             "location": "Point(0 1)",
-            "date": JD_0001,
+            "date": self.JD_0001,
             "event_type": CachedData.DOCUMENT,
         }
         response = self.client.post(url, data, format="json")
@@ -411,7 +322,7 @@ class APITest(APITestCase):
         data = {
             "wikidata_id": 2,
             "location": "Point(0 1)",
-            "date": JD_0001,
+            "date": self.JD_0001,
             "event_type": 555,
         }
         response = self.client.post(url, data, format="json")
@@ -428,7 +339,7 @@ class APITest(APITestCase):
         data = {
             "wikidata_id": 1,
             "location": "Point(0 0)",
-            "date": JD_0001,
+            "date": self.JD_0001,
             "event_type": CachedData.DOCUMENT,
         }
         response = self.client.put(url, data, format="json")
@@ -462,8 +373,8 @@ class APITest(APITestCase):
 
         url = reverse("spacetimevolume-list")
         data = {
-            "start_date": JD_0001,
-            "end_date": JD_0002,
+            "start_date": self.JD_0001,
+            "end_date": self.JD_0002,
             "entity": self.germany.pk,
             "references": ["ref"],
             "territory": "POLYGON((3 3, 3 4, 4 4, 3 3))",
@@ -481,8 +392,8 @@ class APITest(APITestCase):
 
         url = reverse("spacetimevolume-detail", args=[self.alsace_stv.pk])
         data = {
-            "start_date": JD_0001,
-            "end_date": JD_0005,
+            "start_date": self.JD_0001,
+            "end_date": self.JD_0005,
             "entity": self.france.pk,
             "references": ["ref"],
             "territory": "POLYGON((1 1, 1 2, 2 2, 1 1))",
@@ -490,7 +401,7 @@ class APITest(APITestCase):
         }
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["end_date"], str(JD_0005))
+        self.assertEqual(response.data["end_date"], str(self.JD_0005))
 
     def test_api_can_query_stv(self):
         """
@@ -500,7 +411,7 @@ class APITest(APITestCase):
         url = reverse("spacetimevolume-detail", args=[self.alsace_stv.pk])
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["end_date"], str(JD_0002))
+        self.assertEqual(response.data["end_date"], str(self.JD_0002))
 
     def test_api_can_create_narrative(self):
         """
@@ -622,7 +533,7 @@ class APITest(APITestCase):
             "title": "Test Narration",
             "description": "This is a narration point",
             "date_label": "test",
-            "map_datetime": JD_0002,
+            "map_datetime": self.JD_0002,
             "settings": self.norman_conquest_settings.pk,
             "attached_events_ids": [self.hastings.pk],
             "location": "POINT (0 0)",
@@ -643,7 +554,7 @@ class APITest(APITestCase):
             "title": "Test Narration 2",
             "description": "This is a narration point",
             "date_label": "test",
-            "map_datetime": JD_0002,
+            "map_datetime": self.JD_0002,
             "settings": self.norman_conquest_settings.pk,
             "attached_events_ids": [self.hastings.pk],
             "location": "POINT (0 0)",
@@ -682,7 +593,7 @@ class APITest(APITestCase):
             "wikidata_id": 2,
             "label": "London",
             "location": "POINT (10 10)",
-            "inception_date": JD_0001,
+            "inception_date": self.JD_0001,
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -699,7 +610,7 @@ class APITest(APITestCase):
             "wikidata_id": 2,
             "label": "London",
             "location": "POINT (10 10)",
-            "inception_date": JD_0001,
+            "inception_date": self.JD_0001,
         }
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -733,7 +644,6 @@ class APITest(APITestCase):
         url = reverse("narrativevote-list")
         data = {
             "narrative": self.norman_conquest.pk,
-            "user": self.django_user.pk,
             "vote": 0,
         }
         response = self.client.post(url, data, format="json")
@@ -749,7 +659,6 @@ class APITest(APITestCase):
         url = reverse("narrativevote-list")
         data = {
             "narrative": self.norman_conquest.pk,
-            "user": self.django_user.pk,
             "vote": 1,
         }
         response = self.client.post(url, data, format="json")
@@ -785,7 +694,6 @@ class APITest(APITestCase):
         url = reverse("narrativevote-list")
         data = {
             "narrative": self.norman_conquest.pk,
-            "user": self.django_user.pk,
             "vote": None,
         }
         response = self.client.post(url, data, format="json")
