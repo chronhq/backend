@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from unittest.mock import patch
 from django.contrib.gis.geos import Point, Polygon
+from django.utils.crypto import get_random_string
 from rest_framework.test import APITestCase
 
 from api.factories import (
@@ -47,7 +48,7 @@ class FakeUser:
     email = "user@example.com"
     email_verified = False
     phone_number = "+15555550100"
-    password = "secretPassword"
+    password = get_random_string(length=16)
     display_name = "John Doe"
     disabled = False
     uid = "MyFakeUID"
@@ -132,7 +133,9 @@ class APITest(APITestCase):
 
         # Users
         cls.django_user = UserFactory(
-            email="user@example.com", username="django_user", password="p@55w0rd1"
+            email=firebase_user.email,
+            username="django_user",
+            password=firebase_user.password
         )
 
         # NarrativeVotes
