@@ -82,7 +82,6 @@ class APITest(APITestCase):
         Authenticate with firebase_user
         """
         self.client.credentials(
-            # HTTP_AUTHORIZATION="JWT " + get_user_token(self.firebase_user)
             HTTP_AUTHORIZATION="JWT MyMockedToken"
         )
 
@@ -138,9 +137,15 @@ class APITest(APITestCase):
             password=firebase_user.password
         )
 
+        cls.test_user = UserFactory(
+            email="test@test.com",
+            username="test_user",
+            password=get_random_string(length=16)
+        )
+
         # NarrativeVotes
         cls.norman_conquest_vote = NarrativeVoteFactory(
-            narrative=cls.norman_conquest, user=cls.django_user, vote=True
+            narrative=cls.norman_conquest, user=cls.test_user, vote=True
         )
 
         # MapSettings

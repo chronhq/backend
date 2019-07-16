@@ -135,7 +135,7 @@ class NarrativeVoteViewSet(viewsets.ModelViewSet):
 
         request.data["user"] = request.user.id
         if "vote" in request.data and request.data["vote"] is None:
-            NarrativeVote.objects.get(
+            NarrativeVote.objects.filter(
                 narrative=request.data["narrative"], user=request.data["user"]
             ).delete()
             return Response(status.HTTP_204_NO_CONTENT)

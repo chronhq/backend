@@ -19,8 +19,9 @@ class NarrativeVoteTests(APITest):
         data = {"narrative": self.norman_conquest.pk, "vote": 0}
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(NarrativeVote.objects.count(), 1)
-        self.assertEqual(NarrativeVote.objects.last().vote, 0)
+        objects = NarrativeVote.objects.filter(user_id=self.django_user.pk)
+        self.assertEqual(objects.count(), 1)
+        self.assertEqual(objects.last().vote, 0)
 
     @authorized
     def test_api_can_update_narrativevote(self):
@@ -32,8 +33,12 @@ class NarrativeVoteTests(APITest):
         data = {"narrative": self.norman_conquest.pk, "vote": 1}
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(NarrativeVote.objects.count(), 1)
-        self.assertEqual(NarrativeVote.objects.last().vote, 1)
+        self.assertEqual(NarrativeVote.objects.filter(
+            user_id=self.django_user.pk
+        ).count(), 1)
+        self.assertEqual(NarrativeVote.objects.filter(
+            user_id=self.django_user.pk
+        ).last().vote, 1)
 
     @authorized
     def test_api_can_query_narrativevotes(self):
@@ -66,5 +71,5 @@ class NarrativeVoteTests(APITest):
         url = reverse("narrativevote-list")
         data = {"narrative": self.norman_conquest.pk, "vote": None}
         response = self.client.post(url, data, format="json")
-        self.assertEqual(NarrativeVote.objects.count(), 0)
+        self.assertEqual(NarrativeVote.objects.filter(user_id=self.django_user.pk).count(), 0)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
