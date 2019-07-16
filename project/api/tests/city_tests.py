@@ -1,12 +1,13 @@
 from rest_framework import status
 from django.urls import reverse
 from api.models import City
-from .api_tests import APITest
+from .api_tests import (APITest, authorized)
 
 class CityTests(APITest):
     """
     City test suite
     """
+    @authorized
     def test_api_can_create_city(self):
         """
         Ensure we can create Cities
@@ -24,6 +25,7 @@ class CityTests(APITest):
         self.assertEqual(City.objects.count(), 2)
         self.assertEqual(City.objects.last().label, "London")
 
+    @authorized
     def test_api_can_update_city(self):
         """
         Ensure we can update Cities
@@ -40,6 +42,7 @@ class CityTests(APITest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["label"], "London")
 
+    @authorized
     def test_api_can_query_cities(self):
         """
         Ensure we can query for all Cities
@@ -50,6 +53,7 @@ class CityTests(APITest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]["label"], "Paris")
 
+    @authorized
     def test_api_can_query_city(self):
         """
         Ensure we can query for individual Cities

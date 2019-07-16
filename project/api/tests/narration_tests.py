@@ -1,13 +1,14 @@
 from rest_framework import status
 from django.urls import reverse
 from api.models import Narration
-from .api_tests import APITest
+from .api_tests import (APITest, authorized)
 
 class NarrationTests(APITest):
     """
     Narration test suite
     """
 
+    @authorized
     def test_api_can_create_narration(self):
         """
         Ensure we can create Narrations
@@ -29,6 +30,7 @@ class NarrationTests(APITest):
         self.assertEqual(Narration.objects.count(), 2)
         self.assertEqual(Narration.objects.last().title, "Test Narration")
 
+    @authorized
     def test_api_can_update_narration(self):
         """
         Ensure we can update Narrations
@@ -49,6 +51,7 @@ class NarrationTests(APITest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["title"], "Test Narration 2")
 
+    @authorized
     def test_api_can_query_narrations(self):
         """
         Ensure we can query for all Narrations
@@ -59,6 +62,7 @@ class NarrationTests(APITest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]["title"], "Test Narration")
 
+    @authorized
     def test_api_can_query_narration(self):
         """
         Ensure we can query for individual Narrations

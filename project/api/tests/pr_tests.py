@@ -1,13 +1,14 @@
 from rest_framework import status
 from django.urls import reverse
 from api.models import PoliticalRelation
-from .api_tests import APITest
+from .api_tests import (APITest, authorized)
 
 class PRTests(APITest):
     """
     Poltical Relations test suite
     """
 
+    @authorized
     def test_api_can_create_pr(self):
         """
         Ensure we can create PoliticalRelations
@@ -28,6 +29,7 @@ class PRTests(APITest):
             PoliticalRelation.objects.last().control_type, PoliticalRelation.GROUP
         )
 
+    @authorized
     def test_api_can_update_pr(self):
         """
         Ensure we can update PoliticalRelations
@@ -45,6 +47,7 @@ class PRTests(APITest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["control_type"], PoliticalRelation.GROUP)
 
+    @authorized
     def test_api_can_query_prs(self):
         """
         Ensure we can query for all PoliticalRelations
@@ -55,6 +58,7 @@ class PRTests(APITest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]["control_type"], PoliticalRelation.INDIRECT)
 
+    @authorized
     def test_api_can_query_pr(self):
         """
         Ensure we can query for individual PoliticalRelations

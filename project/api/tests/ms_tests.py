@@ -1,13 +1,14 @@
 from rest_framework import status
 from django.urls import reverse
 from api.models import MapSettings
-from .api_tests import APITest
+from .api_tests import (APITest, authorized)
 
 class MSTests(APITest):
     """
     Map Settings test suite
     """
 
+    @authorized
     def test_api_can_create_ms(self):
         """
         Ensure we can create MapSettings
@@ -20,6 +21,7 @@ class MSTests(APITest):
         self.assertEqual(MapSettings.objects.count(), 2)
         self.assertEqual(MapSettings.objects.last().zoom_min, 1.0)
 
+    @authorized
     def test_api_can_update_ms(self):
         """
         Ensure we can update MapSettings
@@ -31,6 +33,7 @@ class MSTests(APITest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["zoom_min"], 5)
 
+    @authorized
     def test_api_can_query_mss(self):
         """
         Ensure we can query for all MapSettings
@@ -41,6 +44,7 @@ class MSTests(APITest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]["zoom_min"], 1)
 
+    @authorized
     def test_api_can_query_ms(self):
         """
         Ensure we can query for individual MapSettings

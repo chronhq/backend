@@ -1,12 +1,13 @@
 from rest_framework import status
 from django.urls import reverse
-from .api_tests import APITest
+from .api_tests import (APITest, authorized)
 
 class ProfileTests(APITest):
     """
     Profile test suite
     """
 
+    @authorized
     def test_api_can_not_update_profile(self):
         """
         Ensure Profile permissions are operational
@@ -17,6 +18,7 @@ class ProfileTests(APITest):
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    @authorized
     def test_api_can_update_profile(self):
         """
         Ensure user's own Profile can be updated
@@ -29,6 +31,7 @@ class ProfileTests(APITest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["location"]["coordinates"], [10.0, 10.0])
 
+    @authorized
     def test_api_can_query_profiles(self):
         """
         Ensure we can query for all Profiles
@@ -39,6 +42,7 @@ class ProfileTests(APITest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]["user"], self.django_user.pk)
 
+    @authorized
     def test_api_can_query_profile(self):
         """
         Ensure we can query for individual Profiles

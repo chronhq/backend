@@ -1,13 +1,14 @@
 from rest_framework import status
 from django.urls import reverse
 from api.models import SpacetimeVolume
-from .api_tests import APITest
+from .api_tests import (APITest, authorized)
 
 class STVTests(APITest):
     """
     SpacetimeVolume test suite
     """
 
+    @authorized
     def test_api_can_create_stv(self):
         """
         Ensure we can create SpacetimeVolumes
@@ -27,6 +28,7 @@ class STVTests(APITest):
         self.assertEqual(SpacetimeVolume.objects.count(), 2)
         self.assertEqual(SpacetimeVolume.objects.last().references, ["ref"])
 
+    @authorized
     def test_api_can_update_stv(self):
         """
         Ensure we can update SpacetimeVolumes
@@ -45,6 +47,7 @@ class STVTests(APITest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["end_date"], str(self.JD_0005))
 
+    @authorized
     def test_api_can_query_stv(self):
         """
         Ensure we can query for individual SpacetimeVolumes
