@@ -19,11 +19,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-# import os
-# import requests
 from unittest.mock import patch
 from django.contrib.gis.geos import Point, Polygon
-# from firebase_admin import auth
 from rest_framework.test import APITestCase
 
 from api.factories import (
@@ -70,37 +67,6 @@ def authorized(function):
             firebase_auth.get_user.return_value = firebase_user
             return function(args[0])
     return wrapper
-
-# def memoize(function):  # https://stackoverflow.com/a/815160/
-#     """
-#     Decorator to memoize a function return value
-#     """
-#     memo = {}
-
-#     def wrapper(*args):
-#         if args in memo:
-#             return memo[args]
-#         new_func = function(*args)
-#         memo[args] = new_func
-#         return new_func
-
-#     return wrapper
-
-
-# @memoize
-# def get_user_token(uid):
-#     """
-#     Returns an idToken for a given UID
-#     """
-#     custom_token = auth.create_custom_token(uid)
-#     token_req = requests.post(
-#         (
-#             "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyCustomToken?key="
-#             f"{os.environ.get('CLIENT_API_KEY')}"
-#         ),
-#         json={"token": str(custom_token.decode("UTF-8")), "returnSecureToken": True},
-#     ).json()
-#     return token_req["idToken"]
 
 
 # Tests
@@ -164,16 +130,11 @@ class APITest(APITestCase):
         )
 
         # Users
-        # cls.firebase_user = dict(
-        #     email="user@example.com",
-        #     email_verified=False,
-        #     phone_number="+15555550100",
-        #     password="secretPassword",
-        #     display_name="John Doe",
-        #     disabled=False,
-        # )
-        # cls.firebase_user = new_firebase_user.uid
-        cls.django_user = UserFactory(username="django_user", password="p@55w0rd1")
+        cls.django_user = UserFactory(
+            email="user@example.com",
+            username="django_user",
+            password="p@55w0rd1"
+        )
 
         # NarrativeVotes
         cls.norman_conquest_vote = NarrativeVoteFactory(
@@ -198,11 +159,3 @@ class APITest(APITestCase):
         cls.paris = CityFactory(
             wikidata_id=1, label="Paris", location=Point(0, 0), inception_date=cls.JD_0001
         )
-
-    @classmethod
-    def tearDownClass(cls):
-        """
-        Delete test user
-        """
-        # auth.delete_user(cls.firebase_user)
-        super().tearDownClass()
