@@ -22,8 +22,6 @@ from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import Point, Polygon
 from django.test import TestCase
 
-# from api.factories import TerritorialEntityFactory
-
 from api.models import (
     PoliticalRelation,
     TerritorialEntity,
