@@ -37,7 +37,7 @@ from api.models import (
     Profile,
 )
 
-from .test_data import set_up_data
+from .test_data import set_up_data, wiki_cd
 
 # Tests
 class ModelTest(TestCase):
@@ -239,6 +239,7 @@ class ModelTest(TestCase):
                 territory=Point(1, 1),
             )
 
+    @wiki_cd
     def test_model_can_create_narrative(self):
         """
         Ensure that we can create a narrative and the ordering plugin works.
@@ -327,6 +328,7 @@ class ModelTest(TestCase):
         with self.assertRaises(ValidationError):
             MapSettings.objects.create(zoom_min=5, zoom_max=3)
 
+    @wiki_cd
     def test_model_can_create_cd(self):
         """
         Ensure CachedData can be created

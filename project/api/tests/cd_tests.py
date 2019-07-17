@@ -23,6 +23,7 @@ from rest_framework import status
 from django.urls import reverse
 from api.models import CachedData
 from .api_tests import APITest, authorized
+from .test_data import wiki_cd
 
 
 class CDTests(APITest):
@@ -31,6 +32,7 @@ class CDTests(APITest):
     """
 
     @authorized
+    @wiki_cd
     def test_api_can_create_cd(self):
         """
         Ensure we can create CachedData
@@ -49,6 +51,7 @@ class CDTests(APITest):
         self.assertEqual(CachedData.objects.last().event_type, CachedData.DOCUMENT)
 
     @authorized
+    @wiki_cd
     def test_api_can_create_cd_othertype(self):
         """
         Ensure we can create CachedData with an event_type not in the choices
@@ -67,6 +70,7 @@ class CDTests(APITest):
         self.assertEqual(CachedData.objects.last().event_type, 555)
 
     @authorized
+    @wiki_cd
     def test_api_can_update_cd(self):
         """
         Ensure we can update CachedData
@@ -84,6 +88,7 @@ class CDTests(APITest):
         self.assertEqual(response.data["event_type"], CachedData.DOCUMENT)
 
     @authorized
+    @wiki_cd
     def test_api_can_query_cds(self):
         """
         Ensure we can query for all CachedDatas
@@ -95,6 +100,7 @@ class CDTests(APITest):
         self.assertEqual(response.data[0]["event_type"], CachedData.BATTLE)
 
     @authorized
+    @wiki_cd
     def test_api_can_query_cd(self):
         """
         Ensure we can query for individual CachedDatas

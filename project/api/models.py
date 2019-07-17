@@ -191,7 +191,10 @@ class CachedData(models.Model):
 
     history = HistoricalRecords()
 
-    def save(self, *args, **kwargs):  # pylint: disable=W0221
+    def query_wikidata(self):
+        """
+        Fetch links from wikidata
+        """
         url = "https://query.wikidata.org/sparql"
         query = """
         SELECT ?item ?outcoming ?sitelinks ?incoming WHERE {{
@@ -210,10 +213,11 @@ class CachedData(models.Model):
             wid=self.wikidata_id
         )
         req = get(url, params={"format": "json", "query": query})
+        return req.json()["results"]["bindings"][0]
 
+    def save(self, *args, **kwargs):  # pylint: disable=W0221
         try:
-            data = req.json()["results"]["bindings"][0]
-
+            data = self.query_wikidata()
             incoming = int(data["incoming"]["value"])
             sitelinks = int(data["sitelinks"]["value"])
             outcoming = int(data["outcoming"]["value"])

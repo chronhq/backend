@@ -37,7 +37,7 @@ from api.factories import (
 )
 from api.models import PoliticalRelation, CachedData
 
-from .test_data import set_up_data
+from .test_data import set_up_data, wiki_cd
 
 
 class FakeUser:  # pylint: disable=too-few-public-methods
@@ -85,6 +85,7 @@ class APITest(APITestCase):
 
     @classmethod
     @authorized
+    @wiki_cd
     def setUpTestData(cls):
         """
         Create basic model instances

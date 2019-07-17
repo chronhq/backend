@@ -20,8 +20,29 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from math import ceil
+from unittest.mock import patch
 from jdcal import gcal2jd
 from api.factories import TerritorialEntityFactory
+
+# Response from wikidata
+RANK = {
+    "outcoming": {"value": "75"},
+    "sitelinks": {"value": "185"},
+    "incoming": {"value": "65"},
+}
+
+
+# Helpers
+def wiki_cd(function):
+    """
+    Decorator to mock firebase auth
+    """
+
+    def wrapper(*args):
+        with patch("api.models.CachedData.query_wikidata", return_value=RANK):
+            return function(args[0])
+
+    return wrapper
 
 
 def set_up_data(cls):
