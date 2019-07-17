@@ -365,7 +365,7 @@ class ModelTest(TestCase):
         Ensures Profiles are created on User create
         """
         test_user = User.objects.create_user(
-            username="test_user", password="test_password"
+            username="test_user", password=get_random_string(length=16)
         )
 
         self.assertEqual(Profile.objects.count(), 1)
