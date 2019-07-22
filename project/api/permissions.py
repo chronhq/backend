@@ -17,29 +17,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.contrib import admin
+from rest_framework import permissions
 
-from .models import (
-    TerritorialEntity,
-    PoliticalRelation,
-    SpacetimeVolume,
-    CachedData,
-    Narration,
-    Narrative,
-    MapSettings,
-    City,
-    Profile,
-    NarrativeVote,
-)
 
-# Register your models here.
-admin.site.register(TerritorialEntity)
-admin.site.register(PoliticalRelation)
-admin.site.register(SpacetimeVolume)
-admin.site.register(CachedData)
-admin.site.register(Narration)
-admin.site.register(Narrative)
-admin.site.register(MapSettings)
-admin.site.register(City)
-admin.site.register(Profile)
-admin.site.register(NarrativeVote)
+class IsUserOrReadOnly(permissions.BasePermission):
+    """
+    Assumes the model instance has a `user` attribute.
+    Used for Profile and Vote models
+    """
+
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed to any request,
+        # so we'll always allow GET, HEAD or OPTIONS requests.
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        return obj.user == request.user

@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "colorfield",
     "rest_framework",
     "rest_framework_gis",
+    "drf_firebase_auth",
     "ordered_model",
     "silk",
 ]
@@ -180,8 +181,18 @@ if DEBUG:
     )
 
 REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly"
+    ],
     "DEFAULT_RENDERER_CLASSES": DEFAULT_RENDERER_CLASSES,
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "drf_firebase_auth.authentication.FirebaseAuthentication"
+    ],
+}
+
+DRF_FIREBASE_AUTH = {
+    "FIREBASE_SERVICE_ACCOUNT_KEY": "../config/firebase.json",
+    "ALLOW_ANONYMOUS_REQUESTS": True,
 }
 
 SILKY_PYTHON_PROFILER = True

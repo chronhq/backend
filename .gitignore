@@ -141,6 +141,7 @@ venv.bak/
 django.env
 postgres.env
 mbtiles.env
+auth.env
 
 # docs
 project/graph.svg
@@ -156,3 +157,6 @@ data/
 
 # silk profiles
 project/profiles/
+
+# firebase secrets
+config/firebase.json

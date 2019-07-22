@@ -19,11 +19,63 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from requests import get
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from ordered_model.models import OrderedModel
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
+
+
+class Vote(models.Model):
+    """
+    Abstract class to store User's votes
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    vote = models.BooleanField()
+
+    class Meta:
+        abstract = True
+
+
+class NarrativeVote(Vote):
+    """
+    Stores votes for Narratives. Extends Vote model
+    """
+
+    narrative = models.ForeignKey("Narrative", on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("narrative", "user")
+
+
+class Profile(models.Model):
+    """
+    Optional profile fields, 1-1 with User instances
+    """
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    location = models.PointField(blank=True, null=True)
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):  # pylint: disable=W0613
+    """
+    Creates user profile on post_save for a new User instance
+    """
+    if created:
+        Profile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):  # pylint: disable=W0613
+    """
+    Saves user profile on post_save for User
+    """
+    instance.profile.save()
 
 
 class TerritorialEntity(models.Model):
@@ -139,7 +191,10 @@ class CachedData(models.Model):
 
     history = HistoricalRecords()
 
-    def save(self, *args, **kwargs):  # pylint: disable=W0221
+    def query_wikidata(self):
+        """
+        Fetch links from wikidata
+        """
         url = "https://query.wikidata.org/sparql"
         query = """
         SELECT ?item ?outcoming ?sitelinks ?incoming WHERE {{
@@ -158,10 +213,11 @@ class CachedData(models.Model):
             wid=self.wikidata_id
         )
         req = get(url, params={"format": "json", "query": query})
+        return req.json()["results"]["bindings"][0]
 
+    def save(self, *args, **kwargs):  # pylint: disable=W0221
         try:
-            data = req.json()["results"]["bindings"][0]
-
+            data = self.query_wikidata()
             incoming = int(data["incoming"]["value"])
             sitelinks = int(data["sitelinks"]["value"])
             outcoming = int(data["outcoming"]["value"])
@@ -277,6 +333,9 @@ class Narrative(models.Model):
     url = models.TextField(unique=True)
     description = models.TextField()
     tags = ArrayField(models.TextField(max_length=100))
+    votes = models.ManyToManyField(
+        User, related_name="narrative_votes", through=NarrativeVote, blank=True
+    )
     history = HistoricalRecords()
 
 
@@ -310,7 +369,7 @@ class MapSettings(models.Model):
 
 class Narration(OrderedModel):
     """
-    Each point of narration inside a narrative commenting on events.
+    Each point of narration inside a narrative, commenting on events.
     """
 
     narrative = models.ForeignKey(Narrative, on_delete=models.CASCADE)

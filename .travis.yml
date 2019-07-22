@@ -12,15 +12,21 @@ install:
   - mv django.env.sample django.env
   - mv postgres.env.sample postgres.env
   - mv mbtiles.env.sample mbtiles.env
+  - touch auth.env
   - docker-compose build
 
 script:
   - docker-compose run web black . --exclude /migrations/ --diff --check
   - docker-compose run web pylint --ignore=tests ./api/
   - docker-compose run web pylint --rcfile=api/tests/pylintrc ./api/tests
-  - docker-compose run -e ENV=dev web ash init.sh python manage.py test --debug-mode
+  - docker-compose run -e ENV=dev -e CLIENT_API_KEY web ash init.sh
+    python manage.py test --debug-mode
 
 branches:
   only:
     - staging
     - trying
+
+before_install:
+  - openssl aes-256-cbc -K $encrypted_14955f54f703_key -iv $encrypted_14955f54f703_iv
+    -in firebase.json.enc -out config/firebase.json -d

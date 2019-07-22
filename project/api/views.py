@@ -20,7 +20,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from django.db import connection
 from django.db.models import Count
 from django.http import Http404, HttpResponse
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from .models import (
     TerritorialEntity,
@@ -31,6 +33,8 @@ from .models import (
     Narrative,
     MapSettings,
     Narration,
+    NarrativeVote,
+    Profile,
 )
 from .serializers import (
     TerritorialEntitySerializer,
@@ -41,7 +45,10 @@ from .serializers import (
     NarrativeSerializer,
     MapSettingsSerializer,
     NarrationSerializer,
+    NarrativeVoteSerializer,
+    ProfileSerializer,
 )
+from .permissions import IsUserOrReadOnly
 
 
 class TerritorialEntityViewSet(viewsets.ModelViewSet):
@@ -112,6 +119,30 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
     serializer_class = SpacetimeVolumeSerializer
 
 
+class NarrativeVoteViewSet(viewsets.ModelViewSet):
+    """
+    Viewset for NarrativeVote model
+    """
+
+    queryset = NarrativeVote.objects.all()
+    serializer_class = NarrativeVoteSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly, IsUserOrReadOnly)
+
+    def create(self, request, *args, **kwargs):
+        """
+        Deletes instance if vote is null
+        """
+
+        request.data["user"] = request.user.id
+        if "vote" in request.data and request.data["vote"] is None:
+            NarrativeVote.objects.filter(
+                narrative=request.data["narrative"], user=request.data["user"]
+            ).delete()
+            return Response(status.HTTP_204_NO_CONTENT)
+
+        return super().create(request, *args, **kwargs)
+
+
 class NarrativeViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Narratives
@@ -151,6 +182,16 @@ class NarrationViewSet(viewsets.ModelViewSet):
         if narrative is not None:
             queryset = queryset.filter(narrative=narrative)
         return queryset
+
+
+class ProfileViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Profile
+    """
+
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly, IsUserOrReadOnly)
 
 
 # https://medium.com/@mrgrantanderson/https-medium-com-serving-vector-tiles-from-django-38c705f677cf

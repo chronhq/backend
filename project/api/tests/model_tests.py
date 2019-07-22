@@ -16,31 +16,26 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-from math import ceil
+from django.contrib.auth.models import User
+from django.utils.crypto import get_random_string
 from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import Point, Polygon
 from django.test import TestCase
-from jdcal import gcal2jd
-
-from api.factories import TerritorialEntityFactory
 
 from api.models import (
     PoliticalRelation,
     TerritorialEntity,
     SpacetimeVolume,
     Narrative,
+    NarrativeVote,
     MapSettings,
     Narration,
     CachedData,
     City,
+    Profile,
 )
 
-# Constants
-JD_0001 = ceil(sum(gcal2jd(1, 1, 1))) + 0.0
-JD_0002 = ceil(sum(gcal2jd(2, 1, 1))) + 0.0
-JD_0003 = ceil(sum(gcal2jd(3, 1, 1))) + 0.0
-JD_0004 = ceil(sum(gcal2jd(4, 1, 1))) + 0.0
-JD_0005 = ceil(sum(gcal2jd(5, 1, 1))) + 0.0
+from .test_data import set_up_data, wiki_cd
 
 # Tests
 class ModelTest(TestCase):
@@ -53,88 +48,7 @@ class ModelTest(TestCase):
         """
         Create basic model instances
         """
-        cls.european_union = TerritorialEntityFactory(
-            wikidata_id=10,
-            label="European Union",
-            color=1,
-            admin_level=1,
-            inception_date=0,
-            dissolution_date=1,
-        )
-        cls.nato = TerritorialEntityFactory(
-            wikidata_id=11,
-            label="NATO",
-            color=1,
-            admin_level=1,
-            inception_date=0,
-            dissolution_date=1,
-        )
-
-        cls.germany = TerritorialEntityFactory(
-            wikidata_id=20,
-            label="Germany",
-            color=1,
-            admin_level=2,
-            inception_date=0,
-            dissolution_date=1,
-        )
-        cls.france = TerritorialEntityFactory(
-            wikidata_id=21,
-            label="France",
-            color=1,
-            admin_level=2,
-            inception_date=0,
-            dissolution_date=1,
-        )
-        cls.spain = TerritorialEntityFactory(
-            wikidata_id=22,
-            label="Spain",
-            color=1,
-            admin_level=2,
-            inception_date=0,
-            dissolution_date=1,
-        )
-        cls.italy = TerritorialEntityFactory(
-            wikidata_id=23,
-            label="Italy",
-            color=1,
-            admin_level=2,
-            inception_date=0,
-            dissolution_date=1,
-        )
-        cls.british_empire = TerritorialEntityFactory(
-            wikidata_id=24,
-            label="British Empire",
-            color=1,
-            admin_level=2,
-            inception_date=0,
-            dissolution_date=1,
-        )
-        cls.british_hk = TerritorialEntityFactory(
-            wikidata_id=25,
-            label="British HK",
-            color=1,
-            admin_level=2,
-            inception_date=0,
-            dissolution_date=1,
-        )
-
-        cls.alsace = TerritorialEntityFactory(
-            wikidata_id=30,
-            label="Alsace",
-            color=1,
-            admin_level=3,
-            inception_date=0,
-            dissolution_date=1,
-        )
-        cls.lorraine = TerritorialEntityFactory(
-            wikidata_id=31,
-            label="Lorraine",
-            color=1,
-            admin_level=3,
-            inception_date=0,
-            dissolution_date=1,
-        )
+        set_up_data(cls)
 
     def test_model_can_create_te(self):
         """
@@ -161,22 +75,22 @@ class ModelTest(TestCase):
 
         # GROUP
         PoliticalRelation.objects.create(
-            start_date=JD_0001,
-            end_date=JD_0002,
+            start_date=self.JD_0001,
+            end_date=self.JD_0002,
             parent=self.european_union,
             child=self.france,
             control_type=PoliticalRelation.GROUP,
         )
         PoliticalRelation.objects.create(
-            start_date=JD_0001,
-            end_date=JD_0002,
+            start_date=self.JD_0001,
+            end_date=self.JD_0002,
             parent=self.european_union,
             child=self.germany,
             control_type=PoliticalRelation.GROUP,
         )
         PoliticalRelation.objects.create(
-            start_date=JD_0001,
-            end_date=JD_0002,
+            start_date=self.JD_0001,
+            end_date=self.JD_0002,
             parent=self.nato,
             child=self.france,
             control_type=PoliticalRelation.GROUP,
@@ -188,15 +102,15 @@ class ModelTest(TestCase):
 
         # DIRECT
         PoliticalRelation.objects.create(
-            start_date=JD_0001,
-            end_date=JD_0002,
+            start_date=self.JD_0001,
+            end_date=self.JD_0002,
             parent=self.france,
             child=self.alsace,
             control_type=PoliticalRelation.DIRECT,
         )
         PoliticalRelation.objects.create(
-            start_date=JD_0001,
-            end_date=JD_0002,
+            start_date=self.JD_0001,
+            end_date=self.JD_0002,
             parent=self.france,
             child=self.lorraine,
             control_type=PoliticalRelation.DIRECT,
@@ -225,8 +139,8 @@ class ModelTest(TestCase):
 
         with self.assertRaises(ValidationError):
             PoliticalRelation.objects.create(
-                start_date=JD_0005,
-                end_date=JD_0002,
+                start_date=self.JD_0005,
+                end_date=self.JD_0002,
                 parent=self.european_union,
                 child=self.germany,
                 control_type=PoliticalRelation.GROUP,
@@ -234,8 +148,8 @@ class ModelTest(TestCase):
 
         with self.assertRaises(ValidationError):
             PoliticalRelation.objects.create(
-                start_date=JD_0001,
-                end_date=JD_0002,
+                start_date=self.JD_0001,
+                end_date=self.JD_0002,
                 parent=self.germany,
                 child=self.european_union,
                 control_type=PoliticalRelation.DIRECT,
@@ -247,8 +161,8 @@ class ModelTest(TestCase):
         """
 
         SpacetimeVolume.objects.create(
-            start_date=JD_0001,
-            end_date=JD_0002,
+            start_date=self.JD_0001,
+            end_date=self.JD_0002,
             entity=self.france,
             references=["ref"],
             visual_center=Point(1.2, 1.8),
@@ -277,16 +191,16 @@ class ModelTest(TestCase):
         # Timeframe
         with self.assertRaises(ValidationError):
             SpacetimeVolume.objects.create(
-                start_date=JD_0001,
-                end_date=JD_0003,
+                start_date=self.JD_0001,
+                end_date=self.JD_0003,
                 entity=self.france,
                 references=["ref"],
                 visual_center=Point(2, 2),
                 territory=Polygon(((1, 1), (1, 2), (2, 2), (1, 1))),
             )
             SpacetimeVolume.objects.create(
-                start_date=JD_0002,
-                end_date=JD_0004,
+                start_date=self.JD_0002,
+                end_date=self.JD_0004,
                 entity=self.france,
                 references=["ref"],
                 visual_center=Point(1, 1),
@@ -296,16 +210,16 @@ class ModelTest(TestCase):
         # Territory
         with self.assertRaises(ValidationError):
             SpacetimeVolume.objects.create(
-                start_date=JD_0003,
-                end_date=JD_0004,
+                start_date=self.JD_0003,
+                end_date=self.JD_0004,
                 entity=self.british_empire,
                 references=["ref"],
                 visual_center=Point(2, 2),
                 territory=Polygon(((6, 6), (6, 7), (7, 7), (6, 6))),
             )
             SpacetimeVolume.objects.create(
-                start_date=JD_0002,
-                end_date=JD_0004,
+                start_date=self.JD_0002,
+                end_date=self.JD_0004,
                 entity=self.italy,
                 references=["ref"],
                 visual_center=Point(1, 1),
@@ -315,14 +229,15 @@ class ModelTest(TestCase):
         # Geom type
         with self.assertRaises(ValidationError):
             SpacetimeVolume.objects.create(
-                start_date=JD_0001,
-                end_date=JD_0003,
+                start_date=self.JD_0001,
+                end_date=self.JD_0003,
                 entity=self.france,
                 references=["ref"],
                 visual_center=Point(2, 2),
                 territory=Point(1, 1),
             )
 
+    @wiki_cd
     def test_model_can_create_narrative(self):
         """
         Ensure that we can create a narrative and the ordering plugin works.
@@ -340,14 +255,14 @@ class ModelTest(TestCase):
         hastings = CachedData.objects.create(
             wikidata_id=1,
             location=Point(0, 0),
-            date=JD_0001,
+            date=self.JD_0001,
             event_type=CachedData.BATTLE,
         )
 
         balaclava = CachedData.objects.create(
             wikidata_id=2,
             location=Point(0, 0),
-            date=JD_0002,
+            date=self.JD_0002,
             event_type=CachedData.BATTLE,
         )
 
@@ -356,7 +271,7 @@ class ModelTest(TestCase):
             title="Test Narration",
             description="This is a narration point",
             date_label="test",
-            map_datetime=JD_0002,
+            map_datetime=self.JD_0002,
             settings=test_settings,
             location=Point(0, 0),
         )
@@ -370,7 +285,7 @@ class ModelTest(TestCase):
             title="Test Narration2",
             description="This is another narration point",
             date_label="test2",
-            map_datetime=JD_0002,
+            map_datetime=self.JD_0002,
             settings=test_settings2,
             location=Point(0, 0),
         )
@@ -379,9 +294,23 @@ class ModelTest(TestCase):
 
         narration1.swap(narration2)
 
+        test_user = User.objects.create(
+            username="test_user", password=get_random_string(length=16)
+        )
+
+        vote1 = NarrativeVote.objects.create(
+            narrative=test_narrative, user=test_user, vote=True
+        )
+
         self.assertEqual(Narrative.objects.filter().count(), 1)
         self.assertEqual(Narration.objects.filter().count(), 2)
         self.assertEqual(narration2.next().title, "Test Narration")
+
+        self.assertTrue(vote1.vote)
+        self.assertTrue(
+            Narrative.objects.first().votes.filter(username=test_user.username).exists()
+        )
+        self.assertEqual(NarrativeVote.objects.count(), 1)
 
     def test_model_can_not_create_ms(self):
         """
@@ -397,6 +326,7 @@ class ModelTest(TestCase):
         with self.assertRaises(ValidationError):
             MapSettings.objects.create(zoom_min=5, zoom_max=3)
 
+    @wiki_cd
     def test_model_can_create_cd(self):
         """
         Ensure CachedData can be created
@@ -405,12 +335,12 @@ class ModelTest(TestCase):
         hastings = CachedData.objects.create(
             wikidata_id=1,
             location=Point(0, 0),
-            date=JD_0001,
+            date=self.JD_0001,
             event_type=CachedData.BATTLE,
         )
 
         self.assertTrue(hastings.rank >= 0)
-        self.assertEqual(hastings.date, JD_0001)
+        self.assertEqual(hastings.date, self.JD_0001)
         self.assertEqual(CachedData.objects.count(), 1)
 
     def test_model_can_create_city(self):
@@ -419,8 +349,22 @@ class ModelTest(TestCase):
         """
 
         paris = City.objects.create(
-            wikidata_id=1, label="Paris", location=Point(0, 0), inception_date=JD_0001
+            wikidata_id=1,
+            label="Paris",
+            location=Point(0, 0),
+            inception_date=self.JD_0001,
         )
 
         self.assertEqual(paris.label, "Paris")
         self.assertEqual(City.objects.count(), 1)
+
+    def test_model_can_create_profile(self):
+        """
+        Ensures Profiles are created on User create
+        """
+        test_user = User.objects.create_user(
+            username="test_user", password=get_random_string(length=16)
+        )
+
+        self.assertEqual(Profile.objects.count(), 1)
+        self.assertEqual(Profile.objects.first().user, test_user)

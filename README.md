@@ -19,6 +19,7 @@ cd backend
 cp django.env.sample django.env
 cp postgres.env.sample postgres.env
 cp mbtiles.env.sample mbtiles.env
+cp auth.env.sample auth.env  # from console.firebase.com
 
 # Build and start the docker containers
 make run
