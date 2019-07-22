@@ -141,12 +141,13 @@ venv.bak/
 django.env
 postgres.env
 mbtiles.env
+auth.env
 
 # docs
 project/graph.svg
 
 # dbdumps
-project/dump.json
+project/*.json
 
 # IP whitelist
 config/nginx/allowed_ips.conf
@@ -156,3 +157,6 @@ data/
 
 # silk profiles
 project/profiles/
+
+# firebase secrets
+config/firebase.json

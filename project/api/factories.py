@@ -18,13 +18,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import factory
-
+from django.contrib.auth.models import User
 from .models import (
     TerritorialEntity,
     PoliticalRelation,
     CachedData,
     SpacetimeVolume,
     Narrative,
+    NarrativeVote,
     MapSettings,
     Narration,
     City,
@@ -76,6 +77,15 @@ class NarrativeFactory(factory.django.DjangoModelFactory):
         model = Narrative
 
 
+class NarrativeVoteFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for the NarrativeVote model
+    """
+
+    class Meta:  # pylint: disable=C0111
+        model = NarrativeVote
+
+
 class MapSettingsFactory(factory.django.DjangoModelFactory):
     """
     Factory for the MapSettings model
@@ -101,3 +111,12 @@ class CityFactory(factory.django.DjangoModelFactory):
 
     class Meta:  # pylint: disable=C0111
         model = City
+
+
+class UserFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for the django User model
+    """
+
+    class Meta:  # pylint: disable=C0111
+        model = User

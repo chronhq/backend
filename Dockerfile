@@ -28,6 +28,7 @@ RUN set -ex \
 RUN mkdir /config
 COPY /config/requirements.txt /config/
 RUN pip install -r /config/requirements.txt
+COPY /config/firebase.json /config/firebase.json
 RUN mkdir /src
 WORKDIR /src
 EXPOSE 80
