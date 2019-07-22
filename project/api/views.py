@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.db import connection
 from django.db.models import Count
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -230,7 +230,7 @@ def mvt_cacheddata(request, zoom, x_cor, y_cor):
         )
         tile = bytes(cursor.fetchone()[0])
         if not tile:
-            raise Http404()
+            return HttpResponse(status=204)
     return HttpResponse(tile, content_type="application/x-protobuf")
 
 
@@ -253,7 +253,7 @@ def mvt_cities(request, zoom, x_cor, y_cor):
         )
         tile = bytes(cursor.fetchone()[0])
         if not tile:
-            raise Http404()
+            return HttpResponse(status=204)
     return HttpResponse(tile, content_type="application/x-protobuf")
 
 
@@ -283,7 +283,7 @@ def mvt_narration_events(request, narrative, zoom, x_cor, y_cor):
         )
         tile = bytes(cursor.fetchone()[0])
         if not tile:
-            raise Http404()
+            return HttpResponse(status=204)
     return HttpResponse(tile, content_type="application/x-protobuf")
 
 
@@ -345,7 +345,7 @@ def mvt_stv(request, zoom, x_cor, y_cor):
         )
         tile = bytes(cursor.fetchone()[0])
         if not tile:
-            raise Http404()
+            return HttpResponse(status=204)
     return HttpResponse(tile, content_type="application/x-protobuf")
 
 
@@ -382,5 +382,5 @@ def mvt_visual_center(request, zoom, x_cor, y_cor):
         )
         tile = bytes(cursor.fetchone()[0])
         if not tile:
-            raise Http404()
+            return HttpResponse(status=204)
     return HttpResponse(tile, content_type="application/x-protobuf")
