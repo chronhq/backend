@@ -47,4 +47,4 @@ python manage.py runserver # must be executed from the project directory
 
 ## Production Setup
 
-First, run `cp config/nginx/allowed_ips.conf.sample config/nginx/allowed_ips.conf` and edit the new file to whitelist IPs that should have write access to the API. This is required for the time being to run the API in production. After this, `make run_prod` can then be used to configure the containers for a production setup. 
+`make run_prod` can be used to configure the containers for a production setup. 
