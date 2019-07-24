@@ -149,9 +149,6 @@ project/graph.svg
 # dbdumps
 project/*.json
 
-# IP whitelist
-config/nginx/allowed_ips.conf
-
 # postgres init data
 data/
 
