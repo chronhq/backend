@@ -17,7 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.db import connection
+from django.contrib.gis.geos import GEOSGeometry
+from django.db import connection, transaction
 from django.db.models import Count
 from django.http import HttpResponse
 from rest_framework import viewsets, status
@@ -117,6 +118,27 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         .defer("visual_center")
     )
     serializer_class = SpacetimeVolumeSerializer
+
+    # @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        """
+        Solve overlaps if included in request body
+        """
+
+        if "overlaps" in request.data:
+            geom = GEOSGeometry(str(request.data["territory"]))
+            for stv_pk, subtract_old in request.data["overlaps"].items():
+                if subtract_old:
+                    stv = SpacetimeVolume.objects.get(pk=stv_pk)
+                    stv.territory = stv.territory.difference(geom)
+                    stv.save()
+                else:
+                    geom = geom.difference(
+                        SpacetimeVolume.objects.get(pk=stv_pk).territory
+                    )
+            request.data["territory"] = geom
+
+        return super().create(request, *args, **kwargs)
 
 
 class NarrativeVoteViewSet(viewsets.ModelViewSet):

@@ -301,19 +301,21 @@ class SpacetimeVolume(models.Model):
                 SpacetimeVolume.objects.filter(
                     start_date__lte=self.end_date,
                     end_date__gte=self.start_date,
-                    territory__intersects=self.territory,
+                    territory__overlaps=self.territory,
                 )
                 .exclude(pk=self.pk)
                 .exists()
             ):
                 raise ValidationError(
-                    "Another SpaceTimeVolume overlaps this polygon: "
-                    + "\n".join(
-                        str(i)
-                        for i in SpacetimeVolume.objects.filter(
-                            territory__intersects=self.territory
-                        )
-                    )
+                    [
+                        "Unsolved overlap",
+                        [
+                            i.pk
+                            for i in SpacetimeVolume.objects.filter(
+                                territory__overlaps=self.territory
+                            )
+                        ],
+                    ]
                 )
 
         super(SpacetimeVolume, self).clean(*args, **kwargs)
