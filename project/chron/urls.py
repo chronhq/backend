@@ -18,14 +18,19 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.conf import settings
-from django.contrib import admin
 from django.urls import path, include
 
-urlpatterns = [
-    path("api/", include("api.urls")),
-    path("admin/", admin.site.urls),
-    path("doc/", include("django.contrib.admindocs.urls")),
-]
+
+urlpatterns = [path("api/", include("api.urls"))]
+
+if settings.DEBUG:
+    from django.contrib import admin
+
+    urlpatterns = [
+        path("admin/", admin.site.urls),
+        path("doc/", include("django.contrib.admindocs.urls")),
+    ] + urlpatterns
+
 
 if settings.DEBUG and "silk" in settings.INSTALLED_APPS:
     import debug_toolbar
