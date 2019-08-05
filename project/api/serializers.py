@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.db.models import Count, Case, When
 from jdcal import jd2gcal
+from jsonschema import validate
 from rest_framework.serializers import (
     ModelSerializer,
     IntegerField,
@@ -29,6 +30,7 @@ from rest_framework.serializers import (
 from .models import (
     TerritorialEntity,
     PoliticalRelation,
+    Symbol,
     CachedData,
     City,
     SpacetimeVolume,
@@ -117,6 +119,49 @@ class CachedDataSerializer(ModelSerializer):
         model = CachedData
         fields = "__all__"
         read_only_fields = ("rank",)
+
+
+"""class SymbolSerializer(ModelSerializer):
+    ""
+    Serializes the Symbol model
+    ""
+
+    class Meta:
+        model = Symbol
+        fields = "__all__"
+
+    def validate_geom(self, value):
+        ""
+        Ensure the geom field is a properly structured FeatureCollection
+        ""
+        schema = {
+            "type": "FeatureCollection",
+            "features": {
+
+            } 
+        } 
+"""
+
+class SymbolSerializer(GeoFeatureModelSerializer):
+
+    class Meta:
+        model = Symbol
+        geo_field = "geom"
+
+    def get_properties(self, instance, fields):
+        print(fields)
+        return instance.styling
+
+    def unformat_geojson(self, feature):
+        attrs = {
+            self.Meta.geo_field: feature["geometry"],
+            "styling": feature["properties"]
+        }
+
+        if self.Meta.bbox_geom_field and "bbox" in feature:
+            attrs[self.Meta.bbox_geom_field] = Polygon.from_bbox(feature["bbox"])
+
+        return attrs
 
 
 class CitySerializer(ModelSerializer):
