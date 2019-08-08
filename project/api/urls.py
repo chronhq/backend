@@ -33,6 +33,7 @@ ROUTER.register(r"map-settings", views.MapSettingsViewSet)
 ROUTER.register(r"narrations", views.NarrationViewSet)
 ROUTER.register(r"narrative-votes", views.NarrativeVoteViewSet)
 ROUTER.register(r"profiles", views.ProfileViewSet)
+ROUTER.register(r"symbols", views.SymbolViewSet)
 
 urlpatterns = [
     path(
