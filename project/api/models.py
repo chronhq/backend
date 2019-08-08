@@ -306,16 +306,15 @@ class SpacetimeVolume(models.Model):
                 .exclude(pk=self.pk)
                 .exists()
             ):
+
+                overlaps = []
+                for i in SpacetimeVolume.objects.filter(territory__overlaps=self.territory):
+                    overlaps.append(i.pk)
                 raise ValidationError(
-                    [
-                        "Unsolved overlap",
-                        [
-                            i.pk
-                            for i in SpacetimeVolume.objects.filter(
-                                territory__overlaps=self.territory
-                            )
-                        ],
-                    ]
+                    (
+                        "{\"unsolved overlap\": %(values)s}" 
+                    ),
+                    params={'values': overlaps}
                 )
 
         super(SpacetimeVolume, self).clean(*args, **kwargs)
