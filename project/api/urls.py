@@ -34,6 +34,7 @@ ROUTER.register(r"narrations", views.NarrationViewSet)
 ROUTER.register(r"narrative-votes", views.NarrativeVoteViewSet)
 ROUTER.register(r"profiles", views.ProfileViewSet)
 ROUTER.register(r"symbols", views.SymbolViewSet)
+ROUTER.register(r"symbol-features", views.SymbolFeatureViewSet)
 
 urlpatterns = [
     path(

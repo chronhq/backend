@@ -232,25 +232,6 @@ class CachedData(models.Model):
         unique_together = ("wikidata_id", "event_type")
 
 
-class Symbol(models.Model):
-    """
-    Stores a FeatureCollection in representation of something
-    """
-
-    name = models.TextField(max_length=50)
-    history = HistoricalRecords()
-
-
-class SymbolFeature(models.Model):
-    """
-    Stores geometry to be used in a collection in a Symbol
-    """
-
-    geom = models.GeometryField()
-    styling = HStoreField()
-    symbol = models.ForeignKey(Symbol, related_name="features", on_delete=models.CASCADE)
-
-
 class City(models.Model):
     """
     Stores a city represented by a point on the map
@@ -404,3 +385,25 @@ class Narration(OrderedModel):
     location = models.PointField(blank=True, null=True)
 
     order_with_respect_to = "narrative"
+
+
+class Symbol(models.Model):
+    """
+    Stores a FeatureCollection in representation of something
+    """
+
+    name = models.TextField(max_length=50)
+    narrations = models.ManyToManyField(Narration, related_name="symbols")
+    history = HistoricalRecords()
+
+
+class SymbolFeature(models.Model):
+    """
+    Stores geometry to be used in a collection in a Symbol
+    """
+
+    geom = models.GeometryField()
+    styling = HStoreField()
+    symbol = models.ForeignKey(
+        Symbol, related_name="features", on_delete=models.CASCADE
+    )

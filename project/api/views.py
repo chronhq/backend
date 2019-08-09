@@ -50,7 +50,7 @@ from .serializers import (
     NarrativeVoteSerializer,
     ProfileSerializer,
     SymbolSerializer,
-    SymbolFeatureSerializer
+    SymbolFeatureSerializer,
 )
 from .permissions import IsUserOrReadOnly
 
@@ -188,21 +188,29 @@ class NarrationViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class SymbolViewSet(viewsets.ModelViewSet):
+class SymbolFeatureViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for Symbols
+    ViewSet for SymbolFeatures, filterable by Symbol id
     """
 
     queryset = SymbolFeature.objects.all()
     serializer_class = SymbolFeatureSerializer
 
-    def retrieve(self, request, pk=None):
+    def get_queryset(self):
         queryset = self.queryset
-        user = queryset.filter(symbol=pk)
-        print(user)
-        serializer = SymbolSerializer(user, many=True)
-        return Response(serializer.data)
+        symbol = self.request.query_params.get("symbol", None)
+        if symbol is not None:
+            queryset = queryset.filter(symbol=symbol)
+        return queryset
 
+
+class SymbolViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Symbols
+    """
+
+    queryset = Symbol.objects.all()
+    serializer_class = SymbolSerializer
 
 
 class ProfileViewSet(viewsets.ModelViewSet):

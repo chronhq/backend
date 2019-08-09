@@ -31,7 +31,7 @@ from .models import (
     Profile,
     NarrativeVote,
     Symbol,
-    SymbolFeature
+    SymbolFeature,
 )
 
 # Register your models here.

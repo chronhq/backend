@@ -18,7 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.db.models import Count, Case, When
-from django.contrib.gis.geos import Polygon
 from jdcal import jd2gcal
 from rest_framework.serializers import (
     ModelSerializer,
@@ -124,6 +123,9 @@ class CachedDataSerializer(ModelSerializer):
 
 
 class SymbolFeatureSerializer(GeoFeatureModelSerializer):
+    """
+    Symbolizes SymbolFeatures as valid GeoJSON
+    """
 
     class Meta:
         model = SymbolFeature
@@ -136,7 +138,7 @@ class SymbolFeatureSerializer(GeoFeatureModelSerializer):
     def unformat_geojson(self, feature):
         attrs = {
             self.Meta.geo_field: feature["geometry"],
-            "styling": feature["properties"]
+            "styling": feature["properties"],
         }
 
         return attrs
@@ -147,22 +149,9 @@ class SymbolSerializer(ModelSerializer):
     Serializes the Symbol model
     """
 
-    features = SymbolFeatureSerializer()
-
     class Meta:
         model = Symbol
-        fields = "__all__"
-
-    """def validate_geom(self, value):
-        ""
-        Ensure the geom field is a properly structured FeatureCollection
-        ""
-        schema = {
-            "type": "FeatureCollection",
-            "features": {
-
-            }
-        }"""
+        fields = ("id", "name", "narrations", "features")
 
 
 class CitySerializer(ModelSerializer):
