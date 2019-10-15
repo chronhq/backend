@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED 1
 
 ENV ALPINE_MIRROR "http://dl-cdn.alpinelinux.org/alpine"
 RUN echo "${ALPINE_MIRROR}/edge/main" >> /etc/apk/repositories
-RUN apk add --update libressl2.7-libcrypto
+RUN apk add --update libressl2.9-libcrypto
 
 RUN set -ex \
     && apk --update upgrade \
@@ -23,7 +23,8 @@ RUN set -ex \
     postgresql-dev \
     linux-headers \
     pcre-dev \
-    graphviz
+    graphviz \
+    && pip install --upgrade pip drf_firebase_auth
 
 RUN mkdir /config
 COPY /config/requirements.txt /config/
