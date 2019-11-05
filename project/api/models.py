@@ -21,7 +21,7 @@ from requests import get
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField, HStoreField
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from ordered_model.models import OrderedModel
@@ -385,3 +385,25 @@ class Narration(OrderedModel):
     location = models.PointField(blank=True, null=True)
 
     order_with_respect_to = "narrative"
+
+
+class Symbol(models.Model):
+    """
+    Stores a FeatureCollection in representation of something
+    """
+
+    name = models.TextField(max_length=50)
+    narrations = models.ManyToManyField(Narration, related_name="symbols")
+    history = HistoricalRecords()
+
+
+class SymbolFeature(models.Model):
+    """
+    Stores geometry to be used in a collection in a Symbol
+    """
+
+    geom = models.GeometryField()
+    styling = HStoreField()
+    symbol = models.ForeignKey(
+        Symbol, related_name="features", on_delete=models.CASCADE
+    )

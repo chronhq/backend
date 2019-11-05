@@ -25,10 +25,13 @@ from rest_framework.serializers import (
     PrimaryKeyRelatedField,
     SerializerMethodField,
 )
+from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from .models import (
     TerritorialEntity,
     PoliticalRelation,
+    Symbol,
+    SymbolFeature,
     CachedData,
     City,
     SpacetimeVolume,
@@ -117,6 +120,38 @@ class CachedDataSerializer(ModelSerializer):
         model = CachedData
         fields = "__all__"
         read_only_fields = ("rank",)
+
+
+class SymbolFeatureSerializer(GeoFeatureModelSerializer):
+    """
+    Symbolizes SymbolFeatures as valid GeoJSON
+    """
+
+    class Meta:
+        model = SymbolFeature
+        geo_field = "geom"
+        fields = "__all__"
+
+    def get_properties(self, instance, fields):
+        return instance.styling
+
+    def unformat_geojson(self, feature):
+        attrs = {
+            self.Meta.geo_field: feature["geometry"],
+            "styling": feature["properties"],
+        }
+
+        return attrs
+
+
+class SymbolSerializer(ModelSerializer):
+    """
+    Serializes the Symbol model
+    """
+
+    class Meta:
+        model = Symbol
+        fields = ("id", "name", "narrations", "features")
 
 
 class CitySerializer(ModelSerializer):

@@ -35,6 +35,8 @@ from .models import (
     Narration,
     NarrativeVote,
     Profile,
+    Symbol,
+    SymbolFeature,
 )
 from .serializers import (
     TerritorialEntitySerializer,
@@ -47,6 +49,8 @@ from .serializers import (
     NarrationSerializer,
     NarrativeVoteSerializer,
     ProfileSerializer,
+    SymbolSerializer,
+    SymbolFeatureSerializer,
 )
 from .permissions import IsUserOrReadOnly
 
@@ -182,6 +186,31 @@ class NarrationViewSet(viewsets.ModelViewSet):
         if narrative is not None:
             queryset = queryset.filter(narrative=narrative)
         return queryset
+
+
+class SymbolFeatureViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for SymbolFeatures, filterable by Symbol id
+    """
+
+    queryset = SymbolFeature.objects.all()
+    serializer_class = SymbolFeatureSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        symbol = self.request.query_params.get("symbol", None)
+        if symbol is not None:
+            queryset = queryset.filter(symbol=symbol)
+        return queryset
+
+
+class SymbolViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Symbols
+    """
+
+    queryset = Symbol.objects.all()
+    serializer_class = SymbolSerializer
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
