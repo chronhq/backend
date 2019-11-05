@@ -23,8 +23,7 @@ RUN set -ex \
     postgresql-dev \
     linux-headers \
     pcre-dev \
-    graphviz \
-    && pip install --upgrade pip drf_firebase_auth
+    graphviz
 
 RUN mkdir /config
 COPY /config/requirements.txt /config/
