@@ -34,7 +34,7 @@ FROM base
 COPY --from=deps /opt/python /opt/python/
 RUN mkdir /config /src
 
-ADD ./project /src
+COPY ./project /src
 WORKDIR /src
 EXPOSE 80
 CMD ["/bin/ash", "./init.sh", "gunicorn chron.wsgi -b 0.0.0.0:80 -t 300"]

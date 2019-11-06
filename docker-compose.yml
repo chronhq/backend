@@ -23,18 +23,14 @@ services:
       - ./project:/src
       - ./config:/config
     ports:
-      - '3080:80'
+      - '8086:80'
       - '8006:81'
     env_file:
       - django.env
       - postgres.env
       - auth.env
-    restart: always
   redis:
-    restart: always
     image: redis:alpine
-    expose:
-      - '6379'
   mbtiles:
     image: morlov/mbtiles-server:latest
     env_file:

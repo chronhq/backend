@@ -5,6 +5,12 @@ services:
       - '3080:80'
     volumes:
       - ./config/nginx.prod:/etc/nginx/conf.d
+    restart: always
   web:
     environment:
       - ENV=prod
+    restart: always
+  redis:
+    restart: always
+  mbtiles:
+    restart: always
