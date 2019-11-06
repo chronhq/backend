@@ -32,9 +32,9 @@ RUN pip install -r /requirements.txt --user --upgrade
 FROM base
 
 COPY --from=deps /opt/python /opt/python/
-RUN mkdir /{config,src}
+RUN mkdir /config /src
 
-COPY /config/firebase.json /config/firebase.json
+ADD ./project /src
 WORKDIR /src
 EXPOSE 80
 CMD ["/bin/ash", "./init.sh", "gunicorn chron.wsgi -b 0.0.0.0:80 -t 300"]

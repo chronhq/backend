@@ -21,9 +21,9 @@ services:
       - db
     volumes:
       - ./project:/src
-    expose:
-      - '80'
+      - ./config:/config
     ports:
+      - '3080:80'
       - '8006:81'
     env_file:
       - django.env
