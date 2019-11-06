@@ -9,31 +9,27 @@ ENV PATH="/opt/python/bin:${PATH}"
 ENV ALPINE_MIRROR "http://dl-cdn.alpinelinux.org/alpine"
 RUN echo "${ALPINE_MIRROR}/edge/main" >> /etc/apk/repositories
 
+RUN apk add --no-cache \
+    postgresql binutils graphviz
+RUN apk add --no-cache --repository ${ALPINE_MIRROR}/edge/testing \
+    gdal-dev geos-dev
+
 FROM base as deps
 
 RUN set -ex \
-    && apk add --no-cache --update libressl2.9-libcrypto \
-    && apk add --no-cache alpine-sdk \
+    && apk add --no-cache alpine-sdk libressl2.9-libcrypto \
     && apk add --no-cache --virtual .build-deps-testing \
     --repository ${ALPINE_MIRROR}/edge/testing \
-    gdal-dev \
-    geos-dev \
     proj-dev \
     && apk add --no-cache --virtual .build-deps \
     postgresql-dev \
     linux-headers \
-    pcre-dev \
-    graphviz
+    pcre-dev
 
 COPY /config/requirements.txt /
 RUN pip install -r /requirements.txt --user --upgrade
 
 FROM base
-
-RUN apk add --no-cache \
-    postgresql binutils
-RUN apk add --no-cache --repository ${ALPINE_MIRROR}/edge/testing \
-    gdal-dev geos-dev
 
 COPY --from=deps /opt/python /opt/python/
 RUN mkdir /{config,src}
