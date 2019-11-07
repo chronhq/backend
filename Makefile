@@ -87,11 +87,19 @@ mvt-stv: ## Generates mbtiles for STVs
 
 # Docker images
 image: ## Build backend:latest image
-	docker build -t chronmaps/backend:latest -t chronmaps/backend:v-${REV} .
+	docker build -t chronmaps/backend:latest .
 
 push-image: ## Push backend:latest image
 	docker push chronmaps/backend:latest
-	docker push chronmaps/backend:v-${REV}
+
+python-image: ## Build image with python dependencies
+	docker build -t chronmaps/backend:deps-python -f Dockerfile.python .
+
+push-python: ## Push python image
+	docker push chronmaps/backend:deps-python
+
+check-python-image:
+	docker run --entrypoint md5sum chronmaps/backend:deps-python /requirements.txt| sed 's%/%config/%' | md5sum --check -
 
 system-image: ## Build alpine with dependencies
 	docker build -t chronmaps/backend:deps-base -f Dockerfile.base .
@@ -100,3 +108,6 @@ system-image: ## Build alpine with dependencies
 push-system: ## Push alpine with dependencies
 	docker push chronmaps/backend:deps-base
 	docker push chronmaps/backend:deps-build
+
+pull-images: ## Pull all images from docker.hub
+	docker pull --all-tags chronmaps/backend

@@ -1,13 +1,6 @@
-FROM chronmaps/backend:deps-build as build
+FROM chronmaps/backend:deps-python as python
 
 LABEL maintainer="Mikhail Orlov <miklergm@gmail.com>"
-
-COPY /config/requirements.txt /
-RUN pip install -r /requirements.txt --user --upgrade
-
-FROM chronmaps/backend:deps-base as base
-
-COPY --from=build /opt/python /opt/python/
 
 RUN mkdir /config /src
 
