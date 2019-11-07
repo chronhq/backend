@@ -1,0 +1,12 @@
+FROM chronmaps/backend:deps-base as base
+# chronmaps/backend:deps-build
+
+LABEL maintainer="Mikhail Orlov <miklergm@gmail.com>"
+
+RUN set -ex \
+    && apk add --no-cache \ 
+      alpine-sdk libressl postgresql-dev linux-headers pcre-dev \
+    && apk add --no-cache --repository ${ALPINE_MIRROR}/edge/testing \
+      proj-dev
+
+ENTRYPOINT /bin/sh
