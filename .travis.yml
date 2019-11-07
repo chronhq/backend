@@ -2,6 +2,10 @@ language: python
 
 sudo: required
 
+git:
+  depth: false
+  quiet: true
+
 python:
   - '3.6'
 
@@ -22,10 +26,10 @@ jobs:
   include:
     - stage: tests
       script:
-        - docker-compose run web black . --exclude /migrations/ --diff --check
-        - docker-compose run web pylint --ignore=tests ./api/
-        - docker-compose run web pylint --rcfile=api/tests/pylintrc ./api/tests
-        - docker-compose run -e ENV=dev -e CLIENT_API_KEY web ash init.sh
+        - docker-compose run --entrypoint black web . --exclude /migrations/ --diff --check
+        - docker-compose run --entrypoint pylint web --ignore=tests ./api/
+        - docker-compose run --entrypoint pylint web --rcfile=api/tests/pylintrc ./api/tests
+        - docker-compose run --entrypoint sh -e ENV=dev -e CLIENT_API_KEY web init.sh
           python manage.py test --debug-mode
     - stage: docker push
       if: branch = master AND type = push

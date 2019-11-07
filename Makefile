@@ -40,7 +40,7 @@ clean: ## Stop and remove containers, networks, volmes, and images
 
 # Debug tools
 run_debug: ## Builds, starts, and runs containers, running the built-in Django web server
-	docker-compose run --service-ports web sh init.sh python manage.py runserver 0.0.0.0:81
+	docker-compose run --entrypoint sh --service-ports web init.sh python manage.py runserver 0.0.0.0:81
 
 exec_debug: ## Runs built-in Django web server
 	docker-compose exec web python manage.py runserver 0.0.0.0:81
@@ -51,7 +51,7 @@ graph: ## Builds a UML class diagram of the models
 
 # Misc
 test: ## Builds, starts, and runs containers, running the django tests
-	docker-compose run --service-ports web sh init.sh python manage.py test --debug-mode
+	docker-compose run --entrypoint sh --service-ports web init.sh python manage.py test --debug-mode
 
 exec_test: ## Executes django tests in a running container
 	docker-compose exec web python manage.py test --debug-mode
