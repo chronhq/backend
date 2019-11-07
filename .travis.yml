@@ -13,14 +13,26 @@ install:
   - mv postgres.env.sample postgres.env
   - mv mbtiles.env.sample mbtiles.env
   - touch auth.env
+  - make pull-images
+  - 'if ! make check-python-image; then make python-image; fi'
+  - make image
   - docker-compose build
 
-script:
-  - docker-compose run web black . --exclude /migrations/ --diff --check
-  - docker-compose run web pylint --ignore=tests ./api/
-  - docker-compose run web pylint --rcfile=api/tests/pylintrc ./api/tests
-  - docker-compose run -e ENV=dev -e CLIENT_API_KEY web ash init.sh
-    python manage.py test --debug-mode
+jobs:
+  include:
+    - stage: Run tests
+    script:
+      - docker-compose run web black . --exclude /migrations/ --diff --check
+      - docker-compose run web pylint --ignore=tests ./api/
+      - docker-compose run web pylint --rcfile=api/tests/pylintrc ./api/tests
+      - docker-compose run -e ENV=dev -e CLIENT_API_KEY web ash init.sh
+        python manage.py test --debug-mode
+    - stage: docker push
+    script:
+      if: branch = master AND type = push
+      - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      - make push-python
+      - make push-image
 
 branches:
   only:
