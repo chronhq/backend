@@ -16,7 +16,7 @@ services:
     depends_on:
       - web
   web:
-    build: .
+    image: chronmaps/backend:latest
     depends_on:
       - db
     volumes:
