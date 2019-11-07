@@ -11,6 +11,10 @@ help: ## Displays this message
 
 .DEFAULT_GOAL := help
 
+# Git revision
+
+REV := $(shell git rev-parse --short HEAD)
+
 # Docker tasks
 
 CONTAINERS := $(shell docker ps -q)
@@ -80,3 +84,19 @@ mvt-stv: ## Generates mbtiles for STVs
 	docker-compose exec mbtiles /bin/rm -f /root/mbtiles/stv.mbtiles
 	docker-compose restart mbtiles
 	docker-compose exec mbtiles /bin/mv /tmp/stv.mbtiles /root/mbtiles/stv.mbtiles
+
+# Docker images
+image: ## Build backend:latest image
+	docker build -t chronmaps/backend:latest -t chronmaps/backend:v-${REV} .
+
+push-image: ## Push backend:latest image
+	docker push chronmaps/backend:latest
+	docker push chronmaps/backend:v-${REV}
+
+system-image: ## Build alpine with dependencies
+	docker build -t chronmaps/backend:deps-base -f Dockerfile.base .
+	docker build -t chronmaps/backend:deps-build -f Dockerfile.build .
+
+push-system: ## Push alpine with dependencies
+	docker push chronmaps/backend:deps-base
+	docker push chronmaps/backend:deps-build
