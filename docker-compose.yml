@@ -16,25 +16,21 @@ services:
     depends_on:
       - web
   web:
-    build: .
+    image: chronmaps/backend:latest
     depends_on:
       - db
     volumes:
       - ./project:/src
-    expose:
-      - '80'
+      - ./config:/config
     ports:
+      - '8086:80'
       - '8006:81'
     env_file:
       - django.env
       - postgres.env
       - auth.env
-    restart: always
   redis:
-    restart: always
     image: redis:alpine
-    expose:
-      - '6379'
   mbtiles:
     image: morlov/mbtiles-server:latest
     env_file:

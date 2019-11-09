@@ -11,6 +11,10 @@ help: ## Displays this message
 
 .DEFAULT_GOAL := help
 
+# Git revision
+
+REV := $(shell git rev-parse --short HEAD)
+
 # Docker tasks
 
 CONTAINERS := $(shell docker ps -q)
@@ -36,7 +40,7 @@ clean: ## Stop and remove containers, networks, volmes, and images
 
 # Debug tools
 run_debug: ## Builds, starts, and runs containers, running the built-in Django web server
-	docker-compose run --service-ports web sh init.sh python manage.py runserver 0.0.0.0:81
+	docker-compose run --entrypoint sh --service-ports web init.sh python manage.py runserver 0.0.0.0:81
 
 exec_debug: ## Runs built-in Django web server
 	docker-compose exec web python manage.py runserver 0.0.0.0:81
@@ -47,7 +51,7 @@ graph: ## Builds a UML class diagram of the models
 
 # Misc
 test: ## Builds, starts, and runs containers, running the django tests
-	docker-compose run --service-ports web sh init.sh python manage.py test --debug-mode
+	docker-compose run --entrypoint sh --service-ports web init.sh python manage.py test --debug-mode
 
 exec_test: ## Executes django tests in a running container
 	docker-compose exec web python manage.py test --debug-mode
@@ -80,3 +84,30 @@ mvt-stv: ## Generates mbtiles for STVs
 	docker-compose exec mbtiles /bin/rm -f /root/mbtiles/stv.mbtiles
 	docker-compose restart mbtiles
 	docker-compose exec mbtiles /bin/mv /tmp/stv.mbtiles /root/mbtiles/stv.mbtiles
+
+# Docker images
+image: ## Build backend:latest image
+	docker build -t chronmaps/backend:latest .
+
+push-image: ## Push backend:latest image
+	docker push chronmaps/backend:latest
+
+python-image: ## Build image with python dependencies
+	docker build -t chronmaps/backend:deps-python -f Dockerfile.python .
+
+push-python: ## Push python image
+	docker push chronmaps/backend:deps-python
+
+check-python-image:
+	docker run --entrypoint md5sum chronmaps/backend:deps-python /requirements.txt| sed 's%/%config/%' | md5sum --check -
+
+system-image: ## Build alpine with dependencies
+	docker build -t chronmaps/backend:deps-base -f Dockerfile.base .
+	docker build -t chronmaps/backend:deps-build -f Dockerfile.build .
+
+push-system: ## Push alpine with dependencies
+	docker push chronmaps/backend:deps-base
+	docker push chronmaps/backend:deps-build
+
+pull-images: ## Pull all images from docker.hub
+	docker pull --all-tags chronmaps/backend
