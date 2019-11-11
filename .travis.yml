@@ -32,7 +32,7 @@ jobs:
         - docker-compose run --entrypoint sh -e ENV=dev -e CLIENT_API_KEY web init.sh
           python manage.py test --debug-mode
     - stage: docker push
-      if: branch = master AND type = push
+      if: branch = staging AND type = push
       script:
         - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
         - make push-python
