@@ -31,12 +31,10 @@ jobs:
         - docker-compose run --entrypoint pylint web --rcfile=api/tests/pylintrc ./api/tests
         - docker-compose run --entrypoint sh -e ENV=dev -e CLIENT_API_KEY web init.sh
           python manage.py test --debug-mode
-    - stage: docker push
-      if: branch = staging AND type = push
-      script:
-        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        - make push-python
-        - make push-image
+        - 'if [[ "$TRAVIS_PULL_REQUEST" = "false" && "$TRAVIS_BRANCH" = "staging" ]];then
+        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin;
+        make push-python;
+        make push-image; fi'
 
 branches:
   only:
