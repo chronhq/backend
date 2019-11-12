@@ -140,6 +140,7 @@ venv.bak/
 # env
 django.env
 postgres.env
+pgadmin.env
 mbtiles.env
 auth.env
 

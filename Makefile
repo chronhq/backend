@@ -76,6 +76,12 @@ dbshell: ## Create psql shell
 admin: ## Creates a super user based on the values supplied in the configuration file (must be running)
 	docker-compose exec web ./manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('$(ADMIN_USER)', '$(ADMIN_EMAIL)', '$(ADMIN_PASS)')"
 
+pgadmin: ## Run pgadmin server
+	[ -f "pgadmin.env" ] || cp pgadmin.env.sample pgadmin.env
+	docker-compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.debug.yml up -d pgadmin
+
+pgadmin-stop: ## Stop pgadmin server
+	docker-compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.debug.yml stop pgadmin
 # Geometry
 
 mvt-stv: ## Generates mbtiles for STVs

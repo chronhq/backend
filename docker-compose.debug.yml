@@ -1,0 +1,10 @@
+version: '3'
+services:
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    env_file:
+        - pgadmin.env
+    ports:
+      - '5050:80'
+    depends_on:
+        - db
