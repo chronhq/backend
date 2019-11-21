@@ -271,32 +271,63 @@ def mvt_cities(request, zoom, x_cor, y_cor):
     with connection.cursor() as cursor:
         cursor.execute(
             """
-                SELECT ST_AsMVT(tile, 'cities') as cities
+            SELECT ST_AsMVT(tile, 'cities') as cities
+            FROM (
+                SELECT id, wikidata_id, label, inception_date, dissolution_date,
+                    ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s))
+                FROM api_city
+            ) AS tile
+            --
+            UNION
+            -- Row 2
+            -- Visual Center
+            --
+            SELECT ST_AsMVT(vc, 'visual_center')
                 FROM (
-                    SELECT id, wikidata_id, label, inception_date, dissolution_date,
-                        ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s))
-                    FROM api_city
-                ) AS tile
+                    SELECT
+                    api_spacetimevolume.id
+                    , api_spacetimevolume.start_date::INTEGER
+                    , api_spacetimevolume.end_date::INTEGER
+                    , ST_AsMVTGeom(
+                        ST_Transform(
+                            api_spacetimevolume.visual_center
+                            , 3857
+                        )
+                        , TileBBox(%s, %s, %s)
+                    ) as visual_center
+                    , api_territorialentity.label
+                    , api_territorialentity.admin_level
+                FROM api_spacetimevolume
+                JOIN api_territorialentity
+                ON api_spacetimevolume.entity_id = api_territorialentity.id
+                WHERE visual_center && TileBBox(%s, %s, %s, 4326)
+                ) as vc
             """,
-            [zoom, x_cor, y_cor],
+            [zoom, x_cor, y_cor, zoom, x_cor, y_cor, zoom, x_cor, y_cor],
         )
-        tile = bytes(cursor.fetchone()[0])
+
+        first_row = cursor.fetchone()[0]
+        try:
+            tile = bytes(first_row) + bytes(cursor.fetchone()[0])
+        except TypeError:
+            tile = bytes(first_row)
+
         if not tile:
             return HttpResponse(status=204)
     return HttpResponse(tile, content_type="application/x-protobuf")
 
 
-def mvt_narration_events(request, narrative, zoom, x_cor, y_cor):
+def mvt_narratives(request, zoom, x_cor, y_cor):
     """
-    Custom view to serve Mapbox Vector Tiles for attached_events in a given Narrative.
+    Custom view to serve Mapbox Vector Tiles for Narratives with Symbols and Attached Events.
     """
 
     with connection.cursor() as cursor:
         cursor.execute(
             """
-                SELECT ST_AsMVT(tile, 'events')
+                SELECT ST_AsMVT(tile, 'narratives')
                 FROM (
-                    SELECT wikidata_id, rank, event_type,
+                    SELECT wikidata_id, rank, event_type, narrative_id,
                         ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) as geom
                     FROM (
                         SELECT api_cacheddata.* FROM api_narration
@@ -304,13 +335,34 @@ def mvt_narration_events(request, narrative, zoom, x_cor, y_cor):
                             (api_narration.id = api_narration_attached_events.narration_id)
                         JOIN api_cacheddata ON
                             (api_narration_attached_events.cacheddata_id = api_cacheddata.id)
-                        WHERE narrative_id = %s
                     ) AS foo
                 ) AS tile
+                --
+                UNION
+                -- Row 2
+                -- Military symbols
+                --
+                SELECT ST_AsMVT(tile, 'symbols') FROM (
+                SELECT
+                    "order", narrative_id,
+                    ST_AsMVTGeom(ST_Transform(geom, 3857), TileBBox(%s, %s, %s)) as geom,
+                    styling::json,
+                    styling->'layer' AS layer
+                FROM api_narration
+                JOIN api_symbol_narrations ON api_narration.id = api_symbol_narrations.narration_id
+                JOIN api_symbol ON api_symbol_narrations.symbol_id = api_symbol.id
+                JOIN api_symbolfeature ON api_symbol.id = api_symbolfeature.symbol_id
+            ) as tile
             """,
-            [zoom, x_cor, y_cor, narrative],
+            [zoom, x_cor, y_cor, zoom, x_cor, y_cor],
         )
-        tile = bytes(cursor.fetchone()[0])
+
+        first_row = cursor.fetchone()[0]
+        try:
+            tile = bytes(first_row) + bytes(cursor.fetchone()[0])
+        except TypeError:
+            tile = bytes(first_row)
+
         if not tile:
             return HttpResponse(status=204)
     return HttpResponse(tile, content_type="application/x-protobuf")
@@ -371,43 +423,6 @@ def mvt_stv(request, zoom, x_cor, y_cor):
                 ) as a
             """,
             [simplification, zoom, x_cor, y_cor, zoom, x_cor, y_cor],
-        )
-        tile = bytes(cursor.fetchone()[0])
-        if not tile:
-            return HttpResponse(status=204)
-    return HttpResponse(tile, content_type="application/x-protobuf")
-
-
-def mvt_visual_center(request, zoom, x_cor, y_cor):
-    """
-    Custom view to serve Mapbox Vector Tiles for Country Labels.
-    """
-
-    with connection.cursor() as cursor:
-        cursor.execute(
-            """
-                SELECT ST_AsMVT(a, 'visual_center')
-                FROM (
-                    SELECT
-                    api_spacetimevolume.id
-                    , api_spacetimevolume.start_date::INTEGER
-                    , api_spacetimevolume.end_date::INTEGER
-                    , ST_AsMVTGeom(
-                        ST_Transform(
-                            api_spacetimevolume.visual_center
-                            , 3857
-                        )
-                        , TileBBox(%s, %s, %s)
-                    ) as visual_center
-                    , api_territorialentity.label
-                    , api_territorialentity.admin_level
-                FROM api_spacetimevolume
-                JOIN api_territorialentity
-                ON api_spacetimevolume.entity_id = api_territorialentity.id
-                WHERE visual_center && TileBBox(%s, %s, %s, 4326)
-                ) as a
-            """,
-            [zoom, x_cor, y_cor, zoom, x_cor, y_cor],
         )
         tile = bytes(cursor.fetchone()[0])
         if not tile:

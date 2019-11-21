@@ -48,15 +48,10 @@ urlpatterns = [
         name="mvt-cities",
     ),
     path(
-        "mvt/narratives/<int:narrative>/<int:zoom>/<int:x_cor>/<int:y_cor>",
-        views.mvt_narration_events,
-        name="mvt-narrationevents",
+        "mvt/narratives/<int:zoom>/<int:x_cor>/<int:y_cor>",
+        views.mvt_narratives,
+        name="mvt-narratives",
     ),
     path("mvt/stv/<int:zoom>/<int:x_cor>/<int:y_cor>", views.mvt_stv, name="mvt-stv"),
-    path(
-        "mvt/visual-center/<int:zoom>/<int:x_cor>/<int:y_cor>",
-        views.mvt_visual_center,
-        name="mvt-visualcenter",
-    ),
     path("", include(ROUTER.urls)),
 ]
