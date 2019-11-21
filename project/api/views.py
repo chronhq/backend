@@ -325,24 +325,23 @@ def mvt_narratives(request, zoom, x_cor, y_cor):
     with connection.cursor() as cursor:
         cursor.execute(
             """
-                SELECT ST_AsMVT(tile, 'narratives')
+            SELECT ST_AsMVT(tile, 'narratives') FROM (
+                SELECT wikidata_id, rank, event_type, narrative_id,
+                    ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) as geom
                 FROM (
-                    SELECT wikidata_id, rank, event_type, narrative_id,
-                        ST_AsMVTGeom(ST_Transform(location, 3857), TileBBox(%s, %s, %s)) as geom
-                    FROM (
-                        SELECT api_cacheddata.* FROM api_narration
-                        JOIN api_narration_attached_events ON
-                            (api_narration.id = api_narration_attached_events.narration_id)
-                        JOIN api_cacheddata ON
-                            (api_narration_attached_events.cacheddata_id = api_cacheddata.id)
-                    ) AS foo
-                ) AS tile
-                --
-                UNION
-                -- Row 2
-                -- Military symbols
-                --
-                SELECT ST_AsMVT(tile, 'symbols') FROM (
+                    SELECT api_cacheddata.*, api_narration.narrative_id FROM api_narration
+                    JOIN api_narration_attached_events ON
+                        (api_narration.id = api_narration_attached_events.narration_id)
+                    JOIN api_cacheddata ON
+                        (api_narration_attached_events.cacheddata_id = api_cacheddata.id)
+                ) AS foo
+            ) AS tile
+            --
+            UNION
+            -- Row 2
+            -- Military symbols
+            --
+            SELECT ST_AsMVT(symbols, 'symbols') FROM (
                 SELECT
                     "order", narrative_id,
                     ST_AsMVTGeom(ST_Transform(geom, 3857), TileBBox(%s, %s, %s)) as geom,
@@ -352,7 +351,7 @@ def mvt_narratives(request, zoom, x_cor, y_cor):
                 JOIN api_symbol_narrations ON api_narration.id = api_symbol_narrations.narration_id
                 JOIN api_symbol ON api_symbol_narrations.symbol_id = api_symbol.id
                 JOIN api_symbolfeature ON api_symbol.id = api_symbolfeature.symbol_id
-            ) as tile
+            ) as symbols
             """,
             [zoom, x_cor, y_cor, zoom, x_cor, y_cor],
         )
