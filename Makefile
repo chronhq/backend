@@ -111,3 +111,25 @@ push-system: ## Push alpine with dependencies
 
 pull-images: ## Pull all images from docker.hub
 	docker pull --all-tags chronmaps/backend
+
+dumpdata: ## Dump data from the database
+	docker-compose exec web python manage.py dumpdata -e contenttypes -e auth.Permission -e sessions --indent=2 | \
+	xz -z -T 0 > project/$$(date +%Y-%m-%d).dump.json.xz
+
+loaddata: ## Restore data from previous dump
+	NAME=$$(ls project |grep "^20[0-9][0-9]-[0-9]" | sort -r | head -n 1| sed -e 's%.json%%' -e 's%.xz%%'); \
+	if [ -z "$${NAME}" ]; then \
+		echo "Dumped data not detected"; \
+		exit 1; \
+	fi; \
+	echo "Selected filename $${NAME}"; \
+	if [ -f "project/$${NAME}.json.xz" ]; then \
+		echo "Extracting file"; \
+		xz -d project/$${NAME}.json.xz; \
+	fi; \
+	if [ -f "project/$${NAME}.json" ]; then \
+		echo Loading $${NAME}.json; \
+		docker-compose exec web python manage.py loaddata $${NAME}; \
+	else \
+		echo Error: No file to load; \
+	fi;
