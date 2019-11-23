@@ -129,7 +129,7 @@ loaddata: ## Restore data from previous dump
 	fi; \
 	if [ -f "project/$${NAME}.json" ]; then \
 		echo Loading $${NAME}.json; \
-		docker-compose exec web python manage.py loaddata $${NAME}; \
+		docker-compose exec web python manage.py loaddata $${NAME}.json; \
 	else \
 		echo Error: No file to load; \
 	fi;
