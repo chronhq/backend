@@ -17,25 +17,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.conf import settings
-from django.urls import path, include
+from rest_framework import permissions
 
 
-urlpatterns = [path("api/", include("api.urls"))]
+class IsUserOrReadOnly(permissions.BasePermission):
+    """
+    Assumes the model instance has a `user` attribute.
+    Used for Profile and Vote models
+    """
 
-if settings.DEBUG:
-    from django.contrib import admin
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed to any request,
+        # so we'll always allow GET, HEAD or OPTIONS requests.
+        if request.method in permissions.SAFE_METHODS:
+            return True
 
-    urlpatterns = [
-        path("admin/", admin.site.urls),
-        path("doc/", include("django.contrib.admindocs.urls")),
-    ] + urlpatterns
-
-
-if settings.DEBUG and "silk" in settings.INSTALLED_APPS:
-    import debug_toolbar
-
-    urlpatterns = [
-        path("__debug__/", include(debug_toolbar.urls)),
-        path("silk/", include("silk.urls", namespace="silk")),
-    ] + urlpatterns
+        return obj.user == request.user

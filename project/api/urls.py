@@ -31,6 +31,10 @@ ROUTER.register(r"spacetime-volumes", views.SpacetimeVolumeViewSet)
 ROUTER.register(r"narratives", views.NarrativeViewSet)
 ROUTER.register(r"map-settings", views.MapSettingsViewSet)
 ROUTER.register(r"narrations", views.NarrationViewSet)
+ROUTER.register(r"narrative-votes", views.NarrativeVoteViewSet)
+ROUTER.register(r"profiles", views.ProfileViewSet)
+ROUTER.register(r"symbols", views.SymbolViewSet)
+ROUTER.register(r"symbol-features", views.SymbolFeatureViewSet)
 
 urlpatterns = [
     path(
@@ -47,6 +51,12 @@ urlpatterns = [
         "mvt/narratives/<int:narrative>/<int:zoom>/<int:x_cor>/<int:y_cor>",
         views.mvt_narration_events,
         name="mvt-narrationevents",
+    ),
+    path("mvt/stv/<int:zoom>/<int:x_cor>/<int:y_cor>", views.mvt_stv, name="mvt-stv"),
+    path(
+        "mvt/visual-center/<int:zoom>/<int:x_cor>/<int:y_cor>",
+        views.mvt_visual_center,
+        name="mvt-visualcenter",
     ),
     path("", include(ROUTER.urls)),
 ]

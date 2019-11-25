@@ -1,7 +1,7 @@
 version: '3'
 services:
   db:
-    image: mdillon/postgis:10-alpine
+    image: mdillon/postgis:11-alpine
     ports:
       - '5432'
     env_file:
@@ -10,36 +10,31 @@ services:
     volumes:
       - ./data:/docker-entrypoint-initdb.d
   nginx:
-    image: nginx:1.13-alpine
+    image: nginx:stable-alpine
     volumes:
       - ./project:/src
     depends_on:
       - web
   web:
-    build: .
+    image: chronmaps/backend:latest
     depends_on:
       - db
     volumes:
       - ./project:/src
-    expose:
-      - '80'
+      - ./config:/config
     ports:
+      - '8086:80'
       - '8006:81'
     env_file:
       - django.env
       - postgres.env
-    restart: always
+      - auth.env
   redis:
-    restart: always
     image: redis:alpine
-    expose:
-      - '6379'
   mbtiles:
+    image: morlov/mbtiles-server:latest
     env_file:
       - mbtiles.env
-    build:
-      context: .
-      dockerfile: Dockerfile.mbtiles
     ports:
     - "5000:5000"
     volumes:

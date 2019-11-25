@@ -40,25 +40,27 @@ INTERNAL_IPS = ["172.20.0.1", "127.0.0.1"]
 # Application definition
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.admindocs",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.gis",
+    "django.contrib.postgres",
     "django_extensions",
     "api.apps.ApiConfig",
     "colorfield",
     "rest_framework",
     "rest_framework_gis",
+    "drf_firebase_auth",
     "ordered_model",
     "silk",
 ]
 
 if DEBUG:
-    INSTALLED_APPS.append("debug_toolbar")
+    INSTALLED_APPS.extend(
+        ["debug_toolbar", "django.contrib.admin", "django.contrib.admindocs"]
+    )
 else:
     INSTALLED_APPS.append("cacheops")
 
@@ -180,8 +182,18 @@ if DEBUG:
     )
 
 REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly"
+    ],
     "DEFAULT_RENDERER_CLASSES": DEFAULT_RENDERER_CLASSES,
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "drf_firebase_auth.authentication.FirebaseAuthentication"
+    ],
+}
+
+DRF_FIREBASE_AUTH = {
+    "FIREBASE_SERVICE_ACCOUNT_KEY": "../config/firebase.json",
+    "ALLOW_ANONYMOUS_REQUESTS": True,
 }
 
 SILKY_PYTHON_PROFILER = True

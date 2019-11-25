@@ -19,11 +19,63 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from requests import get
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User
 from django.contrib.gis.db import models
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField, HStoreField
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from ordered_model.models import OrderedModel
 from colorfield.fields import ColorField
 from simple_history.models import HistoricalRecords
+
+
+class Vote(models.Model):
+    """
+    Abstract class to store User's votes
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    vote = models.BooleanField()
+
+    class Meta:
+        abstract = True
+
+
+class NarrativeVote(Vote):
+    """
+    Stores votes for Narratives. Extends Vote model
+    """
+
+    narrative = models.ForeignKey("Narrative", on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("narrative", "user")
+
+
+class Profile(models.Model):
+    """
+    Optional profile fields, 1-1 with User instances
+    """
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    location = models.PointField(blank=True, null=True)
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):  # pylint: disable=W0613
+    """
+    Creates user profile on post_save for a new User instance
+    """
+    if created:
+        Profile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):  # pylint: disable=W0613
+    """
+    Saves user profile on post_save for User
+    """
+    instance.profile.save()
 
 
 class TerritorialEntity(models.Model):
@@ -33,8 +85,18 @@ class TerritorialEntity(models.Model):
     """
 
     wikidata_id = models.PositiveIntegerField()  # Excluding the Q
+    label = models.TextField(max_length=90)
     color = ColorField()
     admin_level = models.PositiveIntegerField()
+    inception_date = models.DecimalField(
+        decimal_places=1, max_digits=10, blank=True, null=True
+    )
+    dissolution_date = models.DecimalField(
+        decimal_places=1, max_digits=10, blank=True, null=True
+    )
+
+    predecessor = models.ManyToManyField("self", blank=True, symmetrical=False)
+
     relations = models.ManyToManyField(
         "self",
         blank=True,
@@ -43,6 +105,15 @@ class TerritorialEntity(models.Model):
         related_name="political_relations",
     )
     history = HistoricalRecords()
+
+    def clean(self, *args, **kwargs):  # pylint: disable=W0221
+        if not self.inception_date is None and not self.dissolution_date is None:
+            if self.inception_date > self.dissolution_date:
+                raise ValidationError(
+                    "Inception date cannot be later than dissolution date"
+                )
+
+        super(TerritorialEntity, self).clean(*args, **kwargs)
 
     def get_children(self):
         """
@@ -120,7 +191,10 @@ class CachedData(models.Model):
 
     history = HistoricalRecords()
 
-    def save(self, *args, **kwargs):  # pylint: disable=W0221
+    def query_wikidata(self):
+        """
+        Fetch links from wikidata
+        """
         url = "https://query.wikidata.org/sparql"
         query = """
         SELECT ?item ?outcoming ?sitelinks ?incoming WHERE {{
@@ -139,15 +213,17 @@ class CachedData(models.Model):
             wid=self.wikidata_id
         )
         req = get(url, params={"format": "json", "query": query})
+        return req.json()["results"]["bindings"][0]
 
+    def save(self, *args, **kwargs):  # pylint: disable=W0221
         try:
-            data = req.json()["results"]["bindings"][0]
-
+            data = self.query_wikidata()
             incoming = int(data["incoming"]["value"])
             sitelinks = int(data["sitelinks"]["value"])
             outcoming = int(data["outcoming"]["value"])
             self.rank = incoming + sitelinks + outcoming
-        except IndexError:
+        # https://docs.python.org/3/library/json.html#json.JSONDecodeError
+        except (IndexError, ValueError):
             self.rank = 0
 
         super(CachedData, self).save(*args, **kwargs)
@@ -257,6 +333,9 @@ class Narrative(models.Model):
     url = models.TextField(unique=True)
     description = models.TextField()
     tags = ArrayField(models.TextField(max_length=100))
+    votes = models.ManyToManyField(
+        User, related_name="narrative_votes", through=NarrativeVote, blank=True
+    )
     history = HistoricalRecords()
 
 
@@ -290,7 +369,7 @@ class MapSettings(models.Model):
 
 class Narration(OrderedModel):
     """
-    Each point of narration inside a narrative commenting on events.
+    Each point of narration inside a narrative, commenting on events.
     """
 
     narrative = models.ForeignKey(Narrative, on_delete=models.CASCADE)
@@ -306,3 +385,25 @@ class Narration(OrderedModel):
     location = models.PointField(blank=True, null=True)
 
     order_with_respect_to = "narrative"
+
+
+class Symbol(models.Model):
+    """
+    Stores a FeatureCollection in representation of something
+    """
+
+    name = models.TextField(max_length=50)
+    narrations = models.ManyToManyField(Narration, related_name="symbols")
+    history = HistoricalRecords()
+
+
+class SymbolFeature(models.Model):
+    """
+    Stores geometry to be used in a collection in a Symbol
+    """
+
+    geom = models.GeometryField()
+    styling = HStoreField()
+    symbol = models.ForeignKey(
+        Symbol, related_name="features", on_delete=models.CASCADE
+    )
