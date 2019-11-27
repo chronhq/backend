@@ -119,14 +119,51 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
     )
     serializer_class = SpacetimeVolumeSerializer
 
-    # @transaction.atomic
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
         """
         Solve overlaps if included in request body
         """
 
+        # TODO: need to check that `territory` actually overlaps
         if "overlaps" in request.data:
             geom = GEOSGeometry(str(request.data["territory"]))
+            overlaps_db = SpacetimeVolume.objects.raw(
+                """
+                SELECT id, territory FROM api_spacetimevolume as stv WHERE (ST_IsEmpty((
+                    SELECT geom FROM (
+                        SELECT
+                            (ST_Dump(ST_Intersection(orig, diff))).geom as geom
+                        FROM (
+                            SELECT *
+                                , poly1 as orig, ST_Difference(poly2, poly1) as diff
+                            FROM (
+                                SELECT
+                                    stv.territory as poly1
+                                    , ('{}'::geometry) as poly2
+                            ) as foo
+                        ) as foo
+                    ) as foo
+                    WHERE ST_Dimension(geom) = 2 AND ST_Area(geom) > 10)
+                ))
+                """.format(geom)
+            )
+            print(overlaps_db)
+            for overlap in overlaps_db:
+                print(request.data["overlaps"][str(overlap.pk)])
+                if request.data["overlaps"][str(overlap.pk)]:
+                    overlap.annotate(
+                        diff=Difference("territory", geom)
+                    )
+                    print(overlap.diff)
+                else:
+                    overlap.annotate(
+                        diff=Difference(geom, "territory")
+                    )
+                    print(overlap.diff)
+
+
+            """
             for stv_pk, subtract_old in request.data["overlaps"].items():
                 if subtract_old:
                     stv = SpacetimeVolume.objects.get(pk=stv_pk)
@@ -136,7 +173,8 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
                     geom = geom.difference(
                         SpacetimeVolume.objects.get(pk=stv_pk).territory
                     )
-            request.data["territory"] = geom
+            """
+       #request.data["territory"] = geom
 
         return super().create(request, *args, **kwargs)
 

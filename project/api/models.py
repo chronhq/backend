@@ -288,6 +288,7 @@ class SpacetimeVolume(models.Model):
                 "Another STV for this entity exists in the same timeframe"
             )
 
+        """
         if not self.territory is None:
             if (
                 self.territory.geom_type != "Polygon"
@@ -297,25 +298,27 @@ class SpacetimeVolume(models.Model):
                     "Only Polygon and MultiPolygon objects are acceptable geometry types."
                 )
 
-            if (
-                SpacetimeVolume.objects.filter(
+            overlapping_stvs = SpacetimeVolume.objects.filter(
                     start_date__lte=self.end_date,
                     end_date__gte=self.start_date,
                     territory__overlaps=self.territory,
-                )
-                .exclude(pk=self.pk)
+                ).exclude(pk=self.pk)
+            if (
+                overlapping_stvs
                 .exists()
             ):
+                print(SpacetimeVolume.objects.get(pk=1).territory.intersection(self.territory))
 
                 overlaps = []
-                for i in SpacetimeVolume.objects.filter(territory__overlaps=self.territory):
+                for i in overlapping_stvs:
                     overlaps.append(i.pk)
                 raise ValidationError(
                     (
-                        "{\"unsolved overlap\": %(values)s}" 
+                        "{\"unsolved overlap\": %(values)s}"
                     ),
                     params={'values': overlaps}
                 )
+        """
 
         super(SpacetimeVolume, self).clean(*args, **kwargs)
 
