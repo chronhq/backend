@@ -221,7 +221,9 @@ class NarrativeSerializer(ModelSerializer):
         Retrieves year of first narration in set
         """
         if obj.narration_set.first() is not None:
-            return jd2gcal(obj.narration_set.order_by('map_datetime').first().map_datetime, 0)[0]
+            return jd2gcal(
+                obj.narration_set.order_by("map_datetime").first().map_datetime, 0
+            )[0]
         return None
 
     def get_end_year(self, obj):  # pylint: disable=R0201
@@ -229,7 +231,9 @@ class NarrativeSerializer(ModelSerializer):
         Retrieves year of last narration in set
         """
         if obj.narration_set.last() is not None:
-            return jd2gcal(obj.narration_set.order_by('map_datetime').last().map_datetime, 0)[0]
+            return jd2gcal(
+                obj.narration_set.order_by("map_datetime").last().map_datetime, 0
+            )[0]
         return None
 
     def get_votes(self, obj):  # pylint: disable=R0201
