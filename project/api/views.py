@@ -128,6 +128,8 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         # TODO: need to check that `territory` actually overlaps
         if "overlaps" in request.data:
             geom = GEOSGeometry(str(request.data["territory"]))
+            start_end = float(request.data["start_date"])
+            end_date = float(request.data["end_date"])
             overlaps_db = SpacetimeVolume.objects.raw(
                 """
                 SELECT id, territory FROM api_spacetimevolume as stv WHERE (ST_IsEmpty((
@@ -140,13 +142,14 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
                             FROM (
                                 SELECT
                                     stv.territory as poly1
-                                    , ('{}'::geometry) as poly2
+                                    , ('{geom}'::geometry) as poly2
+                                WHERE stv.end_date >= {start_date}::numeric(10,1) AND stv.start_date <= {end_date}::numeric(10,1)
                             ) as foo
                         ) as foo
                     ) as foo
                     WHERE ST_Dimension(geom) = 2 AND ST_Area(geom) > 10)
                 ))
-                """.format(geom)
+                """.format(geom = geom, start_date = start_date, end_date = end_date)
             )
             print(overlaps_db)
             for overlap in overlaps_db:
