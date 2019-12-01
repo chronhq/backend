@@ -39,7 +39,6 @@ class Command(BaseCommand):
         SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
         ?battle (wdt:P31/wdt:P279*) wd:Q178561.
         ?battle wdt:P585 ?point_in_time.
-        FILTER(?point_in_time < "2019-01-01T00:00:00Z"^^xsd:dateTime)
         FILTER(?point_in_time >= "1700-01-01T00:00:00Z"^^xsd:dateTime)
         OPTIONAL { ?battle wdt:P625 ?coordinate_location. }
         }
@@ -47,8 +46,9 @@ class Command(BaseCommand):
         R_BATTLES = requests.get(URL, params={"format": "json", "query": QUERY})
         BATTLES = R_BATTLES.json()
 
+        statistics = {"Created": 0, "Updated": 0, "Current_total": 0}
         for battle in BATTLES["results"]["bindings"]:
-            
+           
             if battle["point_in_time"]["type"] != "bnode":
                 battle_date = datetime.fromisoformat(battle["point_in_time"]["value"][:-1])
                 #TODO parse negative
@@ -60,10 +60,14 @@ class Command(BaseCommand):
                 point = None
 
 
-            data = CachedData(
-                event_type=178561,
-                wikidata_id=int(battle["battle"]["value"].split("Q", 1)[1]),
-                location=point,
-                date=ceil(sum(gcal2jd(int(battle_date.year), int(battle_date.month), int(battle_date.day)))) + 0.0,
-            )
+            data, created = CachedData.objects.update_or_create(event_type=178561, 
+                                                                wikidata_id=int(battle["battle"]["value"].split("Q", 1)[1]),
+                                                                defaults={'location': point, 'date' : ceil(sum(gcal2jd(int(battle_date.year), int(battle_date.month), int(battle_date.day)))) + 0.0})
 
+            if created:
+                statistics["Created"] += 1
+            else:
+                statistics["Updated"] += 1
+        statistics["Current_total"] = len(CachedData.objects.filter(event_type=178561))
+
+        print(statistics)

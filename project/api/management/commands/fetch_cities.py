@@ -47,6 +47,8 @@ class Command(BaseCommand):
         R_CITIES = requests.get(URL, params={"format": "json", "query": QUERY})
         CITIES = R_CITIES.json()
 
+        statistics = {"Created": 0, "Updated": 0, "Current_total": 0}
+
         for city in CITIES["results"]["bindings"]:
             if city["cityLabel"]["value"][1:].isdigit():
                 print(f"Skipped {city['cityLabel']['value']}")
@@ -65,9 +67,10 @@ class Command(BaseCommand):
                 # Negative date
                 else:
                     neg_date = re.findall(r'-[\d]+', inception_value)
-                    inception_date = gcal2jd(int(neg_date[0]), int(neg_date[1]), int(neg_date[2])) 
+                    inception_date = ceil(sum(gcal2jd(int(neg_date[0]), int(neg_date[1]), int(neg_date[2])))) + 0.0
             else:
-                inception_date = None
+                print(f"Skipped Q{city['city']['value'].split('Q', 1)[1]}, no inception date.")
+                continue
 
             # Dissolution exists and not unknown/no value
             if "dissolution" in city and city["dissolution"]["type"] != "bnode":
@@ -82,7 +85,7 @@ class Command(BaseCommand):
                 # Negative date
                 else:
                     neg_date = re.findall(r'-[\d]+', dissolution_value)
-                    dissolution_date = gcal2jd(int(neg_date[0]), int(neg_date[1]), int(neg_date[2])) 
+                    dissolution_date = ceil(sum(gcal2jd(int(neg_date[0]), int(neg_date[1]), int(neg_date[2])))) + 0.0
             else:
                 dissolution_date = None
 
@@ -93,10 +96,16 @@ class Command(BaseCommand):
             else:
                 point = None
 
+            data, created = City.objects.update_or_create(wikidata_id=int(city["city"]["value"].split("Q", 1)[1]),
+            defaults={'location': point, 'label':city["cityLabel"]["value"],
+            'inception_date' : inception_date, 'dissolution_date': dissolution_date})
 
-            new_city = City(wikidata_id=int(city["city"]["value"].split("Q", 1)[1]),
-                label=city["cityLabel"]["value"],
-                location=point,
-                inception_date=inception_date,
-                dissolution_date=dissolution_date
-            )
+            if created:
+                statistics["Created"] += 1
+            else:
+                statistics["Updated"] += 1
+
+        statistics["Current_total"] = len(City.objects.filter())
+        print(statistics)
+
+        

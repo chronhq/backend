@@ -58,14 +58,17 @@ class Command(BaseCommand):
         R_ACTORS = requests.get(URL, params={"format": "json", "query": QUERY})
         ACTORS = R_ACTORS.json()
 
+        statistics_births = {"Created": 0, "Updated": 0, "Current_total": 0}
+        statistics_deaths = {"Created": 0, "Updated": 0, "Current_total": 0}
+
         for actor in ACTORS["results"]["bindings"]:
             if actor["personLabel"]["value"][1:].isdigit():
-                print(f"Skipped {actor['personLabel']['value']}")
+                print(f"Skipped {actor['personLabel']['value']}, no name.")
                 continue
 
             try:
                 if actor["dateOfBirth"]["type"] == 'bnode':
-                    print(f"Skipped {actor['personLabel']['value']}")
+                    print(f"Skipped Q{actor['person']['value'].split('Q', 1)[1]}, birthdate unknown value")
                     continue
                 birth_date = datetime.fromisoformat(actor["dateOfBirth"]["value"][:-1])
               
@@ -75,18 +78,21 @@ class Command(BaseCommand):
                 else:
                     point = None
 
-                data = CachedData(
-                    event_type=569, 
-                    wikidata_id= int(actor["person"]["value"].split("Q", 1)[1]),
-                    location= point, 
-                    date=ceil(sum(gcal2jd(int(birth_date.year), int(birth_date.month), int(birth_date.day)))) + 0.0,)
+
+                data, created = CachedData.objects.update_or_create(event_type=569, 
+                                                                wikidata_id=int(actor["person"]["value"].split("Q", 1)[1]),
+                                                                defaults={'location': point, 'date' : ceil(sum(gcal2jd(int(birth_date.year), int(birth_date.month), int(birth_date.day)))) + 0.0})
+                if created:
+                    statistics_births["Created"] += 1
+                else:
+                    statistics_births["Updated"] += 1
 
             except KeyError:
-                print("Birth: unknown")
+                print(f"Skipped Q{actor['person']['value'].split('Q', 1)[1]}, doesn't have birthdate")
 
             try:
                 if actor["dateOfDeath"]["type"] == 'bnode':
-                    print(f"Skipped {actor['personLabel']['value']}")
+                    print(f"Skipped Q{actor['person']['value'].split('Q', 1)[1]} deathdate, unknown value")
                     continue
 
                 death_date = datetime.fromisoformat(actor["dateOfDeath"]["value"][:-1])
@@ -97,11 +103,22 @@ class Command(BaseCommand):
                 else:
                     point = None
 
-                data = CachedData(
-                    event_type=570, 
-                    wikidata_id= int(actor["person"]["value"].split("Q", 1)[1]),
-                    location=  point,
-                    date = ceil(sum(gcal2jd(int(death_date.year), int(death_date.month), int(death_date.day)))) + 0.0,)
+                data, created = CachedData.objects.update_or_create(event_type=570, 
+                                                                wikidata_id=int(actor["person"]["value"].split("Q", 1)[1]),
+                                                                defaults={'location': point, 'date' : ceil(sum(gcal2jd(int(death_date.year), int(death_date.month), int(death_date.day)))) + 0.0})
+                if created:
+                    statistics_deaths["Created"] += 1
+                else:
+                    statistics_deaths["Updated"] += 1
                 
             except KeyError:
-                print("Death: unknown")
+                print(f"Skipped Q{actor['person']['value'].split('Q', 1)[1]}, doesn't have deathdate")
+
+
+        statistics_births["Current_total"] = len(CachedData.objects.filter(event_type=570))
+        statistics_deaths["Current_total"] = len(CachedData.objects.filter(event_type=569))
+        print("Births:")
+        print(statistics_births)
+        print("Deaths:")
+        print(statistics_deaths)
+

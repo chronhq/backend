@@ -44,16 +44,17 @@ class Command(BaseCommand):
             ?location wdt:P625 ?coors
         }
         FILTER (?time > "1700-01-01T00:00:00Z"^^xsd:dateTime)
-        FILTER (?time < "2019-01-01T00:00:00Z"^^xsd:dateTime)
         SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
         }
         """
         R_TREATIES = requests.get(URL, params={"format": "json", "query": QUERY})
         TREATIES = R_TREATIES.json()
 
+        statistics = {"Created": 0, "Updated": 0, "Current_total": 0}
+
         for treaty in TREATIES["results"]["bindings"]:
             if treaty["treatyLabel"]["value"][1:].isdigit():
-                print(f"Skipped {treaty['treatyLabel']['value']}")
+                print(f"Skipped {treaty['treatyLabel']['value']}, no name.")
                 continue
 
             if "time" in treaty and treaty["time"]["type"] != "bnode":
@@ -69,8 +70,15 @@ class Command(BaseCommand):
                 point = None
 
 
-            data = CachedData(event_type=131569,
-                wikidata_id=int(treaty["treaty"]["value"].split("Q", 1)[1]),
-                location=point,
-                date=treaty_date
-                )
+            data, created = CachedData.objects.update_or_create(event_type=131569, 
+                                                            wikidata_id=int(treaty["treaty"]["value"].split("Q", 1)[1]),
+                                                            defaults={'location': point, 'date' :ceil(sum(gcal2jd(int(treaty_date.year), int(treaty_date.month), int(treaty_date.day)))) + 0.0})
+
+
+            if created:
+                statistics["Created"] += 1
+            else:
+                statistics["Updated"] += 1
+        statistics["Current_total"] = len(CachedData.objects.filter(event_type=178561))
+
+        print(statistics)
