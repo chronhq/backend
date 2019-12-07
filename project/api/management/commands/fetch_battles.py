@@ -49,9 +49,12 @@ class Command(BaseCommand):
         statistics = {"Created": 0, "Updated": 0, "Current_total": 0}
         for battle in BATTLES["results"]["bindings"]:
            
-            if battle["point_in_time"]["type"] != "bnode":
+            if "point_in_time" in battle and battle["point_in_time"]["type"] != "bnode":
                 battle_date = datetime.fromisoformat(battle["point_in_time"]["value"][:-1])
-                #TODO parse negative
+            else:
+                print(f"Skipped Q{battle['battle']['value'].split('Q', 1)[1]}, no date or unknown value")
+                continue
+
 
             if "coordinate_location" in battle and battle["coordinate_location"]["type"] != "bnode":
                 coords = re.findall(r'[-+]?[\d]+[\.]?\d*',battle["coordinate_location"]["value"])
@@ -68,6 +71,7 @@ class Command(BaseCommand):
                 statistics["Created"] += 1
             else:
                 statistics["Updated"] += 1
+
         statistics["Current_total"] = len(CachedData.objects.filter(event_type=178561))
 
         print(statistics)

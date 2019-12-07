@@ -69,7 +69,7 @@ class Command(BaseCommand):
                     neg_date = re.findall(r'-[\d]+', inception_value)
                     inception_date = ceil(sum(gcal2jd(int(neg_date[0]), int(neg_date[1]), int(neg_date[2])))) + 0.0
             else:
-                print(f"Skipped Q{city['city']['value'].split('Q', 1)[1]}, no inception date.")
+                print(f"Skipped Q{city['city']['value'].split('Q', 1)[1]}, no inception date or unknown value.")
                 continue
 
             # Dissolution exists and not unknown/no value
@@ -87,7 +87,7 @@ class Command(BaseCommand):
                     neg_date = re.findall(r'-[\d]+', dissolution_value)
                     dissolution_date = ceil(sum(gcal2jd(int(neg_date[0]), int(neg_date[1]), int(neg_date[2])))) + 0.0
             else:
-                dissolution_date = None
+                dissolution_date = None # Don't skip since the city might still exist if no dissolution date
 
             # Location in city and not blank 
             if "location" in city and city["location"]["type"] != "bnode":

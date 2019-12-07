@@ -62,15 +62,24 @@ class Command(BaseCommand):
         statistics_deaths = {"Created": 0, "Updated": 0, "Current_total": 0}
 
         for actor in ACTORS["results"]["bindings"]:
+            # Skip if no name
             if actor["personLabel"]["value"][1:].isdigit():
                 print(f"Skipped {actor['personLabel']['value']}, no name.")
                 continue
 
-            try:
-                if actor["dateOfBirth"]["type"] == 'bnode':
-                    print(f"Skipped Q{actor['person']['value'].split('Q', 1)[1]}, birthdate unknown value")
-                    continue
-                birth_date = datetime.fromisoformat(actor["dateOfBirth"]["value"][:-1])
+            
+            if "dateOfBirth" in actor and actor["dateOfBirth"]["type"] != 'bnode':
+
+                birth_value = actor["dateOfBirth"]["value"]
+                # Positive date
+                if not birth_value.startswith("-"):
+
+                    birth_datetime = datetime.fromisoformat(birth_value[:-1])
+                    birth_date = ceil(sum(gcal2jd(int(birth_datetime.year), int(birth_datetime.month), int(birth_datetime.day)))) + 0.0
+                # Negative date
+                else:
+                    neg_date = re.findall(r'-[\d]+', birth_value)
+                    birth_date = ceil(sum(gcal2jd(int(neg_date[0]), int(neg_date[1]), int(neg_date[2])))) + 0.0
               
                 if "coorBirth" in actor:
                     coords = re.findall(r'[-+]?[\d]+[\.]?\d*',actor["coorBirth"]["value"])
@@ -81,21 +90,26 @@ class Command(BaseCommand):
 
                 data, created = CachedData.objects.update_or_create(event_type=569, 
                                                                 wikidata_id=int(actor["person"]["value"].split("Q", 1)[1]),
-                                                                defaults={'location': point, 'date' : ceil(sum(gcal2jd(int(birth_date.year), int(birth_date.month), int(birth_date.day)))) + 0.0})
+                                                                defaults={'location': point, 'date' : birth_date})
                 if created:
                     statistics_births["Created"] += 1
                 else:
                     statistics_births["Updated"] += 1
+            else:
+                print(f"Skipped Q{actor['person']['value'].split('Q', 1)[1]} birth, no birthdate or unknown value")
 
-            except KeyError:
-                print(f"Skipped Q{actor['person']['value'].split('Q', 1)[1]}, doesn't have birthdate")
+            if "dateOfDeath" in actor and actor["dateOfDeath"]["type"] != 'bnode':
 
-            try:
-                if actor["dateOfDeath"]["type"] == 'bnode':
-                    print(f"Skipped Q{actor['person']['value'].split('Q', 1)[1]} deathdate, unknown value")
-                    continue
+                death_value = actor["dateOfDeath"]["value"]
+                # Positive date
+                if not birth_value.startswith("-"):
 
-                death_date = datetime.fromisoformat(actor["dateOfDeath"]["value"][:-1])
+                    death_datetime = datetime.fromisoformat(death_value[:-1])
+                    death_date = ceil(sum(gcal2jd(int(death_datetime.year), int(death_datetime.month), int(death_datetime.day)))) + 0.0
+                # Negative date
+                else:
+                    neg_date = re.findall(r'-[\d]+', death_value)
+                    death_date = ceil(sum(gcal2jd(int(neg_date[0]), int(neg_date[1]), int(neg_date[2])))) + 0.0
               
                 if "coorDeath" in actor:
                     coords = re.findall(r'[-+]?[\d]+[\.]?\d*',actor["coorDeath"]["value"])
@@ -105,14 +119,14 @@ class Command(BaseCommand):
 
                 data, created = CachedData.objects.update_or_create(event_type=570, 
                                                                 wikidata_id=int(actor["person"]["value"].split("Q", 1)[1]),
-                                                                defaults={'location': point, 'date' : ceil(sum(gcal2jd(int(death_date.year), int(death_date.month), int(death_date.day)))) + 0.0})
+                                                                defaults={'location': point, 'date' : death_date})
                 if created:
                     statistics_deaths["Created"] += 1
                 else:
                     statistics_deaths["Updated"] += 1
                 
-            except KeyError:
-                print(f"Skipped Q{actor['person']['value'].split('Q', 1)[1]}, doesn't have deathdate")
+            else:
+                print(f"Skipped Q{actor['person']['value'].split('Q', 1)[1]} death, doesn't have deathdate or unknown value")
 
 
         statistics_births["Current_total"] = len(CachedData.objects.filter(event_type=570))

@@ -59,9 +59,9 @@ class Command(BaseCommand):
 
             if "time" in treaty and treaty["time"]["type"] != "bnode":
                 treaty_date = datetime.fromisoformat(treaty["time"]["value"][:-1])
-                #TODO parse negative
             else:
-                treaty_date = None
+                print(f"Skipped Q{treaty['treatyLabel']['value'].split('Q', 1)[1]}, no date or unknown date.")
+                continue
             
             if "coors" in treaty and treaty["coors"]["type"] != "bnode":
                 coords = re.findall(r'[-+]?[\d]+[\.]?\d*',treaty["coors"]["value"])
@@ -74,11 +74,13 @@ class Command(BaseCommand):
                                                             wikidata_id=int(treaty["treaty"]["value"].split("Q", 1)[1]),
                                                             defaults={'location': point, 'date' :ceil(sum(gcal2jd(int(treaty_date.year), int(treaty_date.month), int(treaty_date.day)))) + 0.0})
 
-
             if created:
                 statistics["Created"] += 1
             else:
                 statistics["Updated"] += 1
+
+
+            
         statistics["Current_total"] = len(CachedData.objects.filter(event_type=178561))
 
         print(statistics)
