@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.db.models.functions import Difference
 from django.db import connection, transaction
 from django.db.models import Count
 from django.http import HttpResponse
@@ -128,56 +129,50 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         # TODO: need to check that `territory` actually overlaps
         if "overlaps" in request.data:
             geom = GEOSGeometry(str(request.data["territory"]))
-            start_end = float(request.data["start_date"])
+            print(geom.ewkt)
+            start_date = float(request.data["start_date"])
             end_date = float(request.data["end_date"])
             overlaps_db = SpacetimeVolume.objects.raw(
                 """
-                SELECT id, territory FROM api_spacetimevolume as stv WHERE (ST_IsEmpty((
-                    SELECT geom FROM (
-                        SELECT
-                            (ST_Dump(ST_Intersection(orig, diff))).geom as geom
+                SELECT id, entity_id, end_date, start_date, ST_Union(xing) FROM (
+                    SELECT *,
+                        (ST_Dump(ST_Intersection(territory, diff))).geom as xing
+                    FROM (
+                        SELECT *,
+                            ST_Difference(
+                            territory,
+                            '{geom}'::geometry
+                            ) as diff
                         FROM (
                             SELECT *
-                                , poly1 as orig, ST_Difference(poly2, poly1) as diff
-                            FROM (
-                                SELECT
-                                    stv.territory as poly1
-                                    , ('{geom}'::geometry) as poly2
-                                WHERE stv.end_date >= {start_date}::numeric(10,1) AND stv.start_date <= {end_date}::numeric(10,1)
-                            ) as foo
+                            FROM api_spacetimevolume as stv
+                            WHERE stv.end_date >= {start_date}::numeric(10,1) AND stv.start_date <= {end_date}::numeric(10,1)
+                            AND ST_Intersects(
+                            territory,
+                            '{geom}'::geometry)
                         ) as foo
                     ) as foo
-                    WHERE ST_Dimension(geom) = 2 AND ST_Area(geom) > 10)
-                ))
-                """.format(geom = geom, start_date = start_date, end_date = end_date)
+                ) as foo
+                WHERE ST_Dimension(xing) = 2 AND ST_Area(xing) > 10
+                GROUP BY id, entity_id, start_date, end_date
+                """.format(
+                    geom=geom.ewkt, start_date=start_date, end_date=end_date
+                )
             )
             print(overlaps_db)
+
+            subtract_old = SpacetimeVolume.objects.filter(pk__in=request.data["overlaps"])
+            subtract_old.update(territory=Difference("territory", geom))
+            subtract_old.reverse().update(territory=Difference(geom, "territory"))
+
             for overlap in overlaps_db:
                 print(request.data["overlaps"][str(overlap.pk)])
                 if request.data["overlaps"][str(overlap.pk)]:
-                    overlap.annotate(
-                        diff=Difference("territory", geom)
-                    )
+                    overlap.annotate(diff=Difference("territory", geom))
                     print(overlap.diff)
                 else:
-                    overlap.annotate(
-                        diff=Difference(geom, "territory")
-                    )
+                    overlap.annotate(diff=Difference(geom, "territory"))
                     print(overlap.diff)
-
-
-            """
-            for stv_pk, subtract_old in request.data["overlaps"].items():
-                if subtract_old:
-                    stv = SpacetimeVolume.objects.get(pk=stv_pk)
-                    stv.territory = stv.territory.difference(geom)
-                    stv.save()
-                else:
-                    geom = geom.difference(
-                        SpacetimeVolume.objects.get(pk=stv_pk).territory
-                    )
-            """
-       #request.data["territory"] = geom
 
         return super().create(request, *args, **kwargs)
 
