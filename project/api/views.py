@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.contrib.gis.geos import GEOSGeometry
+from django.core.exceptions import ValidationError
 from django.db import connection, transaction
 from django.db.models import Count
 from django.http import HttpResponse
@@ -128,7 +129,6 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         # TODO: need to check that `territory` actually overlaps
         if "overlaps" in request.data:
             geom = GEOSGeometry(str(request.data["territory"]))
-            print(geom.ewkt)
             start_date = float(request.data["start_date"])
             end_date = float(request.data["end_date"])
             overlaps_db = SpacetimeVolume.objects.raw(
@@ -156,12 +156,23 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
                 GROUP BY id, entity_id, start_date, end_date
                 """, {'geom':geom.ewkt, 'start_date':start_date, 'end_date':end_date}
             )
-            print(overlaps_db)
+
+            if overlaps_db and set([str(x.pk) for x in overlaps_db]) != set(request.data["overlaps"]):
+                overlaps = []
+                for i in overlaps_db:
+                    overlaps.append(i.pk)
+                raise ValidationError(
+                    ('{"unsolved overlap": %(values)s}'), params={"values": overlaps}
+                )
 
             for overlap in overlaps_db:
+                print(overlap.pk)
                 if request.data["overlaps"][str(overlap.pk)]:
                     overlap.territory = overlap.territory.difference(geom)
-                    overlap.save()
+                    try:
+                        overlap.save(check=False)
+                    except Exception as e:
+                        print(e)
                 else:
                     geom = geom.difference(
                         overlap.territory
@@ -169,7 +180,7 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
 
             request.data["territory"] = geom
 
-        return super().create(request, *args, **kwargs)
+        return super().create(request, *args, **kwargs, passed_overlap=True)
 
 
 class NarrativeVoteViewSet(viewsets.ModelViewSet):

@@ -288,6 +288,7 @@ class SpacetimeVolume(models.Model):
                 "Another STV for this entity exists in the same timeframe"
             )
 
+
         if not self.territory is None:
             if (
                 self.territory.geom_type != "Polygon"
@@ -303,12 +304,6 @@ class SpacetimeVolume(models.Model):
                 territory__overlaps=self.territory,
             ).exclude(pk=self.pk)
             if overlapping_stvs.exists():
-                print(
-                    SpacetimeVolume.objects.get(pk=1).territory.intersection(
-                        self.territory
-                    )
-                )
-
                 overlaps = []
                 for i in overlapping_stvs:
                     overlaps.append(i.pk)
@@ -319,7 +314,8 @@ class SpacetimeVolume(models.Model):
         super(SpacetimeVolume, self).clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
-        self.full_clean()
+        if kwargs["check"]:
+            self.full_clean()
         super(SpacetimeVolume, self).save(*args, **kwargs)
 
 
