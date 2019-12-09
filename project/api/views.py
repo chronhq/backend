@@ -18,7 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.contrib.gis.geos import GEOSGeometry
-from django.contrib.gis.db.models.functions import Difference
 from django.db import connection, transaction
 from django.db.models import Count
 from django.http import HttpResponse
@@ -140,39 +139,35 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
                     FROM (
                         SELECT *,
                             ST_Difference(
-                            territory,
-                            '{geom}'::geometry
+                                territory,
+                                %(geom)s::geometry
                             ) as diff
                         FROM (
                             SELECT *
                             FROM api_spacetimevolume as stv
-                            WHERE stv.end_date >= {start_date}::numeric(10,1) AND stv.start_date <= {end_date}::numeric(10,1)
+                            WHERE stv.end_date >= %(start_date)s::numeric(10,1) AND stv.start_date <= %(end_date)s::numeric(10,1)
                             AND ST_Intersects(
-                            territory,
-                            '{geom}'::geometry)
+                                territory,
+                            %(geom)s::geometry)
                         ) as foo
                     ) as foo
                 ) as foo
                 WHERE ST_Dimension(xing) = 2 AND ST_Area(xing) > 10
                 GROUP BY id, entity_id, start_date, end_date
-                """.format(
-                    geom=geom.ewkt, start_date=start_date, end_date=end_date
-                )
+                """, {'geom':geom.ewkt, 'start_date':start_date, 'end_date':end_date}
             )
             print(overlaps_db)
 
-            subtract_old = SpacetimeVolume.objects.filter(pk__in=request.data["overlaps"])
-            subtract_old.update(territory=Difference("territory", geom))
-            subtract_old.reverse().update(territory=Difference(geom, "territory"))
-
             for overlap in overlaps_db:
-                print(request.data["overlaps"][str(overlap.pk)])
                 if request.data["overlaps"][str(overlap.pk)]:
-                    overlap.annotate(diff=Difference("territory", geom))
-                    print(overlap.diff)
+                    overlap.territory = overlap.territory.difference(geom)
+                    overlap.save()
                 else:
-                    overlap.annotate(diff=Difference(geom, "territory"))
-                    print(overlap.diff)
+                    geom = geom.difference(
+                        overlap.territory
+                    )
+
+            request.data["territory"] = geom
 
         return super().create(request, *args, **kwargs)
 
