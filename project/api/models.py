@@ -288,7 +288,6 @@ class SpacetimeVolume(models.Model):
                 "Another STV for this entity exists in the same timeframe"
             )
 
-
         if not self.territory is None:
             if (
                 self.territory.geom_type != "Polygon"

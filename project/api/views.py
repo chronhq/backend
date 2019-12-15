@@ -143,16 +143,18 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
                     FROM (
                         SELECT *
                         FROM api_spacetimevolume as stv
-                        WHERE stv.end_date >= %(start_date)s::numeric(10,1) AND stv.start_date <= %(end_date)s::numeric(10,1)
-                        AND ST_Intersects(
-                            territory,
-                        %(geom)s::geometry)
+                        WHERE stv.end_date >= %(start_date)s::numeric(10,1)
+                            AND stv.start_date <= %(end_date)s::numeric(10,1)
+                            AND ST_Intersects(
+                                territory,
+                            %(geom)s::geometry)
                     ) as foo
                 ) as foo
             ) as foo
             WHERE ST_Dimension(xing) = 2 AND ST_Area(xing) > 10
             GROUP BY id, entity_id, start_date, end_date
-            """, {'geom':geom.ewkt, 'start_date':start_date, 'end_date':end_date}
+            """,
+            {"geom": geom.ewkt, "start_date": start_date, "end_date": end_date},
         )
 
         overlaps = []
@@ -160,13 +162,14 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
             for i in overlaps_db:
                 if not str(i.pk) in request.data["overlaps"]:
                     overlaps.append(i.pk)
-            if overlaps: 
+            if overlaps:
                 raise ValidationError(
                     ('{"unsolved overlap": %(values)s}'), params={"values": overlaps}
                 )
-        else: 
+        else:
             raise ValidationError(
-                ('{"unsolved overlap": %(values)s}'), params={"values": [i.pk for i in overlaps_db]}
+                ('{"unsolved overlap": %(values)s}'),
+                params={"values": [i.pk for i in overlaps_db]},
             )
 
         for overlap in overlaps_db:
@@ -174,9 +177,7 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
                 overlap.territory = overlap.territory.difference(geom)
                 overlap.save()
             else:
-                geom = geom.difference(
-                    overlap.territory
-                )
+                geom = geom.difference(overlap.territory)
 
         request.data["territory"] = geom
 
