@@ -126,61 +126,61 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         Solve overlaps if included in request body
         """
 
-        # TODO: need to check that `territory` actually overlaps
-        if "overlaps" in request.data:
-            geom = GEOSGeometry(str(request.data["territory"]))
-            start_date = float(request.data["start_date"])
-            end_date = float(request.data["end_date"])
-            overlaps_db = SpacetimeVolume.objects.raw(
-                """
-                SELECT id, entity_id, end_date, start_date, ST_Union(xing) FROM (
+        geom = GEOSGeometry(str(request.data["territory"]))
+        start_date = float(request.data["start_date"])
+        end_date = float(request.data["end_date"])
+        overlaps_db = SpacetimeVolume.objects.raw(
+            """
+            SELECT id, entity_id, end_date, start_date, ST_Union(xing) FROM (
+                SELECT *,
+                    (ST_Dump(ST_Intersection(territory, diff))).geom as xing
+                FROM (
                     SELECT *,
-                        (ST_Dump(ST_Intersection(territory, diff))).geom as xing
+                        ST_Difference(
+                            territory,
+                            %(geom)s::geometry
+                        ) as diff
                     FROM (
-                        SELECT *,
-                            ST_Difference(
-                                territory,
-                                %(geom)s::geometry
-                            ) as diff
-                        FROM (
-                            SELECT *
-                            FROM api_spacetimevolume as stv
-                            WHERE stv.end_date >= %(start_date)s::numeric(10,1) AND stv.start_date <= %(end_date)s::numeric(10,1)
-                            AND ST_Intersects(
-                                territory,
-                            %(geom)s::geometry)
-                        ) as foo
+                        SELECT *
+                        FROM api_spacetimevolume as stv
+                        WHERE stv.end_date >= %(start_date)s::numeric(10,1) AND stv.start_date <= %(end_date)s::numeric(10,1)
+                        AND ST_Intersects(
+                            territory,
+                        %(geom)s::geometry)
                     ) as foo
                 ) as foo
-                WHERE ST_Dimension(xing) = 2 AND ST_Area(xing) > 10
-                GROUP BY id, entity_id, start_date, end_date
-                """, {'geom':geom.ewkt, 'start_date':start_date, 'end_date':end_date}
-            )
+            ) as foo
+            WHERE ST_Dimension(xing) = 2 AND ST_Area(xing) > 10
+            GROUP BY id, entity_id, start_date, end_date
+            """, {'geom':geom.ewkt, 'start_date':start_date, 'end_date':end_date}
+        )
 
-            if overlaps_db and set([str(x.pk) for x in overlaps_db]) != set(request.data["overlaps"]):
-                overlaps = []
-                for i in overlaps_db:
+        overlaps = []
+        if "overlaps" in request.data:
+            for i in overlaps_db:
+                if not str(i.pk) in request.data["overlaps"]:
                     overlaps.append(i.pk)
+            if overlaps: 
                 raise ValidationError(
                     ('{"unsolved overlap": %(values)s}'), params={"values": overlaps}
                 )
+        else: 
+            raise ValidationError(
+                ('{"unsolved overlap": %(values)s}'), params={"values": [i.pk for i in overlaps_db]}
+            )
 
-            for overlap in overlaps_db:
-                print(overlap.pk)
-                if request.data["overlaps"][str(overlap.pk)]:
-                    overlap.territory = overlap.territory.difference(geom)
-                    try:
-                        overlap.save(check=False)
-                    except Exception as e:
-                        print(e)
-                else:
-                    geom = geom.difference(
-                        overlap.territory
-                    )
+        for overlap in overlaps_db:
+            if request.data["overlaps"][str(overlap.pk)]:
+                overlap.territory = overlap.territory.difference(geom)
+                overlap.save()
+            else:
+                geom = geom.difference(
+                    overlap.territory
+                )
 
-            request.data["territory"] = geom
+        request.data["territory"] = geom
 
-        return super().create(request, *args, **kwargs, passed_overlap=True)
+        return super().create(request, *args, **kwargs)
 
 
 class NarrativeVoteViewSet(viewsets.ModelViewSet):

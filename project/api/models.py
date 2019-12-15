@@ -298,24 +298,10 @@ class SpacetimeVolume(models.Model):
                     "Only Polygon and MultiPolygon objects are acceptable geometry types."
                 )
 
-            overlapping_stvs = SpacetimeVolume.objects.filter(
-                start_date__lte=self.end_date,
-                end_date__gte=self.start_date,
-                territory__overlaps=self.territory,
-            ).exclude(pk=self.pk)
-            if overlapping_stvs.exists():
-                overlaps = []
-                for i in overlapping_stvs:
-                    overlaps.append(i.pk)
-                raise ValidationError(
-                    ('{"unsolved overlap": %(values)s}'), params={"values": overlaps}
-                )
-
         super(SpacetimeVolume, self).clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221
-        if kwargs["check"]:
-            self.full_clean()
+        self.full_clean()
         super(SpacetimeVolume, self).save(*args, **kwargs)
 
 
