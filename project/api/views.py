@@ -166,7 +166,7 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
                 raise ValidationError(
                     ('{"unsolved overlap": %(values)s}'), params={"values": overlaps}
                 )
-        else:
+        elif len(overlaps_db) > 0:  # pylint: disable=C1801
             raise ValidationError(
                 ('{"unsolved overlap": %(values)s}'),
                 params={"values": [i.pk for i in overlaps_db]},

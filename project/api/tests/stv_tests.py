@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from rest_framework import status
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from api.models import SpacetimeVolume
 from .api_tests import APITest, authorized
@@ -79,3 +80,54 @@ class STVTests(APITest):
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["end_date"], str(self.JD_0002))
+
+    @authorized
+    def test_api_can_not_create_stv(self):
+        """
+        Ensure territory checks for overlapping STVs are working
+        """
+
+        url = reverse("spacetimevolume-list")
+        data = {
+            "start_date": self.JD_0001,
+            "end_date": self.JD_0002,
+            "entity": self.germany.pk,
+            "references": ["ref"],
+            "territory": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [-27.421875, -14.264383087562637],
+                        [-4.5703125, -15.623036831528252],
+                        [-2.4609375, 28.92163128242129],
+                        [-27.421875, 29.22889003019423],
+                        [-27.421875, -14.264383087562637],
+                    ]
+                ],
+            },
+            "visual_center": "POINT(1.2 1.8)",
+        }
+        data_overlapping = {
+            "start_date": self.JD_0001,
+            "end_date": self.JD_0002,
+            "entity": self.italy.pk,
+            "references": ["ref"],
+            "territory": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [-39.7265625, 30.14512718337613],
+                        [-50.2734375, -16.97274101999901],
+                        [22.148437499999996, -12.211180191503997],
+                        [34.80468749999999, 22.917922936146045],
+                        [-39.7265625, 30.14512718337613],
+                    ]
+                ],
+            },
+            "visual_center": "POINT(1.2 1.8)",
+        }
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        with self.assertRaises(ValidationError):
+            self.client.post(url, data_overlapping, format="json")

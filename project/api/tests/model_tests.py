@@ -207,25 +207,6 @@ class ModelTest(TestCase):
                 territory=Polygon(((3, 3), (3, 4), (4, 4), (3, 3))),
             )
 
-        # Territory
-        with self.assertRaises(ValidationError):
-            SpacetimeVolume.objects.create(
-                start_date=self.JD_0003,
-                end_date=self.JD_0004,
-                entity=self.british_empire,
-                references=["ref"],
-                visual_center=Point(2, 2),
-                territory=Polygon(((6, 6), (6, 7), (7, 7), (6, 6))),
-            )
-            SpacetimeVolume.objects.create(
-                start_date=self.JD_0002,
-                end_date=self.JD_0004,
-                entity=self.italy,
-                references=["ref"],
-                visual_center=Point(1, 1),
-                territory=Polygon(((6, 6), (6, 7), (7, 7), (6, 6))),
-            )
-
         # Geom type
         with self.assertRaises(ValidationError):
             SpacetimeVolume.objects.create(
