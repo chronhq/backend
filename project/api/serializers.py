@@ -25,10 +25,13 @@ from rest_framework.serializers import (
     PrimaryKeyRelatedField,
     SerializerMethodField,
 )
+from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from .models import (
     TerritorialEntity,
     PoliticalRelation,
+    Symbol,
+    SymbolFeature,
     CachedData,
     City,
     SpacetimeVolume,
@@ -119,6 +122,38 @@ class CachedDataSerializer(ModelSerializer):
         read_only_fields = ("rank",)
 
 
+class SymbolFeatureSerializer(GeoFeatureModelSerializer):
+    """
+    Symbolizes SymbolFeatures as valid GeoJSON
+    """
+
+    class Meta:
+        model = SymbolFeature
+        geo_field = "geom"
+        fields = "__all__"
+
+    def get_properties(self, instance, fields):
+        return instance.styling
+
+    def unformat_geojson(self, feature):
+        attrs = {
+            self.Meta.geo_field: feature["geometry"],
+            "styling": feature["properties"],
+        }
+
+        return attrs
+
+
+class SymbolSerializer(ModelSerializer):
+    """
+    Serializes the Symbol model
+    """
+
+    class Meta:
+        model = Symbol
+        fields = ("id", "name", "narrations", "features")
+
+
 class CitySerializer(ModelSerializer):
     """
     Serializes the City model
@@ -185,18 +220,20 @@ class NarrativeSerializer(ModelSerializer):
         """
         Retrieves year of first narration in set
         """
-
         if obj.narration_set.first() is not None:
-            return jd2gcal(obj.narration_set.first().map_datetime, 0)[0]
+            return jd2gcal(
+                obj.narration_set.order_by("map_datetime").first().map_datetime, 0
+            )[0]
         return None
 
     def get_end_year(self, obj):  # pylint: disable=R0201
         """
         Retrieves year of last narration in set
         """
-
         if obj.narration_set.last() is not None:
-            return jd2gcal(obj.narration_set.last().map_datetime, 0)[0]
+            return jd2gcal(
+                obj.narration_set.order_by("map_datetime").last().map_datetime, 0
+            )[0]
         return None
 
     def get_votes(self, obj):  # pylint: disable=R0201

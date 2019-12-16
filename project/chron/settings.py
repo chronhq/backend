@@ -40,14 +40,13 @@ INTERNAL_IPS = ["172.20.0.1", "127.0.0.1"]
 # Application definition
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.admindocs",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.gis",
+    "django.contrib.postgres",
     "django_extensions",
     "api.apps.ApiConfig",
     "colorfield",
@@ -59,7 +58,9 @@ INSTALLED_APPS = [
 ]
 
 if DEBUG:
-    INSTALLED_APPS.append("debug_toolbar")
+    INSTALLED_APPS.extend(
+        ["debug_toolbar", "django.contrib.admin", "django.contrib.admindocs"]
+    )
 else:
     INSTALLED_APPS.append("cacheops")
 

@@ -12,7 +12,7 @@ For API authentication to work, a Firebase service account key is required. Crea
 
 ```bash
 # Clone the repo
-git clone https://github.com/chronoscio/backend
+git clone https://github.com/chronhq/backend
 cd backend
 
 # Create env files, remember to update accordingly
@@ -32,7 +32,7 @@ make run
 
 ```bash
 # Clone the repo
-git clone https://github.com/chronoscio/backend
+git clone https://github.com/chronhq/backend
 cd backend
 
 # Create and activate virtual environment
