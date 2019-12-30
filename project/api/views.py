@@ -147,29 +147,29 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
             """
             return SpacetimeVolume.objects.raw(
                 """
-            SELECT id, entity_id, end_date, start_date, ST_Union(xing) FROM (
-                SELECT *,
-                    (ST_Dump(ST_Intersection(territory, diff))).geom as xing
-                FROM (
+                SELECT id, entity_id, end_date, start_date, ST_Union(xing) FROM (
                     SELECT *,
-                        ST_Difference(
-                            territory,
-                            %(geom)s::geometry
-                        ) as diff
+                        (ST_Dump(ST_Intersection(territory, diff))).geom as xing
                     FROM (
-                        SELECT *
-                        FROM api_spacetimevolume as stv
-                        WHERE stv.end_date >= %(start_date)s::numeric(10,1)
-                            AND stv.start_date <= %(end_date)s::numeric(10,1)
-                            AND ST_Intersects(
+                        SELECT *,
+                            ST_Difference(
                                 territory,
-                            %(geom)s::geometry)
+                                %(geom)s::geometry
+                            ) as diff
+                        FROM (
+                            SELECT *
+                            FROM api_spacetimevolume as stv
+                            WHERE stv.end_date >= %(start_date)s::numeric(10,1)
+                                AND stv.start_date <= %(end_date)s::numeric(10,1)
+                                AND ST_Intersects(
+                                    territory,
+                                %(geom)s::geometry)
+                        ) as foo
                     ) as foo
                 ) as foo
-            ) as foo
-            WHERE ST_Dimension(xing) = 2 AND ST_Area(xing) > 10
-            GROUP BY id, entity_id, start_date, end_date
-            """,
+                WHERE ST_Dimension(xing) = 2 AND ST_Area(xing) > 10
+                GROUP BY id, entity_id, start_date, end_date
+                """,
                 {"geom": geom.ewkt, "start_date": start_date, "end_date": end_date},
             )
 
