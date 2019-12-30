@@ -4,17 +4,10 @@ from jdcal import gcal2jd
 from math import ceil
 import openpyxl
 from django.contrib.gis.geos import Point
+import re
 
 class Command(BaseCommand):
     help = 'For importing narratives from excel files. Not generalized.'
-
-
-
-    def dms2dd(degrees, minutes, seconds, direction):
-        dd = float(degrees) + float(minutes)/60 + float(seconds)/(60*60)
-        if direction == 'E' or direction == 'N':
-            dd *= -1
-        return dd
 
     def parseQID(id_string):
         id_list = id_string.split(",")
@@ -22,7 +15,7 @@ class Command(BaseCommand):
         return list(parsed_list)
 
     def handle(self, *args, **options):
-        """ Do your work here """
+        """ Import narrations from xlsx sheet. """
 
     excel_document = openpyxl.load_workbook('data.xlsx')
     
@@ -30,7 +23,7 @@ class Command(BaseCommand):
         all_rows = sheet.rows
         settings = MapSettings(zoom_min = 2.0,zoom_max = 7.5)
         settings.save()
-        narrative = Narrative.objects.filter(title="Napoleonic Wars")
+        narrative = Narrative.objects.filter(title=sheet.title)
         skipped_sheet = iter(sheet)
         next(skipped_sheet)
         for row in skipped_sheet:
@@ -44,7 +37,6 @@ class Command(BaseCommand):
             #     date = ceil(sum(gcal2jd(int(dates[0]), dates[1], 1))) + 0.0
             # else:
             #     date = ceil(sum(gcal2jd(int(dates[0]), dates[1], dates[2]))) + 0.0
-            print(row)
             # if sheet.title == "Russia":
             #     x_coord_split = row[2].value.split("°")
             #     y_coord_split = row[3].value.split("°")
@@ -62,8 +54,8 @@ class Command(BaseCommand):
                 description=row[2].value
             )
             n.save()
-            attached_events_list = parseQID(row[4].value)
-            attached_events_list += parseQID(row[5].value)
+            attached_events_list = re.sub('[A-z]', '', row[4].value + ',' + row[5].value).split(',')
+            
             print(attached_events_list)
             cached_datas = CachedData.objects.filter(wikidata_id__in=attached_events_list)
             for data in cached_datas:
