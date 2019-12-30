@@ -145,7 +145,6 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
             """
             Return overlapping STVs
             """
-            print("test")
             return SpacetimeVolume.objects.raw(
                 """
             SELECT id, entity_id, end_date, start_date, ST_Union(xing) FROM (
