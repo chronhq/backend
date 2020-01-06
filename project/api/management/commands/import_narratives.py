@@ -15,7 +15,10 @@ class Command(BaseCommand):
         return list(parsed_list)
 
     def handle(self, *args, **options):
-        """ Import narrations from xlsx sheet. """
+        """ Import narrations from xlsx sheet.
+            The columns are: 
+            date	date_label	title	description	x	y	persons	battles	treaties
+        """
 
     excel_document = openpyxl.load_workbook('data.xlsx')
     
@@ -30,36 +33,40 @@ class Command(BaseCommand):
             dates = str(row[0].value).split("-")
             if dates[0] == "" or int(dates[0]) < 1783:
                     continue
-            # if len(dates) == 1:
-                
-            date = ceil(sum(gcal2jd(int(dates[0]), 1, 1))) + 0.0
-            # elif len(dates) == 2:
-            #     date = ceil(sum(gcal2jd(int(dates[0]), dates[1], 1))) + 0.0
-            # else:
-            #     date = ceil(sum(gcal2jd(int(dates[0]), dates[1], dates[2]))) + 0.0
-            # if sheet.title == "Russia":
-            #     x_coord_split = row[2].value.split("°")
-            #     y_coord_split = row[3].value.split("°")
-            #     point = Point(dms2dd(x_coord_split[0],x_coord_split[1],0,"S"), dms2dd(y_coord_split[0],y_coord_split[1],0,"W"))
-            # else:
-            #     point = Point(float(row[2].value), float(row[3].value))
+
+            if len(dates) == 1:
+                date = ceil(sum(gcal2jd(int(dates[0]), 1, 1))) + 0.0
+            elif len(dates) == 2:
+                date = ceil(sum(gcal2jd(int(dates[0]), dates[1], 1))) + 0.0
+            else:
+                print(row[0].value)
+                date = ceil(sum(gcal2jd(int(dates[0]), dates[1], dates[2]))) + 0.0
+
+            point = Point(float(row[4].value), float(row[5].value))
 
 
             n = Narration(
                 narrative=narrative[0],
-                title=row[1].value,
-                date_label=row[0].value,
-                map_datetime=date,
                 settings=settings,
-                description=row[2].value
+                map_datetime=date,
+                date_label=row[1].value,
+                title=row[2].value,
+                description=row[3].value
             )
             n.save()
-            attached_events_list = re.sub('[A-z]', '', row[4].value + ',' + row[5].value).split(',')
+            if row[7].value is not None:
+                attached_battles_list = re.sub('[A-z]', '', row[7].value ).split(',')
             
-            print(attached_events_list)
-            cached_datas = CachedData.objects.filter(wikidata_id__in=attached_events_list)
-            for data in cached_datas:
-                n.attached_events.add(data)
+                print(attached_battles_list)
+                cached_datas = CachedData.objects.filter(wikidata_id__in=attached_battles_list)
+                for data in cached_datas:
+                    n.attached_events.add(data)
 
-
+            if row[8].value is not None:
+                attached_treaties_list = re.sub('[A-z]', '', row[8].value ).split(',')
+            
+                print(attached_treaties_list)
+                cached_datas = CachedData.objects.filter(wikidata_id__in=attached_treaties_list)
+                for data in cached_datas:
+                    n.attached_events.add(data)
 
