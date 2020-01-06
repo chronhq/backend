@@ -407,3 +407,12 @@ class SymbolFeature(models.Model):
     symbol = models.ForeignKey(
         Symbol, related_name="features", on_delete=models.CASCADE
     )
+
+@receiver(post_save, sender=SpacetimeVolume)
+def update_TE_Bounds(sender, instance, **kwargs):
+ if instance.entity.inception_date is None or instance.entity.inception_date > instance.start_date:
+    instance.entity.inception_date = instance.start_date
+    instance.entity.save()
+ if instance.entity.dissolution_date is None or instance.entity.dissolution_date < instance.end_date:
+    instance.entity.dissolution_date = instance.end_date
+    instance.entity.save()
