@@ -9,11 +9,6 @@ import re
 class Command(BaseCommand):
     help = 'For importing narratives from excel files. Not generalized.'
 
-    def parseQID(id_string):
-        id_list = id_string.split(",")
-        parsed_list = map(lambda each:each[1:], id_list)
-        return list(parsed_list)
-
     def handle(self, *args, **options):
         """ Import narrations from xlsx sheet.
             The columns are: 
