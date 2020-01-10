@@ -17,24 +17,62 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.core.management.base import BaseCommand, CommandError
+from math import ceil
+from datetime import datetime
+import re
+import requests
+from jdcal import gcal2jd
+from django.core.management.base import BaseCommand
 from django.contrib.gis.geos import Point
 from api.models import CachedData
-from datetime import datetime
-from jdcal import gcal2jd
-from math import ceil
-import re
-import os
-import requests
+
+
+def get_date(date_string):
+    """
+    Parses positive and negative dates and returns as julian date.
+    """
+
+    # Positive date
+    if not date_string.startswith("-"):
+
+        date = datetime.fromisoformat(date_string[:-1])
+        date_jd = (
+            ceil(sum(gcal2jd(int(date.year), int(date.month), int(date.day),))) + 0.0
+        )
+    # Negative date
+    else:
+        neg_date = re.findall(r"-[\d]+", date_string)
+        date_jd = (
+            ceil(sum(gcal2jd(int(neg_date[0]), int(neg_date[1]), int(neg_date[2]))))
+            + 0.0
+        )
+    return date_jd
+
+
+def get_point(actor, point_string):
+    """
+    Parser the point string value from actor (coorBirth or coorBirth) and
+    returns as Point.
+    """
+    if point_string in actor:
+        coords = re.findall(r"[-+]?[\d]+[\.]?\d*", actor[point_string]["value"])
+        point = Point(float(coords[0]), float(coords[1]))
+    else:
+        point = None
+    return point
+
 
 class Command(BaseCommand):
-    help = 'Populate cached datas with persons.'
+    """
+    Populate cached datas with persons.
+    """
 
+    help = "Populate cached datas with persons."
 
     def handle(self, *args, **options):
 
-        URL = "https://query.wikidata.org/sparql"
-        QUERY = """
+        url = "https://query.wikidata.org/sparql"
+        query = """
         SELECT ?person ?personLabel ?dateOfBirth ?dateOfDeath ?placeOfBirth ?placeOfDeath ?coorBirth ?coorDeath ?occupation WHERE {
         ?person wdt:P31 wd:Q5.
         OPTIONAL {
@@ -55,84 +93,68 @@ class Command(BaseCommand):
         }
         """
 
-        R_ACTORS = requests.get(URL, params={"format": "json", "query": QUERY})
-        ACTORS = R_ACTORS.json()
+        r_actors = requests.get(url, params={"format": "json", "query": query})
+        actors = r_actors.json()
 
         statistics_births = {"Created": 0, "Updated": 0, "Current_total": 0}
         statistics_deaths = {"Created": 0, "Updated": 0, "Current_total": 0}
 
-        for actor in ACTORS["results"]["bindings"]:
+        for actor in actors["results"]["bindings"]:
             # Skip if no name
             if actor["personLabel"]["value"][1:].isdigit():
-                print(f"Skipped {actor['personLabel']['value']}, no name.")
+                print("Skipped {}, no name.".format(actor["personLabel"]["value"]))
                 continue
 
-            
-            if "dateOfBirth" in actor and actor["dateOfBirth"]["type"] != 'bnode':
+            if "dateOfBirth" in actor and actor["dateOfBirth"]["type"] != "bnode":
 
-                birth_value = actor["dateOfBirth"]["value"]
-                # Positive date
-                if not birth_value.startswith("-"):
-
-                    birth_datetime = datetime.fromisoformat(birth_value[:-1])
-                    birth_date = ceil(sum(gcal2jd(int(birth_datetime.year), int(birth_datetime.month), int(birth_datetime.day)))) + 0.0
-                # Negative date
-                else:
-                    neg_date = re.findall(r'-[\d]+', birth_value)
-                    birth_date = ceil(sum(gcal2jd(int(neg_date[0]), int(neg_date[1]), int(neg_date[2])))) + 0.0
-              
-                if "coorBirth" in actor:
-                    coords = re.findall(r'[-+]?[\d]+[\.]?\d*',actor["coorBirth"]["value"])
-                    point = Point(float(coords[0]), float(coords[1]))
-                else:
-                    point = None
-
-
-                data, created = CachedData.objects.update_or_create(event_type=569, 
-                                                                wikidata_id=int(actor["person"]["value"].split("Q", 1)[1]),
-                                                                defaults={'location': point, 'date' : birth_date})
+                dummy, created = CachedData.objects.update_or_create(
+                    event_type=569,
+                    wikidata_id=int(actor["person"]["value"].split("Q", 1)[1]),
+                    defaults={
+                        "location": get_point(actor, "coorBirth"),
+                        "date": get_date(actor["dateOfBirth"]["value"]),
+                    },
+                )
                 if created:
                     statistics_births["Created"] += 1
                 else:
                     statistics_births["Updated"] += 1
             else:
-                print("Skipped Q{} birth, no birthdate or unknown value".format(actor['person']['value'].split('Q', 1)[1]))
+                print(
+                    "Skipped Q{} birth, no birthdate or unknown value".format(
+                        actor["person"]["value"].split("Q", 1)[1]
+                    )
+                )
 
-            if "dateOfDeath" in actor and actor["dateOfDeath"]["type"] != 'bnode':
+            if "dateOfDeath" in actor and actor["dateOfDeath"]["type"] != "bnode":
 
-                death_value = actor["dateOfDeath"]["value"]
-                # Positive date
-                if not birth_value.startswith("-"):
-
-                    death_datetime = datetime.fromisoformat(death_value[:-1])
-                    death_date = ceil(sum(gcal2jd(int(death_datetime.year), int(death_datetime.month), int(death_datetime.day)))) + 0.0
-                # Negative date
-                else:
-                    neg_date = re.findall(r'-[\d]+', death_value)
-                    death_date = ceil(sum(gcal2jd(int(neg_date[0]), int(neg_date[1]), int(neg_date[2])))) + 0.0
-              
-                if "coorDeath" in actor:
-                    coords = re.findall(r'[-+]?[\d]+[\.]?\d*',actor["coorDeath"]["value"])
-                    point = Point(float(coords[0]), float(coords[1]))
-                else:
-                    point = None
-
-                data, created = CachedData.objects.update_or_create(event_type=570, 
-                                                                wikidata_id=int(actor["person"]["value"].split("Q", 1)[1]),
-                                                                defaults={'location': point, 'date' : death_date})
+                dummy, created = CachedData.objects.update_or_create(
+                    event_type=570,
+                    wikidata_id=int(actor["person"]["value"].split("Q", 1)[1]),
+                    defaults={
+                        "location": get_point(actor, "coorDeath"),
+                        "date": get_date(actor["dateOfDeath"]["value"]),
+                    },
+                )
                 if created:
                     statistics_deaths["Created"] += 1
                 else:
                     statistics_deaths["Updated"] += 1
-                
+
             else:
-                print(f"Skipped Q{actor['person']['value'].split('Q', 1)[1]} death, doesn't have deathdate or unknown value")
+                print(
+                    "Skipped Q{} death, doesn't have deathdate or unknown value.".format(
+                        actor["person"]["value"].split("Q", 1)[1]
+                    )
+                )
 
-
-        statistics_births["Current_total"] = len(CachedData.objects.filter(event_type=570))
-        statistics_deaths["Current_total"] = len(CachedData.objects.filter(event_type=569))
+        statistics_births["Current_total"] = len(
+            CachedData.objects.filter(event_type=570)
+        )
+        statistics_deaths["Current_total"] = len(
+            CachedData.objects.filter(event_type=569)
+        )
         print("Births:")
         print(statistics_births)
         print("Deaths:")
         print(statistics_deaths)
-

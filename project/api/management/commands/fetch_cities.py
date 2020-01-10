@@ -16,24 +16,58 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-from django.core.management.base import BaseCommand, CommandError
-from django.contrib.gis.geos import Point
-from api.models import City
-from datetime import datetime
-from jdcal import gcal2jd
-from math import ceil
 import re
-import os
+from datetime import datetime
+from math import ceil
 import requests
+from django.core.management.base import BaseCommand
+from django.contrib.gis.geos import Point
+from jdcal import gcal2jd
+from api.models import City
+
+
+def get_point(city):
+    """
+    Parses coordinates and returns as Point.
+    """
+    # Location in city and not blank
+    if "location" in city and city["location"]["type"] != "bnode":
+        coords = re.findall(r"[-+]?[\d]+[\.]?\d*", city["location"]["value"])
+        point = Point(float(coords[0]), float(coords[1]))
+    else:
+        point = None
+    return point
+
+
+def get_date(date_string):
+    """
+    Parses positive and negative dates and returns as julian date.
+    """
+
+    # Positive date
+    if not date_string.startswith("-"):
+
+        date = datetime.fromisoformat(date_string[:-1])
+        date_jd = (
+            ceil(sum(gcal2jd(int(date.year), int(date.month), int(date.day),))) + 0.0
+        )
+    # Negative date
+    else:
+        date = re.findall(r"-[\d]+", date_string)
+        date_jd = ceil(sum(gcal2jd(int(date[0]), int(date[1]), int(date[2])))) + 0.0
+    return date_jd
 
 
 class Command(BaseCommand):
-    help = 'Populate cached datas with cities.'
+    """
+    Populate cached datas with cities.
+    """
 
+    help = "Populate cached datas with cities."
 
     def handle(self, *args, **options):
-        URL = "https://query.wikidata.org/sparql"
-        QUERY = """
+        url = "https://query.wikidata.org/sparql"
+        query = """
         SELECT DISTINCT ?city ?cityLabel ?inception (SAMPLE(?location) AS ?location) ?dissolution WHERE {
         ?country wdt:P31 wd:Q3624078 .
         ?country wdt:P36 ?city.
@@ -44,32 +78,27 @@ class Command(BaseCommand):
         }
         GROUP BY ?city ?cityLabel ?inception ?dissolution
         """
-        R_CITIES = requests.get(URL, params={"format": "json", "query": QUERY})
-        CITIES = R_CITIES.json()
+        r_cities = requests.get(url, params={"format": "json", "query": query})
+        cities = r_cities.json()
 
         statistics = {"Created": 0, "Updated": 0, "Current_total": 0}
 
-        for city in CITIES["results"]["bindings"]:
+        for city in cities["results"]["bindings"]:
             if city["cityLabel"]["value"][1:].isdigit():
-                print("Skipped {}".format(city['cityLabel']['value']))
+                print("Skipped {}".format(city["cityLabel"]["value"]))
                 continue
-
 
             # Inception exists and not unknown/no value
             if "inception" in city and city["inception"]["type"] != "bnode":
-                inception_value = city["inception"]["value"]
 
-                # Positive date
-                if not inception_value.startswith("-"):
+                inception = get_date(city["inception"]["value"])
 
-                    inception = datetime.fromisoformat(inception_value[:-1])
-                    inception_date = ceil(sum(gcal2jd(int(inception.year), int(inception.month), int(inception.day)))) + 0.0
-                # Negative date
-                else:
-                    neg_date = re.findall(r'-[\d]+', inception_value)
-                    inception_date = ceil(sum(gcal2jd(int(neg_date[0]), int(neg_date[1]), int(neg_date[2])))) + 0.0
             else:
-                print("Skipped Q{}, no inception date or unknown value.".format(city['city']['value'].split('Q', 1)[1]))
+                print(
+                    "Skipped Q{}, no inception date or unknown value.".format(
+                        city["city"]["value"].split("Q", 1)[1]
+                    )
+                )
                 continue
 
             # Dissolution exists and not unknown/no value
@@ -79,26 +108,21 @@ class Command(BaseCommand):
                 # Positive date
                 if not dissolution_value.startswith("-"):
 
-                    dissolution = datetime.fromisoformat(dissolution_value[:-1])
-                    dissolution_date = ceil(sum(gcal2jd(int(dissolution.year), int(dissolution.month), int(dissolution.day)))) + 0.0
-                
-                # Negative date
-                else:
-                    neg_date = re.findall(r'-[\d]+', dissolution_value)
-                    dissolution_date = ceil(sum(gcal2jd(int(neg_date[0]), int(neg_date[1]), int(neg_date[2])))) + 0.0
-            else:
-                dissolution_date = None # Don't skip since the city might still exist if no dissolution date
+                    dissolution = get_date(city["inception"]["value"])
 
-            # Location in city and not blank 
-            if "location" in city and city["location"]["type"] != "bnode":
-                coords = re.findall(r'[-+]?[\d]+[\.]?\d*',city["location"]["value"])
-                point = Point(float(coords[0]), float(coords[1]))
             else:
-                point = None
+                # Don't skip since the city might still exist if no dissolution date
+                dissolution = None
 
-            data, created = City.objects.update_or_create(wikidata_id=int(city["city"]["value"].split("Q", 1)[1]),
-            defaults={'location': point, 'label':city["cityLabel"]["value"],
-            'inception_date' : inception_date, 'dissolution_date': dissolution_date})
+            dummy, created = City.objects.update_or_create(
+                wikidata_id=int(city["city"]["value"].split("Q", 1)[1]),
+                defaults={
+                    "location": get_point(city),
+                    "label": city["cityLabel"]["value"],
+                    "inception_date": inception,
+                    "dissolution_date": dissolution,
+                },
+            )
 
             if created:
                 statistics["Created"] += 1
@@ -107,5 +131,3 @@ class Command(BaseCommand):
 
         statistics["Current_total"] = len(City.objects.filter())
         print(statistics)
-
-        

@@ -408,28 +408,54 @@ class SymbolFeature(models.Model):
         Symbol, related_name="features", on_delete=models.CASCADE
     )
 
+
 @receiver(post_save, sender=SpacetimeVolume)
-def TE_bounds_save(sender, instance, **kwargs):
- if instance.entity.inception_date is None or instance.entity.inception_date > instance.start_date:
-    instance.entity.inception_date = instance.start_date
-    instance.entity.save()
- if instance.entity.dissolution_date is None or instance.entity.dissolution_date < instance.end_date:
-    instance.entity.dissolution_date = instance.end_date
-    instance.entity.save()
+def te_bounds_save(sender, instance, **kwargs):  # pylint: disable=W0613
+    """
+    When an STV is added or updated, checks it's entities bounding dates
+    and changes them if it's needed.
+    """
+    if (
+        instance.entity.inception_date is None
+        or instance.entity.inception_date > instance.start_date
+    ):
+        instance.entity.inception_date = instance.start_date
+        instance.entity.save()
+    if (
+        instance.entity.dissolution_date is None
+        or instance.entity.dissolution_date < instance.end_date
+    ):
+        instance.entity.dissolution_date = instance.end_date
+        instance.entity.save()
+
 
 @receiver(post_delete, sender=SpacetimeVolume)
-def TE_bounds_delete(sender, instance, **kwargs):
- if instance.entity.inception_date is not None and instance.entity.inception_date == instance.start_date:
-    start = SpacetimeVolume.objects.filter(entity=instance.entity).order_by("start_date")
-    if len(start) != 0:
-        instance.entity.inception_date = start[0].start_date
-    else: 
-        instance.entity.inception_date = None
-    instance.entity.save()
- if instance.entity.dissolution_date is not None and instance.entity.dissolution_date == instance.end_date:
-    end = SpacetimeVolume.objects.filter(entity=instance.entity).order_by("-end_date")
-    if len(end) != 0:
-        instance.entity.dissolution_date = end[0].end_date
-    else:
-        instance.entity.dissolution_date = None
-    instance.entity.save()
+def te_bounds_delete(sender, instance, **kwargs):  # pylint: disable=W0613
+    """
+    When an STV is deleted, checks if the entity was using it as it's bouding dates and finds the
+    new date if that's the case.
+    """
+    if (
+        instance.entity.inception_date is not None
+        and instance.entity.inception_date == instance.start_date
+    ):
+        start = SpacetimeVolume.objects.filter(entity=instance.entity).order_by(
+            "start_date"
+        )
+        if len(start) != 0:
+            instance.entity.inception_date = start[0].start_date
+        else:
+            instance.entity.inception_date = None
+        instance.entity.save()
+    if (
+        instance.entity.dissolution_date is not None
+        and instance.entity.dissolution_date == instance.end_date
+    ):
+        end = SpacetimeVolume.objects.filter(entity=instance.entity).order_by(
+            "-end_date"
+        )
+        if len(end) != 0:
+            instance.entity.dissolution_date = end[0].end_date
+        else:
+            instance.entity.dissolution_date = None
+        instance.entity.save()

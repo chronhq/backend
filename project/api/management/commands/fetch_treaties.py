@@ -17,23 +17,26 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.core.management.base import BaseCommand, CommandError
+import re
+from math import ceil
+from datetime import datetime
+import requests
+from jdcal import gcal2jd
+from django.core.management.base import BaseCommand
 from django.contrib.gis.geos import Point
 from api.models import CachedData
-from datetime import datetime
-from jdcal import gcal2jd
-from math import ceil
-import re
-import os
-import requests
+
 
 class Command(BaseCommand):
-    help = 'Populate cached datas with treaties.'
+    """
+    Populate cached datas with treaties.
+    """
 
+    help = "Populate cached datas with treaties."
 
     def handle(self, *args, **options):
-        URL = "https://query.wikidata.org/sparql"
-        QUERY = """
+        url = "https://query.wikidata.org/sparql"
+        query = """
         SELECT ?treaty ?treatyLabel ?time ?location ?coors
         WHERE
         {
@@ -47,40 +50,55 @@ class Command(BaseCommand):
         SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
         }
         """
-        R_TREATIES = requests.get(URL, params={"format": "json", "query": QUERY})
-        TREATIES = R_TREATIES.json()
+        r_treaties = requests.get(url, params={"format": "json", "query": query})
+        treaties = r_treaties.json()
 
         statistics = {"Created": 0, "Updated": 0, "Current_total": 0}
 
-        for treaty in TREATIES["results"]["bindings"]:
+        for treaty in treaties["results"]["bindings"]:
             if treaty["treatyLabel"]["value"][1:].isdigit():
-                print("Skipped {}, no name.".format(treaty['treatyLabel']['value']))
+                print("Skipped {}, no name.".format(treaty["treatyLabel"]["value"]))
                 continue
 
             if "time" in treaty and treaty["time"]["type"] != "bnode":
                 treaty_date = datetime.fromisoformat(treaty["time"]["value"][:-1])
             else:
-                print("Skipped Q{}, no date or unknown date.".format(treaty['treatyLabel']['value'].split('Q', 1)[1]))
+                print(
+                    "Skipped Q{}, no date or unknown date.".format(
+                        treaty["treatyLabel"]["value"].split("Q", 1)[1]
+                    )
+                )
                 continue
-            
+
             if "coors" in treaty and treaty["coors"]["type"] != "bnode":
-                coords = re.findall(r'[-+]?[\d]+[\.]?\d*',treaty["coors"]["value"])
+                coords = re.findall(r"[-+]?[\d]+[\.]?\d*", treaty["coors"]["value"])
                 point = Point(float(coords[0]), float(coords[1]))
             else:
                 point = None
 
-
-            data, created = CachedData.objects.update_or_create(event_type=131569, 
-                                                            wikidata_id=int(treaty["treaty"]["value"].split("Q", 1)[1]),
-                                                            defaults={'location': point, 'date' :ceil(sum(gcal2jd(int(treaty_date.year), int(treaty_date.month), int(treaty_date.day)))) + 0.0})
+            dummy, created = CachedData.objects.update_or_create(
+                event_type=131569,
+                wikidata_id=int(treaty["treaty"]["value"].split("Q", 1)[1]),
+                defaults={
+                    "location": point,
+                    "date": ceil(
+                        sum(
+                            gcal2jd(
+                                int(treaty_date.year),
+                                int(treaty_date.month),
+                                int(treaty_date.day),
+                            )
+                        )
+                    )
+                    + 0.0,
+                },
+            )
 
             if created:
                 statistics["Created"] += 1
             else:
                 statistics["Updated"] += 1
 
-
-            
         statistics["Current_total"] = len(CachedData.objects.filter(event_type=178561))
 
         print(statistics)

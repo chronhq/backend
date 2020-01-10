@@ -17,24 +17,27 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.core.management.base import BaseCommand, CommandError
-from django.contrib.gis.geos import Point
-from api.models import CachedData
-from datetime import datetime
-from jdcal import gcal2jd
-from math import ceil
 import re
-import os
+from math import ceil
+from datetime import datetime
 import requests
+from django.core.management.base import BaseCommand
+from django.contrib.gis.geos import Point
+from jdcal import gcal2jd
+from api.models import CachedData
+
 
 class Command(BaseCommand):
-    help = 'Populate cached datas with battles.'
+    """
+    Populate cached datas with battles.
+    """
 
+    help = "Populate cached datas with battles."
 
     def handle(self, *args, **options):
 
-        URL = "https://query.wikidata.org/sparql"
-        QUERY = """
+        url = "https://query.wikidata.org/sparql"
+        query = """
         SELECT ?battle ?battleLabel ?point_in_time ?coordinate_location WHERE {
         SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
         ?battle (wdt:P31/wdt:P279*) wd:Q178561.
@@ -43,29 +46,52 @@ class Command(BaseCommand):
         OPTIONAL { ?battle wdt:P625 ?coordinate_location. }
         }
         """
-        R_BATTLES = requests.get(URL, params={"format": "json", "query": QUERY})
-        BATTLES = R_BATTLES.json()
+        r_battles = requests.get(url, params={"format": "json", "query": query})
+        battles = r_battles.json()
 
         statistics = {"Created": 0, "Updated": 0, "Current_total": 0}
-        for battle in BATTLES["results"]["bindings"]:
-           
+        for battle in battles["results"]["bindings"]:
+
             if "point_in_time" in battle and battle["point_in_time"]["type"] != "bnode":
-                battle_date = datetime.fromisoformat(battle["point_in_time"]["value"][:-1])
+                battle_date = datetime.fromisoformat(
+                    battle["point_in_time"]["value"][:-1]
+                )
             else:
-                print("Skipped Q{}, no date or unknown value".format(battle['battle']['value'].split('Q', 1)[1]))
+                print(
+                    "Skipped Q{}, no date or unknown value".format(
+                        battle["battle"]["value"].split("Q", 1)[1]
+                    )
+                )
                 continue
 
-
-            if "coordinate_location" in battle and battle["coordinate_location"]["type"] != "bnode":
-                coords = re.findall(r'[-+]?[\d]+[\.]?\d*',battle["coordinate_location"]["value"])
+            if (
+                "coordinate_location" in battle
+                and battle["coordinate_location"]["type"] != "bnode"
+            ):
+                coords = re.findall(
+                    r"[-+]?[\d]+[\.]?\d*", battle["coordinate_location"]["value"]
+                )
                 point = Point(float(coords[0]), float(coords[1]))
             else:
                 point = None
 
-
-            data, created = CachedData.objects.update_or_create(event_type=178561, 
-                                                                wikidata_id=int(battle["battle"]["value"].split("Q", 1)[1]),
-                                                                defaults={'location': point, 'date' : ceil(sum(gcal2jd(int(battle_date.year), int(battle_date.month), int(battle_date.day)))) + 0.0})
+            dummy, created = CachedData.objects.update_or_create(
+                event_type=178561,
+                wikidata_id=int(battle["battle"]["value"].split("Q", 1)[1]),
+                defaults={
+                    "location": point,
+                    "date": ceil(
+                        sum(
+                            gcal2jd(
+                                int(battle_date.year),
+                                int(battle_date.month),
+                                int(battle_date.day),
+                            )
+                        )
+                    )
+                    + 0.0,
+                },
+            )
 
             if created:
                 statistics["Created"] += 1
