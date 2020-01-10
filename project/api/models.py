@@ -22,6 +22,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField, HStoreField
+from django.db import connection
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from ordered_model.models import OrderedModel
@@ -270,9 +271,39 @@ class SpacetimeVolume(models.Model):
         TerritorialEntity, on_delete=models.CASCADE, related_name="stvs"
     )
     references = ArrayField(models.TextField(max_length=500))
-    visual_center = models.PointField()
+    visual_center = models.PointField(blank=True, null=True)
     related_events = models.ManyToManyField(CachedData, blank=True)
     history = HistoricalRecords()
+
+    def calculate_center(self):
+        """
+        Calculate and set the visual_center field
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE api_spacetimevolume SET visual_center = foo.visual_center FROM (
+                    SELECT *, CASE WHEN ST_Intersects(geom, centroid) IS true
+                        THEN centroid ELSE surface END AS visual_center FROM (
+                            SELECT id, geom, ST_Centroid(geom)
+                            as centroid, ST_PointOnSurface(geom) as surface FROM (
+                                SELECT id, geom FROM (
+                                    SELECT *,
+                                    (MAX(ST_Area(geom)) OVER (PARTITION BY id) = ST_Area(geom))
+                                    as sqft
+                                    FROM (
+                                        SELECT id, (ST_Dump(territory)).geom AS geom
+                                        FROM api_spacetimevolume WHERE id = %s
+                                    ) as foo
+                                ) as foo
+                            WHERE sqft = true
+                        ) as foo
+                    ) as foo
+                ) as foo
+                WHERE foo.id = api_spacetimevolume.id;
+                """,
+                [self.pk],
+            )
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
         if (
@@ -321,6 +352,8 @@ class SpacetimeVolume(models.Model):
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
         super(SpacetimeVolume, self).save(*args, **kwargs)
+        if not self.visual_center:
+            self.calculate_center()
 
 
 class Narrative(models.Model):

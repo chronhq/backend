@@ -148,6 +148,7 @@ project/graph.svg
 
 # dbdumps
 project/*.json
+project/*.json.xz
 
 # postgres init data
 data/
