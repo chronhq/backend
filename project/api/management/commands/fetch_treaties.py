@@ -54,13 +54,13 @@ class Command(BaseCommand):
 
         for treaty in TREATIES["results"]["bindings"]:
             if treaty["treatyLabel"]["value"][1:].isdigit():
-                print(f"Skipped {treaty['treatyLabel']['value']}, no name.")
+                print("Skipped {}, no name.".format(treaty['treatyLabel']['value']))
                 continue
 
             if "time" in treaty and treaty["time"]["type"] != "bnode":
                 treaty_date = datetime.fromisoformat(treaty["time"]["value"][:-1])
             else:
-                print(f"Skipped Q{treaty['treatyLabel']['value'].split('Q', 1)[1]}, no date or unknown date.")
+                print("Skipped Q{}, no date or unknown date.".format(treaty['treatyLabel']['value'].split('Q', 1)[1]))
                 continue
             
             if "coors" in treaty and treaty["coors"]["type"] != "bnode":

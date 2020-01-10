@@ -52,7 +52,7 @@ class Command(BaseCommand):
             if "point_in_time" in battle and battle["point_in_time"]["type"] != "bnode":
                 battle_date = datetime.fromisoformat(battle["point_in_time"]["value"][:-1])
             else:
-                print(f"Skipped Q{battle['battle']['value'].split('Q', 1)[1]}, no date or unknown value")
+                print("Skipped Q{}, no date or unknown value".format(battle['battle']['value'].split('Q', 1)[1]))
                 continue
 
 

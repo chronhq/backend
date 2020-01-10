@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from api.models import Narration, Narrative, MapSettings, CachedData
 from jdcal import gcal2jd
 from math import ceil

@@ -96,7 +96,7 @@ class Command(BaseCommand):
                 else:
                     statistics_births["Updated"] += 1
             else:
-                print(f"Skipped Q{actor['person']['value'].split('Q', 1)[1]} birth, no birthdate or unknown value")
+                print("Skipped Q{} birth, no birthdate or unknown value".format(actor['person']['value'].split('Q', 1)[1]))
 
             if "dateOfDeath" in actor and actor["dateOfDeath"]["type"] != 'bnode':
 

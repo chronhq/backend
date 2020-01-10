@@ -51,7 +51,7 @@ class Command(BaseCommand):
 
         for city in CITIES["results"]["bindings"]:
             if city["cityLabel"]["value"][1:].isdigit():
-                print(f"Skipped {city['cityLabel']['value']}")
+                print("Skipped {}".format(city['cityLabel']['value']))
                 continue
 
 
@@ -69,7 +69,7 @@ class Command(BaseCommand):
                     neg_date = re.findall(r'-[\d]+', inception_value)
                     inception_date = ceil(sum(gcal2jd(int(neg_date[0]), int(neg_date[1]), int(neg_date[2])))) + 0.0
             else:
-                print(f"Skipped Q{city['city']['value'].split('Q', 1)[1]}, no inception date or unknown value.")
+                print("Skipped Q{}, no inception date or unknown value.".format(city['city']['value'].split('Q', 1)[1]))
                 continue
 
             # Dissolution exists and not unknown/no value
