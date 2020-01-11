@@ -48,14 +48,14 @@ def get_date(date_string):
     if not date_string.startswith("-"):
 
         date = datetime.fromisoformat(date_string[:-1])
-        date_jd = (
+        jd_date = (
             ceil(sum(gcal2jd(int(date.year), int(date.month), int(date.day),))) + 0.0
         )
     # Negative date
     else:
         date = re.findall(r"-[\d]+", date_string)
-        date_jd = ceil(sum(gcal2jd(int(date[0]), int(date[1]), int(date[2])))) + 0.0
-    return date_jd
+        jd_date = ceil(sum(gcal2jd(int(date[0]), int(date[1]), int(date[2])))) + 0.0
+    return jd_date
 
 
 class Command(BaseCommand):
