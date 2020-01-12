@@ -138,7 +138,11 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         end_date = float(request.data["end_date"])
 
         @cached_as(
-            SpacetimeVolume.objects.filter(territory__overlaps=geom),
+            SpacetimeVolume.objects.filter(
+                territory__overlaps=geom,
+                start_date__lte=end_date,
+                end_date__gte=start_date,
+            ),
             extra=(start_date, end_date),
         )
         def _overlaps():
