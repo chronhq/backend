@@ -55,13 +55,14 @@ INSTALLED_APPS = [
     "drf_firebase_auth",
     "ordered_model",
     "silk",
-    "cacheops",
 ]
 
 if DEBUG:
     INSTALLED_APPS.extend(
         ["debug_toolbar", "django.contrib.admin", "django.contrib.admindocs"]
     )
+else:
+    INSTALLED_APPS.append("cacheops")
 
 
 MIDDLEWARE = [
