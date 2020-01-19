@@ -17,12 +17,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import json
 from django.db import connection
 from django.db.models import Count
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.core.serializers import serialize
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from jdcal import jd2gcal
 
 from .models import (
     TerritorialEntity,
@@ -427,3 +430,54 @@ def mvt_stv(request, zoom, x_cor, y_cor):
         if not tile:
             return HttpResponse(status=204)
     return HttpResponse(tile, content_type="application/x-protobuf")
+
+
+def stv_downloader(request, primary_key):
+    """
+    Download stvs as geojson.
+    """
+
+    try:
+        stv = SpacetimeVolume.objects.filter(pk=primary_key)
+    except SpacetimeVolume.DoesNotExist:
+        return HttpResponse(status=404)
+
+    geojson = serialize(
+        "geojson",
+        stv,
+        geometry_field="territory",
+        fields=(
+            "start_date",
+            "end_date",
+            "entity",
+            "references",
+            "visual_center",
+            "related_events",
+        ),
+    )
+
+    geojson = json.loads(geojson)
+
+    for features in geojson["features"]:
+        features["properties"]["visual_center"] = {
+            "type": "Feature",
+            "properties": None,
+            "geometry": json.loads(stv[0].visual_center.json),
+        }
+        features["properties"]["entity"] = {
+            "label": stv[0].entity.label,
+            "pk": stv[0].entity.pk,
+        }
+
+    start_date = jd2gcal(stv[0].start_date, 0)
+    start_string = "{}-{}-{}".format(start_date[0], start_date[1], start_date[2])
+
+    end_date = jd2gcal(stv[0].end_date, 0)
+    end_string = "{}-{}-{}".format(end_date[0], end_date[1], end_date[2])
+    response = JsonResponse(geojson)
+
+    response["Content-Disposition"] = "attachment;filename={}_{}_{}.json;".format(
+        stv[0].entity.label, start_string, end_string
+    )
+
+    return response
