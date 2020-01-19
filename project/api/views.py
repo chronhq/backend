@@ -437,9 +437,8 @@ def stv_downloader(request, primary_key):
     Download stvs as geojson.
     """
 
-    try:
-        stv = SpacetimeVolume.objects.filter(pk=primary_key)
-    except SpacetimeVolume.DoesNotExist:
+    stv = SpacetimeVolume.objects.filter(pk=primary_key)
+    if len(stv) == 0:
         return HttpResponse(status=404)
 
     geojson = serialize(
