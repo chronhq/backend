@@ -22,7 +22,8 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField, HStoreField
-from django.db.models.signals import post_save
+from django.db import connection
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from ordered_model.models import OrderedModel
 from colorfield.fields import ColorField
@@ -270,9 +271,39 @@ class SpacetimeVolume(models.Model):
         TerritorialEntity, on_delete=models.CASCADE, related_name="stvs"
     )
     references = ArrayField(models.TextField(max_length=500))
-    visual_center = models.PointField()
+    visual_center = models.PointField(blank=True, null=True)
     related_events = models.ManyToManyField(CachedData, blank=True)
     history = HistoricalRecords()
+
+    def calculate_center(self):
+        """
+        Calculate and set the visual_center field
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE api_spacetimevolume SET visual_center = foo.visual_center FROM (
+                    SELECT *, CASE WHEN ST_Intersects(geom, centroid) IS true
+                        THEN centroid ELSE surface END AS visual_center FROM (
+                            SELECT id, geom, ST_Centroid(geom)
+                            as centroid, ST_PointOnSurface(geom) as surface FROM (
+                                SELECT id, geom FROM (
+                                    SELECT *,
+                                    (MAX(ST_Area(geom)) OVER (PARTITION BY id) = ST_Area(geom))
+                                    as sqft
+                                    FROM (
+                                        SELECT id, (ST_Dump(territory)).geom AS geom
+                                        FROM api_spacetimevolume WHERE id = %s
+                                    ) as foo
+                                ) as foo
+                            WHERE sqft = true
+                        ) as foo
+                    ) as foo
+                ) as foo
+                WHERE foo.id = api_spacetimevolume.id;
+                """,
+                [self.pk],
+            )
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
         if (
@@ -302,6 +333,8 @@ class SpacetimeVolume(models.Model):
     def save(self, *args, **kwargs):  # pylint: disable=W0221
         self.full_clean()
         super(SpacetimeVolume, self).save(*args, **kwargs)
+        if not self.visual_center:
+            self.calculate_center()
 
 
 class Narrative(models.Model):
@@ -388,3 +421,55 @@ class SymbolFeature(models.Model):
     symbol = models.ForeignKey(
         Symbol, related_name="features", on_delete=models.CASCADE
     )
+
+
+@receiver(post_save, sender=SpacetimeVolume)
+def te_bounds_save(sender, instance, **kwargs):  # pylint: disable=W0613
+    """
+    When an STV is added or updated, checks it's entities bounding dates
+    and changes them if it's needed.
+    """
+    if (
+        instance.entity.inception_date is None
+        or instance.entity.inception_date > instance.start_date
+    ):
+        instance.entity.inception_date = instance.start_date
+        instance.entity.save()
+    if (
+        instance.entity.dissolution_date is None
+        or instance.entity.dissolution_date < instance.end_date
+    ):
+        instance.entity.dissolution_date = instance.end_date
+        instance.entity.save()
+
+
+@receiver(post_delete, sender=SpacetimeVolume)
+def te_bounds_delete(sender, instance, **kwargs):  # pylint: disable=W0613
+    """
+    When an STV is deleted, checks if the entity was using it as it's bouding dates and finds the
+    new date if that's the case.
+    """
+    if (
+        instance.entity.inception_date is not None
+        and instance.entity.inception_date == instance.start_date
+    ):
+        start = SpacetimeVolume.objects.filter(entity=instance.entity).order_by(
+            "start_date"
+        )
+        if len(start) != 0:
+            instance.entity.inception_date = start[0].start_date
+        else:
+            instance.entity.inception_date = None
+        instance.entity.save()
+    if (
+        instance.entity.dissolution_date is not None
+        and instance.entity.dissolution_date == instance.end_date
+    ):
+        end = SpacetimeVolume.objects.filter(entity=instance.entity).order_by(
+            "-end_date"
+        )
+        if len(end) != 0:
+            instance.entity.dissolution_date = end[0].end_date
+        else:
+            instance.entity.dissolution_date = None
+        instance.entity.save()
