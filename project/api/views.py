@@ -22,6 +22,7 @@ from cacheops import cached_as
 from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from django.db import connection, transaction
 from django.db.models import Count
 from django.http import HttpResponse, JsonResponse
@@ -30,7 +31,6 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from jdcal import jd2gcal
-
 from .models import (
     TerritorialEntity,
     PoliticalRelation,
@@ -135,10 +135,29 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         Solve overlaps if included in request body
         """
 
-        print(request.data["territory"])
-        print(type(request.data["territory"]))
-        geom = GEOSGeometry(str(request.data["territory"]))
+        if not issubclass(type(request.data["territory"]), UploadedFile):
+            print(
+                "Territory type {}, Content {}".format(
+                    type(request.data["territory"]), request.data["territory"]
+                )
+            )
+            raise ValidationError("territory file is missing")
+
+        print(
+            ">🗺️ STV Filename: {}, Size: {}MB".format(
+                request.data["territory"],
+                round(request.data["territory"].size / 1048576, 2),
+            )
+        )
+
+        content = request.data["territory"].read().decode("utf-8")
+        geom = GEOSGeometry(content)
         if geom.srid != 4326:
+            print(
+                "Invalid SRID = {}, in file {}".format(
+                    geom.srid, request.data["territory"]
+                )
+            )
             raise ValidationError("Geometry SRID must be 4326")
         start_date = float(request.data["start_date"])
         end_date = float(request.data["end_date"])
