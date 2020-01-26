@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
 from cacheops import cached_as
+from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.exceptions import ValidationError
 from django.db import connection, transaction
@@ -134,20 +135,14 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         Solve overlaps if included in request body
         """
 
+        print(request.data["territory"])
+        print(type(request.data["territory"]))
         geom = GEOSGeometry(str(request.data["territory"]))
         if geom.srid != 4326:
             raise ValidationError("Geometry SRID must be 4326")
         start_date = float(request.data["start_date"])
         end_date = float(request.data["end_date"])
 
-        @cached_as(
-            SpacetimeVolume.objects.filter(
-                territory__overlaps=geom,
-                start_date__lte=end_date,
-                end_date__gte=start_date,
-            ),
-            extra=(start_date, end_date),
-        )
         def _overlaps():
             """
             Return overlapping STVs
@@ -179,6 +174,19 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
                 """,
                 {"geom": geom.ewkt, "start_date": start_date, "end_date": end_date},
             )
+
+        if "cacheops" in settings.INSTALLED_APPS:
+            # Cache overlaps query in production
+            _overlaps = (
+                cached_as(
+                    SpacetimeVolume.objects.filter(
+                        territory__overlaps=geom,
+                        start_date__lte=end_date,
+                        end_date__gte=start_date,
+                    ),
+                    extra=(start_date, end_date),
+                )
+            )(_overlaps)
 
         overlaps_db = _overlaps()
         overlaps = []

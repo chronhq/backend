@@ -191,10 +191,14 @@ REST_FRAMEWORK = {
     ],
 }
 
+# Firebase
+
 DRF_FIREBASE_AUTH = {
     "FIREBASE_SERVICE_ACCOUNT_KEY": "../config/firebase.json",
     "ALLOW_ANONYMOUS_REQUESTS": True,
 }
+
+# Profiling
 
 SILKY_PYTHON_PROFILER = True
 SILKY_PYTHON_PROFILER_BINARY = True
