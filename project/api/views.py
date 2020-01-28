@@ -21,9 +21,9 @@ import json
 from json.decoder import JSONDecodeError
 from cacheops import cached_as
 from django.conf import settings
-from django.contrib.gis.geos import GeometryCollection, GEOSGeometry
+from django.contrib.gis.geos import GEOSGeometry
 from django.contrib.gis.gdal.error import GDALException
-from django.core.exceptions import ValidationError
+from django.utils.datastructures import MultiValueDictKeyError
 from django.core.files.uploadedfile import UploadedFile
 from django.db import connection, transaction
 from django.db.models import Count
@@ -137,52 +137,38 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         Solve overlaps if included in request body
         """
 
-        if not issubclass(type(request.data["territory"]), UploadedFile):
-            print(
-                "Territory type {}, Content {}".format(
-                    type(request.data["territory"]), request.data["territory"]
-                )
-            )
-            rmsg = "Territory file is missing"
-            raise ValidationError(rmsg, params={"error": rmsg})
+        if not issubclass(type(request.data.get("territory", None)), UploadedFile):
+            return JsonResponse({"error": "Territory file is missing"}, status=400)
 
-        print(
-            ">🗺️ STV Filename: {}, Size: {}MB".format(
-                request.data["territory"],
-                round(request.data["territory"].size / 1048576, 2),
+        try:
+            start_date = float(request.data["start_date"])
+            end_date = float(request.data["end_date"])
+            if start_date >= end_date:
+                raise ValueError
+        except (ValueError, MultiValueDictKeyError):
+            return JsonResponse(
+                {"error": "Use JDN for start_date and end_date"}, status=400
             )
-        )
 
         content = request.data["territory"].read().decode("utf-8")
         try:
             try:
                 # Parse GeoJSON FeatureCollection
-                geoms = []
-                srid = "0"
+                geom = GEOSGeometry("POINT EMPTY", srid=4326)
                 features = json.loads(content)
                 for feature in features["features"]:
                     feature_geom = feature["geometry"]
-                    if "crs" in features:
+                    if "crs" in features:  # Copy SRID data if present
                         feature_geom["crs"] = features["crs"]
-                    ggg = GEOSGeometry(json.dumps(feature_geom))
-                    srid = ggg.srid
-                    geoms.append(ggg)
-                geom = GeometryCollection(tuple(geoms), srid=srid)
+                    geom = geom.union(GEOSGeometry(json.dumps(feature_geom)))
             except (GDALException, KeyError, JSONDecodeError):
                 geom = GEOSGeometry(content)
         except GDALException:
-            rmsg = "Geometry is not recognized"
-            raise ValidationError('{"error": %(error)s}', params={"error": rmsg})
+            return JsonResponse({"error": "Geometry is not recognized"}, status=400)
+        if not geom.geom_type in ["Polygon", "MultiPolygon"]:
+            return JsonResponse({"error": "Invalid geometry type"}, status=400)
         if geom.srid != 4326:
-            print(
-                "Invalid SRID = {}, in file {}".format(
-                    geom.srid, request.data["territory"]
-                )
-            )
-            rmsg = "Geometry SRID must be 4326"
-            raise ValidationError(rmsg, params={"error": rmsg})
-        start_date = float(request.data["start_date"])
-        end_date = float(request.data["end_date"])
+            return JsonResponse({"error": "Geometry SRID must be 4326"}, status=400)
 
         def _overlaps():
             """
@@ -236,13 +222,11 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
                 if not str(i.pk) in request.data["overlaps"]:
                     overlaps.append(i.pk)
             if overlaps:
-                raise ValidationError(
-                    ('{"unsolved overlap": %(values)s}'), params={"values": overlaps}
-                )
+                return JsonResponse({"overlaps": overlaps}, status=409)
         elif len(overlaps_db) > 0:  # pylint: disable=C1801
-            raise ValidationError(
-                ('{"unsolved overlap": %(values)s}'),
-                params={"values": [i.pk for i in overlaps_db]},
+            return JsonResponse(
+                {"overlaps": [i.pk for i in overlaps_db], "data": overlaps_db},
+                status=409,
             )
 
         for overlap in overlaps_db:
