@@ -158,11 +158,12 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
             try:
                 # Parse GeoJSON FeatureCollection
                 geoms = []
-                srid = '0'
+                srid = "0"
                 features = json.loads(content)
-                for feature in features['features']:
-                    feature_geom = feature['geometry']
-                    feature_geom['crs'] = features['crs']
+                for feature in features["features"]:
+                    feature_geom = feature["geometry"]
+                    if "crs" in features:
+                        feature_geom["crs"] = features["crs"]
                     ggg = GEOSGeometry(json.dumps(feature_geom))
                     srid = ggg.srid
                     geoms.append(ggg)
