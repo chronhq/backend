@@ -18,9 +18,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import json
+from json.decoder import JSONDecodeError
 from cacheops import cached_as
 from django.conf import settings
-from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.geos import GeometryCollection, GEOSGeometry
+from django.contrib.gis.gdal.error import GDALException
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.db import connection, transaction
@@ -141,7 +143,8 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
                     type(request.data["territory"]), request.data["territory"]
                 )
             )
-            raise ValidationError("territory file is missing")
+            rmsg = "Territory file is missing"
+            raise ValidationError(rmsg, params={"error": rmsg})
 
         print(
             ">🗺️ STV Filename: {}, Size: {}MB".format(
@@ -151,14 +154,32 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         )
 
         content = request.data["territory"].read().decode("utf-8")
-        geom = GEOSGeometry(content)
+        try:
+            try:
+                # Parse GeoJSON FeatureCollection
+                geoms = []
+                srid = '0'
+                features = json.loads(content)
+                for feature in features['features']:
+                    feature_geom = feature['geometry']
+                    feature_geom['crs'] = features['crs']
+                    ggg = GEOSGeometry(json.dumps(feature_geom))
+                    srid = ggg.srid
+                    geoms.append(ggg)
+                geom = GeometryCollection(tuple(geoms), srid=srid)
+            except (GDALException, KeyError, JSONDecodeError):
+                geom = GEOSGeometry(content)
+        except GDALException:
+            rmsg = "Geometry is not recognized"
+            raise ValidationError('{"error": %(error)s}', params={"error": rmsg})
         if geom.srid != 4326:
             print(
                 "Invalid SRID = {}, in file {}".format(
                     geom.srid, request.data["territory"]
                 )
             )
-            raise ValidationError("Geometry SRID must be 4326")
+            rmsg = "Geometry SRID must be 4326"
+            raise ValidationError(rmsg, params={"error": rmsg})
         start_date = float(request.data["start_date"])
         end_date = float(request.data["end_date"])
 
