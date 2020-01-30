@@ -164,7 +164,7 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
                     geom = GEOSGeometry(content)
             except GDALException:
                 return "Geometry is not recognized"
-            if not geom.geom_type in ["Polygon", "MultiPolygon"]:
+            if geom.geom_type not in ["Polygon", "MultiPolygon"]:
                 return "Invalid geometry type"
             if geom.srid != 4326:
                 return "Geometry SRID must be 4326"
@@ -233,18 +233,18 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         # { "entity_id": ["stv_id", "stv_id"], ...}
         overlaps["db"] = {}
         for i in _overlaps():
-            if not i.entity.pk in overlaps["db"]:
+            if i.entity.pk not in overlaps["db"]:
                 overlaps["db"][i.entity.pk] = []
             overlaps["db"][i.entity.pk].append(i.pk)
 
-        if not "overlaps" in request.data:
+        if "overlaps" not in request.data:
             if len(overlaps["db"]) > 0:
                 return JsonResponse({"overlaps": overlaps["db"]}, status=409)
 
         for entity, stvs in overlaps["db"].items():
             overlaps[
                 "keep"
-                if not entity in request.data["overlaps"]
+                if entity not in request.data["overlaps"]
                 or request.data["overlaps"][entity]
                 else "modify"
             ].extend(SpacetimeVolume.objects.get(pk__in=stvs))
