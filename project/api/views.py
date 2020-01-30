@@ -25,6 +25,7 @@ from django.contrib.gis.geos import GEOSGeometry
 from django.contrib.gis.gdal.error import GDALException
 from django.utils.datastructures import MultiValueDictKeyError
 from django.core.files.uploadedfile import UploadedFile
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection, transaction
 from django.db.models import Count
 from django.http import HttpResponse, JsonResponse
@@ -278,6 +279,13 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         except (KeyError, GDALException):
             request.data.pop("visual_center", None)
         return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, pk):
+        try:
+            SpacetimeVolume.objects.get(pk=pk).delete()
+            return JsonResponse({"status": "ok"}, status=200)
+        except ObjectDoesNotExist:
+            return JsonResponse({"error": "Does not exist"}, status=410)
 
 
 class NarrativeVoteViewSet(viewsets.ModelViewSet):
