@@ -137,38 +137,42 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         Solve overlaps if included in request body
         """
 
-        if not issubclass(type(request.data.get("territory", None)), UploadedFile):
-            return JsonResponse({"error": "Territory file is missing"}, status=400)
+        def _validate():
+            if not issubclass(type(request.data.get("territory", None)), UploadedFile):
+                return "Territory file is missing"
 
-        try:
-            start_date = float(request.data["start_date"])
-            end_date = float(request.data["end_date"])
-            if start_date >= end_date:
-                raise ValueError
-        except (ValueError, MultiValueDictKeyError):
-            return JsonResponse(
-                {"error": "Use JDN for start_date and end_date"}, status=400
-            )
-
-        content = request.data["territory"].read().decode("utf-8")
-        try:
             try:
-                # Parse GeoJSON FeatureCollection
-                geom = GEOSGeometry("POINT EMPTY", srid=4326)
-                features = json.loads(content)
-                for feature in features["features"]:
-                    feature_geom = feature["geometry"]
-                    if "crs" in features:  # Copy SRID data if present
-                        feature_geom["crs"] = features["crs"]
-                    geom = geom.union(GEOSGeometry(json.dumps(feature_geom)))
-            except (GDALException, KeyError, JSONDecodeError):
-                geom = GEOSGeometry(content)
-        except GDALException:
-            return JsonResponse({"error": "Geometry is not recognized"}, status=400)
-        if not geom.geom_type in ["Polygon", "MultiPolygon"]:
-            return JsonResponse({"error": "Invalid geometry type"}, status=400)
-        if geom.srid != 4326:
-            return JsonResponse({"error": "Geometry SRID must be 4326"}, status=400)
+                start_date = float(request.data["start_date"])
+                end_date = float(request.data["end_date"])
+                if start_date >= end_date:
+                    raise ValueError
+            except (ValueError, MultiValueDictKeyError):
+                return "Use JDN for start_date and end_date"
+
+            content = request.data["territory"].read().decode("utf-8")
+            try:
+                try:
+                    # Parse GeoJSON FeatureCollection
+                    geom = GEOSGeometry("POINT EMPTY", srid=4326)
+                    features = json.loads(content)
+                    for feature in features["features"]:
+                        feature_geom = feature["geometry"]
+                        if "crs" in features:  # Copy SRID data if present
+                            feature_geom["crs"] = features["crs"]
+                        geom = geom.union(GEOSGeometry(json.dumps(feature_geom)))
+                except (GDALException, KeyError, JSONDecodeError):
+                    geom = GEOSGeometry(content)
+            except GDALException:
+                return "Geometry is not recognized"
+            if not geom.geom_type in ["Polygon", "MultiPolygon"]:
+                return "Invalid geometry type"
+            if geom.srid != 4326:
+                return "Geometry SRID must be 4326"
+            return None, geom, start_date, end_date
+
+        error, geom, start_date, end_date = _validate()
+        if error:
+            return JsonResponse({"error": error}, status=400)
 
         def _overlaps():
             """
@@ -215,29 +219,38 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
                 )
             )(_overlaps)
 
-        overlaps_db = _overlaps()
-        overlaps = []
-        if "overlaps" in request.data:
-            for i in overlaps_db:
-                if not str(i.pk) in request.data["overlaps"]:
-                    overlaps.append(i.pk)
-            if overlaps:
-                return JsonResponse({"overlaps": overlaps}, status=409)
-        elif len(overlaps_db) > 0:  # pylint: disable=C1801
-            return JsonResponse(
-                {"overlaps": [i.pk for i in overlaps_db], "data": overlaps_db},
-                status=409,
-            )
+        # keep or modify STVs on server
+        # "keep|modify": ["stv_id", "stv_id" ...]
+        overlaps = {"keep": [], "modify": []}
+        # Generate list of overlaps grouped by entities
+        # { "entity_id": ["stv_id", "stv_id"], ...}
+        overlaps["db"] = {}
+        for i in _overlaps():
+            if not i.entity.pk in overlaps["db"]:
+                overlaps["db"][i.entity.pk] = []
+            overlaps["db"][i.entity.pk].append(i.pk)
 
-        for overlap in overlaps_db:
-            if request.data["overlaps"][str(overlap.pk)]:
-                overlap.territory = overlap.territory.difference(geom)
-                overlap.save()
-            else:
-                geom = geom.difference(overlap.territory)
+        if not "overlaps" in request.data:
+            if len(overlaps["db"]) > 0:
+                return JsonResponse({"overlaps": overlaps["db"]}, status=409)
+
+        for entity, stvs in overlaps["db"].items():
+            overlaps[
+                "keep"
+                if not entity in request.data["overlaps"]
+                or request.data["overlaps"][entity]
+                else "modify"
+            ].extend(SpacetimeVolume.objects.get(pk__in=stvs))
+
+        # Important to subtract from staging geometry first
+        for overlap in overlaps["keep"]:
+            geom = geom.difference(overlap.territory)
+
+        for overlap in overlaps["modify"]:
+            overlap.territory = overlap.territory.difference(geom)
+            overlap.save()
 
         request.data["territory"] = geom
-
         return super().create(request, *args, **kwargs)
 
 

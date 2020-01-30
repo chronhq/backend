@@ -21,7 +21,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
 from rest_framework import status
-from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from api.models import SpacetimeVolume
@@ -149,5 +148,5 @@ class STVTests(APITest):
         response = self.client.post(url, data)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        with self.assertRaises(ValidationError):
-            self.client.post(url, data_overlapping)
+        response = self.client.post(url, data_overlapping)
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
