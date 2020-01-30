@@ -65,15 +65,16 @@ class STVTests(APITest):
             "start_date": self.JD_0001,
             "end_date": self.JD_0005,
             "entity": self.france.pk,
-            "references": ["ref"],
-            "territory": SimpleUploadedFile(
-                "polygon.plain", b"SRID=4326;POLYGON((1 1, 1 2, 2 2, 1 1))"
-            ),
+            "references": ["ref", "fer"],
+            # "territory": SimpleUploadedFile(
+            #     "polygon.plain", b"SRID=4326;POLYGON((1 1, 1 2, 2 2, 1 1))"
+            # ),
             "visual_center": "SRID=4326;POINT(0.7 0.7)",
         }
         response = self.client.put(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["end_date"], str(self.JD_0005))
+        self.assertNotEqual(response.data["end_date"], str(self.JD_0005))
+        self.assertEqual(response.data["references"], ["ref", "fer"])
 
     @authorized
     def test_api_can_query_stv(self):

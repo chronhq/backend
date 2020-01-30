@@ -168,6 +168,13 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
                 return "Invalid geometry type"
             if geom.srid != 4326:
                 return "Geometry SRID must be 4326"
+            try:
+                request.data["visual_center"] = GEOSGeometry(
+                    request.data["visual_center"]
+                )
+            except (KeyError, GDALException):
+                request.data.pop("visual_center", None)
+
             return None, geom, start_date, end_date
 
         error, geom, start_date, end_date = _validate()
@@ -252,6 +259,25 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
 
         request.data["territory"] = geom
         return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        """
+        Update STVs references, visual_center and entity_id
+        """
+        stv = SpacetimeVolume.objects.get(pk=kwargs["pk"])
+        request.POST._mutable = True  # pylint: disable=W0212
+        request.POST.update(
+            {
+                "territory": stv.territory,
+                "start_date": stv.start_date,
+                "end_date": stv.end_date,
+            }
+        )
+        try:
+            request.POST["visual_center"] = GEOSGeometry(request.data["visual_center"])
+        except (KeyError, GDALException):
+            request.data.pop("visual_center", None)
+        return super().update(request, *args, **kwargs)
 
 
 class NarrativeVoteViewSet(viewsets.ModelViewSet):
