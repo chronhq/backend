@@ -328,25 +328,6 @@ class SpacetimeVolume(models.Model):
                     "Only Polygon and MultiPolygon objects are acceptable geometry types."
                 )
 
-            if (
-                SpacetimeVolume.objects.filter(
-                    start_date__lte=self.end_date,
-                    end_date__gte=self.start_date,
-                    territory__intersects=self.territory,
-                )
-                .exclude(pk=self.pk)
-                .exists()
-            ):
-                raise ValidationError(
-                    "Another SpaceTimeVolume overlaps this polygon: "
-                    + "\n".join(
-                        str(i)
-                        for i in SpacetimeVolume.objects.filter(
-                            territory__intersects=self.territory
-                        )
-                    )
-                )
-
         super(SpacetimeVolume, self).clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):  # pylint: disable=W0221

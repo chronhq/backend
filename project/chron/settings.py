@@ -36,6 +36,11 @@ ALLOWED_HOSTS = ["web", "127.0.0.1", "localhost"]
 
 INTERNAL_IPS = ["172.20.0.1", "127.0.0.1"]
 
+# Allow huge files
+# See https://docs.djangoproject.com/en/dev/ref/settings/#data-upload-max-memory-size
+# Don't forget to tune nginx config for 'client_max_body_size'
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50Mb
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10Mb
 
 # Application definition
 
@@ -191,10 +196,14 @@ REST_FRAMEWORK = {
     ],
 }
 
+# Firebase
+
 DRF_FIREBASE_AUTH = {
     "FIREBASE_SERVICE_ACCOUNT_KEY": "../config/firebase.json",
     "ALLOW_ANONYMOUS_REQUESTS": True,
 }
+
+# Profiling
 
 SILKY_PYTHON_PROFILER = True
 SILKY_PYTHON_PROFILER_BINARY = True
