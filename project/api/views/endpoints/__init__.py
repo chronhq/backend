@@ -1,3 +1,4 @@
+# flake8: noqa
 """ Special API endpoints """
 from .mvt_cached_data import *
 from .mvt_cities import *
