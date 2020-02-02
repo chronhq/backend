@@ -88,7 +88,7 @@ if DEBUG:
             "silk.middleware.SilkyMiddleware",
         ]
     )
-
+MIDDLEWARE.append("chron.middleware.ErrorMessageFormatter")
 
 ROOT_URLCONF = "chron.urls"
 
