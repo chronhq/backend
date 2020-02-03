@@ -121,10 +121,10 @@ def _subtract_geometry(request, overlaps, geom):
     for entity, stvs in overlaps["db"].items():
         overlaps[
             "keep"
-            if entity not in request.data["overlaps"]
-            or request.data["overlaps"][entity]
+            if str(entity) not in request.data["overlaps"]
+            or request.data["overlaps"][str(entity)]
             else "modify"
-        ].extend(SpacetimeVolume.objects.get(pk__in=stvs))
+        ].extend(SpacetimeVolume.objects.filter(pk__in=stvs))
 
     # Important to subtract from staging geometry first
     for overlap in overlaps["keep"]:
