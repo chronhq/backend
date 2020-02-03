@@ -13,7 +13,7 @@ RUN echo "${ALPINE_MIRROR}/edge/main" >> /etc/apk/repositories
 RUN set -ex \
     && apk add --no-cache \
       postgresql binutils graphviz \
-    && apk add --no-cache --repository ${ALPINE_MIRROR}/edge/testing \
+    && apk add --no-cache --repository ${ALPINE_MIRROR}/edge/community \
       gdal-dev geos-dev
 
 ENTRYPOINT /bin/sh
