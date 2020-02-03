@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 from json.decoder import JSONDecodeError
 from cacheops import cached_as
+from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry
 from django.contrib.gis.gdal.error import GDALException
 from django.utils.datastructures import MultiValueDictKeyError
@@ -155,18 +156,23 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
 
         geom, start_date, end_date = _stv_form_validate(request)
 
-        @cached_as(
-            SpacetimeVolume.objects.filter(
-                territory__intersects=geom,
-                start_date__lte=end_date,
-                end_date__gte=start_date,
-            ),
-            extra=(start_date, end_date),
-        )
         def _overlaps():
             # Note that we are using list for queryset here,
             # it's because we don't want to cache queryset object but results.
             return list(_overlaps_queryset(geom, start_date, end_date))
+
+        if "cacheops" in settings.INSTALLED_APPS:
+            # Cache overlaps query in production
+            _overlaps = (
+                cached_as(
+                    SpacetimeVolume.objects.filter(
+                        territory__overlaps=geom,
+                        start_date__lte=end_date,
+                        end_date__gte=start_date,
+                    ),
+                    extra=(start_date, end_date),
+                )
+            )(_overlaps)
 
         # keep or modify STVs on server
         # "keep|modify": ["stv_id", "stv_id" ...]

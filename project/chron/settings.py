@@ -60,13 +60,14 @@ INSTALLED_APPS = [
     "drf_firebase_auth",
     "ordered_model",
     "silk",
-    "cacheops",
 ]
 
 if DEBUG:
     INSTALLED_APPS.extend(
         ["debug_toolbar", "django.contrib.admin", "django.contrib.admindocs"]
     )
+else:
+    INSTALLED_APPS.append("cacheops")
 
 
 MIDDLEWARE = [
@@ -75,6 +76,7 @@ MIDDLEWARE = [
     # "django.middleware.csrf.CsrfViewMiddleware",
     # "django.contrib.auth.middleware.RemoteUserMiddleware",
     # "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "chron.middleware.ErrorMessageFormatter"
 ]
 
 if DEBUG:
@@ -87,7 +89,7 @@ if DEBUG:
             "silk.middleware.SilkyMiddleware",
         ]
     )
-MIDDLEWARE.append("chron.middleware.ErrorMessageFormatter")
+
 
 ROOT_URLCONF = "chron.urls"
 
