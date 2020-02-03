@@ -130,6 +130,12 @@ def _subtract_geometry(request, overlaps, geom):
     for overlap in overlaps["keep"]:
         geom = geom.difference(overlap.territory)
 
+    # Same result as ST_Area(geom, false) for SRID 4326
+    # https://postgis.net/docs/ST_Area.html
+    # Value should be tuned in the future
+    if geom.area < 0.1:
+        raise ValidationError('Polygon is too small')
+
     for overlap in overlaps["modify"]:
         overlap.territory = overlap.territory.difference(geom)
         overlap.save()
