@@ -76,7 +76,7 @@ MIDDLEWARE = [
     # "django.middleware.csrf.CsrfViewMiddleware",
     # "django.contrib.auth.middleware.RemoteUserMiddleware",
     # "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "chron.middleware.ErrorMessageFormatter"
+    "chron.middleware.ErrorMessageFormatter",
 ]
 
 if DEBUG:
