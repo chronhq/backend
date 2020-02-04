@@ -160,6 +160,12 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         Solve overlaps if included in request body
         """
 
+        # Validate other data before overlaps
+        empty_territory_data = request.data.copy()
+        empty_territory_data["territory"] = "POINT (0 0)"
+        serializer = self.get_serializer(data=empty_territory_data)
+        serializer.is_valid(raise_exception=True)
+
         geom, start_date, end_date = _stv_form_validate(request)
 
         def _overlaps():
