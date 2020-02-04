@@ -121,14 +121,20 @@ def _subtract_geometry(request, overlaps, geom):
     for entity, stvs in overlaps["db"].items():
         overlaps[
             "keep"
-            if entity not in request.data["overlaps"]
-            or request.data["overlaps"][entity]
+            if str(entity) not in request.data["overlaps"]
+            or request.data["overlaps"][str(entity)]
             else "modify"
-        ].extend(SpacetimeVolume.objects.get(pk__in=stvs))
+        ].extend(SpacetimeVolume.objects.filter(pk__in=stvs))
 
     # Important to subtract from staging geometry first
     for overlap in overlaps["keep"]:
         geom = geom.difference(overlap.territory)
+
+    # Same result as ST_Area(geom, false) for SRID 4326
+    # https://postgis.net/docs/ST_Area.html
+    # Value should be tuned in the future
+    if geom.area < 0.1:
+        raise ValidationError("Polygon is too small")
 
     for overlap in overlaps["modify"]:
         overlap.territory = overlap.territory.difference(geom)
