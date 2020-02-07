@@ -38,10 +38,11 @@ class STVTests(APITest):
     def test_stv_area_is_correct(self):
         """ Check Area computations """
         self.assertEqual(
-            _calculate_area(GEOSGeometry("POLYGON(EMPTY)", srid = 4326)),
-            0.0
+            _calculate_area(GEOSGeometry("POLYGON(EMPTY)", srid=4326)), 0.0
         )
-        area = _calculate_area(GEOSGeometry("SRID=4326;POLYGON((-1 -1,-1 1,1 1, 1 -1, -1 -1))"))
+        area = _calculate_area(
+            GEOSGeometry("SRID=4326;POLYGON((-1 -1,-1 1,1 1, 1 -1, -1 -1))")
+        )
         self.assertEqual(area, 49238887518.5544)
 
     @override_settings(CACHEOPS_ENABLED=False)

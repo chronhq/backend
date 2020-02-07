@@ -45,7 +45,9 @@ def _calculate_area(geom):
     Result would be in square meters
     """
     with connection.cursor() as cursor:
-        cursor.execute("SELECT ST_Area(%(geom)s::geography) AS area", {"geom":geom.ewkt})
+        cursor.execute(
+            "SELECT ST_Area(%(geom)s::geography) AS area", {"geom": geom.ewkt}
+        )
         row = cursor.fetchone()[0]
     return row
 
