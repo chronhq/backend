@@ -28,12 +28,28 @@ from django.contrib.gis.gdal.error import GDALException
 from django.utils.datastructures import MultiValueDictKeyError
 from django.core.files.uploadedfile import UploadedFile
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db import transaction
+from django.db import transaction, connection
 from django.http import JsonResponse
 from rest_framework import viewsets
 
 from api.models import SpacetimeVolume
 from api.serializers import SpacetimeVolumeSerializer
+
+
+AREA_TOLERANCE = 100.0
+
+
+def _calculate_area(geom):
+    """
+    Calculates area of the provided geometry using geography
+    Result would be in square meters
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT ST_Area(%(geom)s::geography) AS area", {"geom": geom.ewkt}
+        )
+        row = cursor.fetchone()[0]
+    return row
 
 
 def _validate_geometry(request):
@@ -110,10 +126,15 @@ def _overlaps_queryset(geom, start_date, end_date):
                 ) as foo
             ) as foo
         ) as foo
-        WHERE ST_Dimension(xing) = 2 AND ST_Area(xing) > 10
+        WHERE ST_Dimension(xing) = 2 AND ST_Area(xing::geography) > %(tolerance)s
         GROUP BY id, entity_id, start_date, end_date
         """,
-        {"geom": geom.ewkt, "start_date": start_date, "end_date": end_date},
+        {
+            "geom": geom.ewkt,
+            "start_date": start_date,
+            "end_date": end_date,
+            "tolerance": AREA_TOLERANCE,
+        },
     )
 
 
@@ -130,15 +151,15 @@ def _subtract_geometry(request, overlaps, geom):
     for overlap in overlaps["keep"]:
         geom = geom.difference(overlap.territory)
 
-    # Same result as ST_Area(geom, false) for SRID 4326
-    # https://postgis.net/docs/ST_Area.html
-    # Value should be tuned in the future
-    if geom.area < 0.1:
+    if _calculate_area(geom) < AREA_TOLERANCE:
         raise ValidationError("Polygon is too small")
 
     for overlap in overlaps["modify"]:
         overlap.territory = overlap.territory.difference(geom)
-        overlap.save()
+        if _calculate_area(overlap.territory) < AREA_TOLERANCE:
+            overlap.delete()
+        else:
+            overlap.save()
 
 
 class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
