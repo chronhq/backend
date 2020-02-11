@@ -270,7 +270,7 @@ class SpacetimeVolume(models.Model):
     entity = models.ForeignKey(
         TerritorialEntity, on_delete=models.CASCADE, related_name="stvs"
     )
-    references = ArrayField(models.TextField(max_length=500))
+    references = ArrayField(models.TextField(max_length=500), blank=True, null=True)
     visual_center = models.PointField(blank=True, null=True)
     related_events = models.ManyToManyField(CachedData, blank=True)
     history = HistoricalRecords()
@@ -306,18 +306,20 @@ class SpacetimeVolume(models.Model):
             )
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
-        if (
-            SpacetimeVolume.objects.filter(
-                start_date__lte=self.end_date,
-                end_date__gte=self.start_date,
-                entity=self.entity,
-            )
-            .exclude(pk=self.pk)
-            .exists()
-        ):
-            raise ValidationError(
-                "Another STV for this entity exists in the same timeframe"
-            )
+        # if (
+        #     SpacetimeVolume.objects.filter(
+        #         start_date__lte=self.end_date,
+        #         end_date__gte=self.start_date,
+        #         entity=self.entity,
+        #     )
+        #     .exclude(pk=self.pk)
+        #     .exists()
+        # ):
+            
+
+            # raise ValidationError(
+            #     "Another STV for this entity exists in the same timeframe"
+            # )
 
         if not self.territory is None:
             if (
