@@ -306,20 +306,18 @@ class SpacetimeVolume(models.Model):
             )
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
-        # if (
-        #     SpacetimeVolume.objects.filter(
-        #         start_date__lte=self.end_date,
-        #         end_date__gte=self.start_date,
-        #         entity=self.entity,
-        #     )
-        #     .exclude(pk=self.pk)
-        #     .exists()
-        # ):
-            
-
-            # raise ValidationError(
-            #     "Another STV for this entity exists in the same timeframe"
-            # )
+        if (
+            SpacetimeVolume.objects.filter(
+                start_date__lte=self.end_date,
+                end_date__gte=self.start_date,
+                entity=self.entity,
+            )
+            .exclude(pk=self.pk)
+            .exists()
+        ):
+            raise ValidationError(
+                "Another STV for this entity exists in the same timeframe"
+            )
 
         if not self.territory is None:
             if (

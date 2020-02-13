@@ -17,123 +17,113 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from math import ceil
-from datetime import datetime
-import re
-import requests
-from jdcal import gcal2jd
-from django.core.management.base import BaseCommand
-from django.contrib.gis.geos import Point
-from django.contrib.gis.gdal import CoordTransform, SpatialReference
-from django.contrib.gis.db.models.functions import Area, Transform
-from api.models import TerritorialEntity, SpacetimeVolume
 from itertools import tee
+
+from django.db import transaction
+from django.contrib.gis.geos import GEOSGeometry
+from django.core.management.base import BaseCommand
+
+from api.models import TerritorialEntity, SpacetimeVolume
+
 
 def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
-    a, b = tee(iterable)
+    a, b = tee(iterable)  # pylint: disable=invalid-name
     next(b, None)
     return zip(a, b)
 
+
+@transaction.atomic
+def recreate_stvs(to_create, to_remove):
+    """ Update STVs in database """
+    SpacetimeVolume.objects.filter(pk__in=to_remove).delete()
+    for stv in to_create:
+        SpacetimeVolume.objects.create(**stv)
+
+
+def handle_te_time(entity):
+    """ Prepare changes in list of Spacetimve Volumes for provided Territorial Entity """
+    stvs = SpacetimeVolume.objects.filter(entity=entity)
+    dates = []
+    to_remove = []
+    to_create = []
+
+    for stv in stvs:
+        dates.extend([stv.start_date, stv.end_date + 1])
+    dates = sorted(set(dates))
+
+    for start, next_start in pairwise(dates):
+        end = next_start - 1
+        if int(end - start) <= 1:
+            continue
+        mean = (end + start) / 2
+
+        overlaps = SpacetimeVolume.objects.filter(
+            entity=entity, start_date__lte=mean, end_date__gte=mean
+        )
+        if overlaps.count() == 1:
+            stv = overlaps[0]
+            if not (stv.start_date == start and stv.end_date == end):
+                print(
+                    "[{} - {}]: Using geometry from STV #{} [{} - {}]".format(
+                        start, end, stv.id, stv.start_date, stv.end_date
+                    )
+                )
+                to_create.append(
+                    {
+                        "entity": entity,
+                        "start_date": start,
+                        "end_date": end,
+                        "territory": stv.territory,
+                    }
+                )
+                to_remove.append(stv.id)
+        if overlaps.count() > 1:
+            print(
+                "[{} - {}]: Creating union of {} STVs".format(
+                    start, end, overlaps.count()
+                )
+            )
+            geom = GEOSGeometry("POINT EMPTY", srid=4326)
+            for stv in overlaps:
+                print(
+                    "\t...STV #{} [{} - {}]".format(
+                        stv.id, stv.start_date, stv.end_date
+                    )
+                )
+                geom = geom.union(stv.territory)
+                to_remove.append(stv.id)
+            to_create.append(
+                {
+                    "entity": entity,
+                    "start_date": start,
+                    "end_date": end,
+                    "territory": geom,
+                }
+            )
+    to_remove = sorted(set(to_remove))
+    if len(to_create) > 0 or len(to_remove) > 0:
+        print("> Unique dates {}".format(len(dates)))
+        print("+ Total STVs to create count({})".format(len(to_create)))
+        print("- Total STVs to remove count({})".format(len(to_remove)))
+        recreate_stvs(to_create, to_remove)
+
+
 class Command(BaseCommand):
 
-    
     """
-    Populate cached datas with persons.
+    Clean time overlaps for STVs
     """
-    help = "Populate cached datas with persons."
-    
+
+    help = "Clean time overlaps for STVs"
 
     def handle(self, *args, **options):
-        TEs = TerritorialEntity.objects.all()
+        entities = TerritorialEntity.objects.all()
 
-        
-        geom_count = 0
-        for TE in TEs:
-
-            STVs = SpacetimeVolume.objects.filter(entity=TE).annotate( lul=Transform("territory",3857)).order_by("start_date")
-
-            print("FOR TE: {}".format(TE.label))
-
-            for stv in STVs:
-    
-                print("FOR STV: {} Start date: {} End date:{}".format(stv.pk, stv.start_date, stv.end_date))
-                for stv_overlap in SpacetimeVolume.objects.filter(entity=stv.entity).exclude(pk=stv.pk):
-                    
-#                    print(stv_overlap.pk)
-
-                    # python manage.py clean_stvs
-                    # Skip if we are inside another 
-                    if (stv_overlap.end_date >= stv.end_date and stv_overlap.start_date < stv.start_date) or (stv_overlap.end_date > stv.end_date and stv_overlap.start_date <= stv.start_date) :
-                        continue
-                    # Union and delete if complete overlap 
-                    elif stv_overlap.end_date == stv.end_date and stv_overlap.start_date == stv.start_date:
-                        print("DELETING STV: {} Start date: {} End date:{}".format(stv_overlap.pk, stv_overlap.start_date, stv_overlap.end_date))
-
-                        stv.territory = stv.territory.union(stv_overlap.territory)
-                        stv_overlap.delete()
-                        stv.save()
-                    # If they are completely inside us: 1) Create new after overlap until original end date with original geom. 3) Make the original end date before overlap start date. 2) make overlap geom a union of two.
-                    elif stv_overlap.start_date > stv.start_date and stv_overlap.end_date < stv.end_date:
-                        
-
-                        new_stv = SpacetimeVolume(start_date=stv_overlap.end_date + 1, end_date=stv.end_date, territory=stv.territory, entity=TE)
-                        new_stv.save()
-                        print("New stv id : {}".format(new_stv.pk))
-
-                        stv.end_date = stv_overlap.start_date - 1
-                        stv.save()
-
-                        stv_overlap.territory = stv_overlap.territory.union(stv.territory)
-                        stv_overlap.save()
-
-                    # If their start is inside us: 1) Create new for before that 2) Union the overlap and set our start to their start 3) Set their start to our end 
-                    elif stv_overlap.start_date >= stv.start_date and stv_overlap.start_date <= stv.end_date:
-                        print("SETTING START DATE  STV: {} Start date: {} End date:{}".format(stv_overlap.pk, stv_overlap.start_date, stv_overlap.end_date))
-
-
-                        new_stv = SpacetimeVolume(start_date=stv.start_date, end_date=stv_overlap.start_date-1, territory=stv.territory, entity=TE)
-                        new_stv.save()
-                        print("New stv id : {}".format(new_stv.pk))
-
-                        
-                        stv.territory = stv.territory.union(stv_overlap.territory)
-                        stv.start_date = stv_overlap.start_date
-                        stv.save()
-                        
-                        stv_overlap.start_date = stv.end_date + 1 
-                        stv_overlap.save()
-                        print("NEW START DATE  STV: {} Start date: {} End date:{}".format(stv_overlap.pk, stv_overlap.start_date, stv_overlap.end_date))
-
-                    # If their end is inside us: 1) Create new after  2) Set their end to our start 3) Union the overlap and set our end to their end. 
-                    elif stv_overlap.end_date <= stv.end_date and stv_overlap.end_date >= stv.start_date:
-                        print("SETTING END DATE STV: {} Start date: {} End date:{}".format(stv_overlap.pk, stv_overlap.start_date, stv_overlap.end_date))
-
-                        new_stv = SpacetimeVolume(start_date=stv_overlap.end_date+1, end_date=stv.end_date, territory=stv.territory, entity=TE)
-                        new_stv.save()
-                        print("New stv id : {}".format(new_stv.pk))
-
-                        stv.territory = stv.territory.union(stv_overlap.territory)
-                        stv.end_date = stv_overlap.end_date  
-                        stv.save()
-                        
-                        stv_overlap.end_date = stv.start_date - 1
-                        stv_overlap.save()
-                        print("NEW END DATE STV: {} Start date: {} End date:{}".format(stv_overlap.pk, stv_overlap.start_date, stv_overlap.end_date))
-
-
-
-
-            # for current_stv, next_stv in pairwise(STVs):
-
-            #     if abs(current_stv.lul.area - next_stv.lul.area) < 10000000:
-            #         print("Current TE: {} STV PK: {} START_DATE: {} END_DATE: {} Transform Area: {}".format(TE.label, current_stv.pk, current_stv.start_date, current_stv.end_date, current_stv.lul.area))
-
-            #         print("Next TE: {} STV PK: {} START_DATE: {} END_DATE: {} Transform Area: {}".format(TE.label, next_stv.pk, next_stv.start_date, next_stv.end_date, next_stv.lul.area))
-
-            #         next_stv.start_date = current_stv.start_date
-            #         current_stv.delete()
-            #         next_stv.references.append("https://www.placeholder.com")
-            #         next_stv.save()
-
-            #         geom_count += 1
+        for entity in entities:
+            print(
+                "Processing Territorial Entity: {}, id {}".format(
+                    entity.label, entity.id
+                )
+            )
+            handle_te_time(entity)
