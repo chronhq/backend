@@ -23,6 +23,7 @@ import json
 from rest_framework import status
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
+from django.test import override_settings
 from api.models import SpacetimeVolume
 from .api_tests import APITest, authorized
 
@@ -32,6 +33,7 @@ class STVTests(APITest):
     SpacetimeVolume test suite
     """
 
+    @override_settings(CACHEOPS_ENABLED=False)
     @authorized
     def test_api_can_create_stv(self):
         """
@@ -54,6 +56,7 @@ class STVTests(APITest):
         self.assertEqual(SpacetimeVolume.objects.count(), 2)
         self.assertEqual(SpacetimeVolume.objects.last().references, ["ref"])
 
+    @override_settings(CACHEOPS_ENABLED=False)
     @authorized
     def test_api_can_update_stv(self):
         """
@@ -76,6 +79,7 @@ class STVTests(APITest):
         self.assertNotEqual(response.data["end_date"], str(self.JD_0005))
         self.assertEqual(response.data["references"], ["ref", "fer"])
 
+    @override_settings(CACHEOPS_ENABLED=False)
     @authorized
     def test_api_can_query_stv(self):
         """
@@ -87,6 +91,7 @@ class STVTests(APITest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["end_date"], str(self.JD_0002))
 
+    @override_settings(CACHEOPS_ENABLED=False)
     @authorized
     def test_api_can_not_create_stv(self):
         """
