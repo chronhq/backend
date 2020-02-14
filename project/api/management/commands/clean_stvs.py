@@ -24,6 +24,7 @@ from django.contrib.gis.geos import GEOSGeometry
 from django.core.management.base import BaseCommand
 
 from api.models import TerritorialEntity, SpacetimeVolume
+from api.views.stv_view import _find_difference, _calculate_area
 
 
 def pairwise(iterable):
@@ -109,6 +110,35 @@ def handle_te_time(entity):
         recreate_stvs(to_create, to_remove)
 
 
+@transaction.atomic
+def handle_stv_duplicates(entity):
+    """ Join STVs with identical geometry """
+    stvs = SpacetimeVolume.objects.filter(entity=entity).order_by("start_date")
+    for prev, cur in pairwise(stvs):
+        if cur.start_date - prev.end_date > 1:
+            continue
+        if (
+            abs(_calculate_area(prev.territory) - _calculate_area(cur.territory))
+            < 1000000
+        ):
+            continue
+        diff = _find_difference(prev.territory, cur.territory)
+        if diff is None:
+            print(
+                "= Combining STV #{} [{} - {}] + STV #{} [{} - {}]".format(
+                    prev.id,
+                    prev.start_date,
+                    prev.end_date,
+                    cur.id,
+                    cur.start_date,
+                    cur.end_date,
+                )
+            )
+            cur.start_date = prev.start_date
+            prev.delete()
+            cur.save()
+
+
 class Command(BaseCommand):
 
     """
@@ -127,3 +157,4 @@ class Command(BaseCommand):
                 )
             )
             handle_te_time(entity)
+            handle_stv_duplicates(entity)
