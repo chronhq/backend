@@ -118,18 +118,27 @@ def handle_stv_duplicates(entity):
         if cur.start_date - prev.end_date > 1:
             continue
         areas = [_calculate_area(prev.territory), _calculate_area(cur.territory)]
-        if abs(areas[0] - areas[1]) < 1000000:
+        # Skip big difference
+        if abs(areas[0] - areas[1]) > 100:
             continue
-        diff = _find_difference(prev.territory, cur.territory)
+        if areas[0] == areas[1]:
+            diff = None
+        else:
+            diff = _find_difference(cur.territory, prev.territory)
+            if diff is None:
+                diff = _find_difference(prev.territory, cur.territory)
+
         if diff is None:
             print(
-                "= Combining STV #{} [{} - {}] + STV #{} [{} - {}]".format(
+                "= Combining STV #{} [{} - {}] {} + STV #{} [{} - {}] {}".format(
                     prev.id,
                     prev.start_date,
                     prev.end_date,
+                    areas[0],
                     cur.id,
                     cur.start_date,
                     cur.end_date,
+                    areas[1],
                 )
             )
             cur.start_date = prev.start_date
