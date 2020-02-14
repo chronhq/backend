@@ -117,10 +117,8 @@ def handle_stv_duplicates(entity):
     for prev, cur in pairwise(stvs):
         if cur.start_date - prev.end_date > 1:
             continue
-        if (
-            abs(_calculate_area(prev.territory) - _calculate_area(cur.territory))
-            < 1000000
-        ):
+        areas = [_calculate_area(prev.territory), _calculate_area(cur.territory)]
+        if abs(areas[0] - areas[1]) < 1000000:
             continue
         diff = _find_difference(prev.territory, cur.territory)
         if diff is None:

@@ -50,8 +50,8 @@ def _find_difference(geom_a, geom_b):
             SELECT ST_Union(geom) as geom FROM (
                 SELECT (ST_Dump(ST_Difference(p1, p2))).geom FROM (
                     SELECT
-                        %(geom_a)s::geometry as p1,
-                        %(geom_b)s::geometry as p2
+                        ST_MakeValid(%(geom_a)s::geometry) as p1,
+                        ST_MakeValid(%(geom_b)s::geometry) as p2
                     ) as foo
                 ) as foo
                 WHERE ST_Dimension(geom) = 2 AND ST_Area(geom::geography) > %(tolerance)s
