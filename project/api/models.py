@@ -269,7 +269,7 @@ class SpacetimeVolume(models.Model):
     entity = models.ForeignKey(
         TerritorialEntity, on_delete=models.CASCADE, related_name="stvs"
     )
-    references = ArrayField(models.TextField(max_length=500))
+    references = ArrayField(models.TextField(max_length=500), blank=True, null=True)
     visual_center = models.PointField(blank=True, null=True)
     related_events = models.ManyToManyField(CachedData, blank=True)
     history = HistoricalRecords()

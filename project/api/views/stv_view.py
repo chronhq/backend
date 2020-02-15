@@ -39,6 +39,29 @@ from api.serializers import SpacetimeVolumeSerializer
 AREA_TOLERANCE = 100.0
 
 
+def _find_difference(geom_a, geom_b):
+    """
+    Calculate difference between two polygons
+    null if no difference
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT ST_Union(geom) as geom FROM (
+                SELECT (ST_Dump(ST_Difference(p1, p2))).geom FROM (
+                    SELECT
+                        ST_MakeValid(%(geom_a)s::geometry) as p1,
+                        ST_MakeValid(%(geom_b)s::geometry) as p2
+                    ) as foo
+                ) as foo
+                WHERE ST_Dimension(geom) = 2 AND ST_Area(geom::geography) > %(tolerance)s
+            """,
+            {"geom_a": geom_a.ewkt, "geom_b": geom_b.ewkt, "tolerance": AREA_TOLERANCE},
+        )
+        row = cursor.fetchone()[0]
+    return row
+
+
 def _calculate_area(geom):
     """
     Calculates area of the provided geometry using geography
