@@ -22,6 +22,7 @@ from itertools import tee
 from django.db import transaction
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.management.base import BaseCommand
+from django.contrib.gis.db.models.functions import MakeValid
 
 from api.models import TerritorialEntity, SpacetimeVolume
 from api.views.stv_view import _find_difference, _calculate_area
@@ -32,6 +33,19 @@ def pairwise(iterable):
     a, b = tee(iterable)  # pylint: disable=invalid-name
     next(b, None)
     return zip(a, b)
+
+
+def make_stvs_valid(entity):
+    """ Update STVs with invalid geometry """
+    stvs = SpacetimeVolume.objects.filter(entity=entity)
+    for stv in stvs:
+        if not stv.territory.valid:
+            print(
+                "- Making STV #{} [{} - {}] valid".format(
+                    stv.id, stv.start_date, stv.end_date
+                )
+            )
+            stvs.filter(id=stv.id).update(territory=MakeValid("territory"))
 
 
 @transaction.atomic
@@ -163,5 +177,10 @@ class Command(BaseCommand):
                     entity.label, entity.id
                 )
             )
+            if SpacetimeVolume.objects.filter(entity=entity).count() == 0:
+                print("* Removing empty entity")
+                entity.delete()
+                continue
+            make_stvs_valid(entity)
             handle_te_time(entity)
             handle_stv_duplicates(entity)
