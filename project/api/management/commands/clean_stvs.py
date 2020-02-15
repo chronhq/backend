@@ -71,10 +71,9 @@ def handle_te_time(entity):
         end = next_start - 1
         if int(end - start) <= 1:
             continue
-        mean = (end + start) / 2
 
         overlaps = SpacetimeVolume.objects.filter(
-            entity=entity, start_date__lte=mean, end_date__gte=mean
+            entity=entity, start_date__lte=start, end_date__gte=end
         )
         if overlaps.count() == 1:
             stv = overlaps[0]
