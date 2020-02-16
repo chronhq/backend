@@ -31,10 +31,6 @@ run_prod: ## Builds, starts, and runs containers with production config
 stop: ## Stops running containers
 	docker-compose stop
 
-rm: ## Stops and removes all running containers
-	docker kill $(CONTAINERS)
-	docker rm $(CONTAINERS)
-
 clean: ## Stop and remove containers, networks, volmes, and images
 	docker-compose down
 
