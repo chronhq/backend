@@ -23,20 +23,22 @@ from django.core.serializers import serialize
 from api.models import SpacetimeVolume, TerritorialEntity
 
 
-def all_history(request):
-    return HttpResponse("OK")
-
-def te_history(request, TE):
-
+def all_stv_history(request):
+    """
+    Return revision history for all STVs.
+    Parameters
+    1) limit: Limit the amount of results per page
+    2) page: Page number
+    3) entity: Filter by TerritorialEntity
+    """
     page_number = request.GET.get('page')
     limit = request.GET.get('limit')
+    entity = request.GET.get('entity')
 
-    history = SpacetimeVolume.history.filter(entity=TE)
-
-
-    for x in history:
-        print(x)
-
+    if entity is not None:
+        history = SpacetimeVolume.history.filter(entity=entity)
+    else:
+        history = SpacetimeVolume.history.all()
 
     if limit is not None:
         paginator = Paginator(history, limit)
@@ -48,7 +50,34 @@ def te_history(request, TE):
     else:
         page = paginator.get_page("1")
 
-    json = serialize('json', page)
+    json = serialize('json', page, fields=["id", "start_date", "end_date", "references", "history_date", "history_change_reason", "history_type", "history_user"])
     
+    
+    return HttpResponse(json, content_type='application/json')
+
+def stv_history(request, STV):
+    """
+    Return revision history for specific STV.
+    Parameters
+    1) limit: Limit the amount of results per page
+    2) page: Page number
+    """
+
+    page_number = request.GET.get('page')
+    limit = request.GET.get('limit')
+
+    history = SpacetimeVolume.history.filter(id=STV)
+
+    if limit is not None:
+        paginator = Paginator(history, limit)
+    else:
+        paginator = Paginator(history, 25)
+    
+    if page_number is not None:
+        page = paginator.get_page(page_number)
+    else:
+        page = paginator.get_page("1")
+
+    json = serialize('json', page, fields=["id", "start_date", "end_date", "references", "history_date", "history_change_reason", "history_type", "history_user"])    
     
     return HttpResponse(json, content_type='application/json')
