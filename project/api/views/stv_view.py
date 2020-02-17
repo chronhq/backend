@@ -183,6 +183,7 @@ def _subtract_geometry(request, overlaps, geom):
             overlap.delete()
         else:
             overlap.save()
+    return geom
 
 
 class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
@@ -247,9 +248,8 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
             request.data["overlaps"] = json.loads(request.data["overlaps"])
         except ValueError:
             return JsonResponse({"overlaps": overlaps["db"]}, status=409)
-        _subtract_geometry(request, overlaps, geom)
+        request.data["territory"] = _subtract_geometry(request, overlaps, geom)
 
-        request.data["territory"] = geom
         return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
