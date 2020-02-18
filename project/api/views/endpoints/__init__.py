@@ -5,4 +5,3 @@ from .mvt_cities import *
 from .mvt_narratives import *
 from .mvt_stv import *
 from .stv_downloader import *
-from .history import *
