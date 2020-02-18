@@ -21,6 +21,7 @@ from django.db.models import Count
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.pagination import LimitOffsetPagination
 
 from api.models import (
     TerritorialEntity,
@@ -34,6 +35,7 @@ from api.models import (
     Profile,
     Symbol,
     SymbolFeature,
+    HistoricalSpacetimeVolume,
 )
 from api.serializers import (
     TerritorialEntitySerializer,
@@ -47,6 +49,8 @@ from api.serializers import (
     ProfileSerializer,
     SymbolSerializer,
     SymbolFeatureSerializer,
+    StvHistoryListSerializer,
+    StvHistoryRetrieveSerializer,
 )
 from api.permissions import IsUserOrReadOnly
 
@@ -203,3 +207,39 @@ class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, IsUserOrReadOnly)
+
+
+class HistoryPagination(LimitOffsetPagination):
+    page_size = 100
+    page_size_query_param = 'limit'
+    max_page_size = 1000
+class StvHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for SpacetimeVolume History
+    """
+    queryset = HistoricalSpacetimeVolume.objects.all()
+    pagination_class = HistoryPagination
+
+
+    def get_queryset(self):
+
+        queryset = self.queryset
+
+        if self.action == 'list':
+            stv = self.request.query_params.get('stv', None)
+            
+            if stv is not None:
+                queryset = queryset.filter(id=stv)
+
+            te = self.request.query_params.get('te', None)
+
+            if te is not None:
+                queryset = queryset.filter(entity=te)
+        
+        return queryset
+
+    def get_serializer_class(self):
+            if self.action == 'list':
+                return StvHistoryListSerializer
+            if self.action == 'retrieve':
+                return StvHistoryRetrieveSerializer

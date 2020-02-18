@@ -40,6 +40,7 @@ from .models import (
     Narration,
     NarrativeVote,
     Profile,
+    HistoricalSpacetimeVolume,
 )
 
 
@@ -252,3 +253,22 @@ class NarrativeSerializer(ModelSerializer):
         """
 
         return obj.narration_set.count()
+
+
+class StvHistoryListSerializer(ModelSerializer):
+    """
+    Serializes the HistoricalSpacetimeVolume model
+    """
+
+    class Meta:
+        model = HistoricalSpacetimeVolume
+        exclude = ["territory"]
+
+class StvHistoryRetrieveSerializer(ModelSerializer):
+    """
+    Serializes the HistoricalSpacetimeVolume model
+    """
+
+    class Meta:
+        model = HistoricalSpacetimeVolume
+        fields = "__all__"
