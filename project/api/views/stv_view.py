@@ -165,8 +165,7 @@ def _subtract_geometry(request, overlaps, geom):
     for entity, stvs in overlaps["db"].items():
         overlaps[
             "keep"
-            if str(entity) not in request.data["overlaps"]
-            or not request.data["overlaps"][str(entity)]
+            if str(entity) not in request.POST.getlist("overlaps")
             else "modify"
         ].extend(SpacetimeVolume.objects.filter(pk__in=stvs))
 
@@ -243,10 +242,6 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
             overlaps["db"][i.entity.pk].append(i.pk)
 
         if "overlaps" not in request.data and len(overlaps["db"]) > 0:
-            return JsonResponse({"overlaps": overlaps["db"]}, status=409)
-        try:
-            request.data["overlaps"] = json.loads(request.data["overlaps"])
-        except ValueError:
             return JsonResponse({"overlaps": overlaps["db"]}, status=409)
         request.data["territory"] = _subtract_geometry(request, overlaps, geom)
 
