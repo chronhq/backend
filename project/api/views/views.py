@@ -36,7 +36,8 @@ from api.models import (
     Symbol,
     SymbolFeature,
     HistoricalSpacetimeVolume,
-)
+    HistoricalTerritorialEntity,
+)  # pylint: disable=E0611
 from api.serializers import (
     TerritorialEntitySerializer,
     PoliticalRelationSerializer,
@@ -51,6 +52,7 @@ from api.serializers import (
     SymbolFeatureSerializer,
     StvHistoryListSerializer,
     StvHistoryRetrieveSerializer,
+    TeHistorySerializer,
 )
 from api.permissions import IsUserOrReadOnly
 
@@ -210,36 +212,75 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
 
 class HistoryPagination(LimitOffsetPagination):
-    page_size = 100
-    page_size_query_param = 'limit'
+    """
+    Pagination for history items
+    """
+
+    page_size_query_param = "limit"
     max_page_size = 1000
+
+
 class StvHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for SpacetimeVolume History
     """
+
     queryset = HistoricalSpacetimeVolume.objects.all()
     pagination_class = HistoryPagination
-
 
     def get_queryset(self):
 
         queryset = self.queryset
 
-        if self.action == 'list':
-            stv = self.request.query_params.get('stv', None)
-            
+        if self.action == "list":
+            stv = self.request.query_params.get("stv", None)
+
             if stv is not None:
                 queryset = queryset.filter(id=stv)
 
-            te = self.request.query_params.get('te', None)
+            entity = self.request.query_params.get("entity", None)
 
-            if te is not None:
-                queryset = queryset.filter(entity=te)
-        
+            if entity is not None:
+                queryset = queryset.filter(entity=entity)
+
+            user = self.request.query_params.get("user", None)
+
+            if user is not None:
+                queryset = queryset.filter(history_user=user)
+
         return queryset
 
     def get_serializer_class(self):
-            if self.action == 'list':
-                return StvHistoryListSerializer
-            if self.action == 'retrieve':
-                return StvHistoryRetrieveSerializer
+        if self.action == "list":
+            return StvHistoryListSerializer
+        if self.action == "retrieve":
+            return StvHistoryRetrieveSerializer
+        return StvHistoryListSerializer
+
+
+class TeHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for SpacetimeVolume History
+    """
+
+    queryset = HistoricalTerritorialEntity.objects.all()
+    pagination_class = HistoryPagination
+    serializer_class = TeHistorySerializer
+
+    def get_queryset(self):
+
+        queryset = self.queryset
+
+        if self.action == "list":
+
+            entity = self.request.query_params.get("entity", None)
+
+            if entity is not None:
+                queryset = queryset.filter(id=entity)
+
+            user = self.request.query_params.get("user", None)
+
+            if user is not None:
+                queryset = queryset.filter(history_user=user)
+
+        return queryset

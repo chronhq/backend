@@ -41,6 +41,7 @@ from .models import (
     NarrativeVote,
     Profile,
     HistoricalSpacetimeVolume,
+    HistoricalTerritorialEntity,
 )
 
 
@@ -260,15 +261,77 @@ class StvHistoryListSerializer(ModelSerializer):
     Serializes the HistoricalSpacetimeVolume model
     """
 
+    history_user = SerializerMethodField()
+    history_user_id = SerializerMethodField()
+
+    def get_history_user(self, obj):  # pylint: disable=R0201
+        """
+        Returns the username of the user who made the change.
+        """
+
+        return obj.history_user.username
+
+    def get_history_user_id(self, obj):  # pylint: disable=R0201
+        """
+        Returns the id of the user who made the change.
+        """
+
+        return obj.history_user.id
+
     class Meta:
         model = HistoricalSpacetimeVolume
         exclude = ["territory"]
+
 
 class StvHistoryRetrieveSerializer(ModelSerializer):
     """
     Serializes the HistoricalSpacetimeVolume model
     """
 
+    history_user = SerializerMethodField()
+    history_user_id = SerializerMethodField()
+
+    def get_history_user(self, obj):  # pylint: disable=R0201
+        """
+        Returns the username of the user who made the change.
+        """
+
+        return obj.history_user.username
+
+    def get_history_user_id(self, obj):  # pylint: disable=R0201
+        """
+        Returns the id of the user who made the change.
+        """
+
+        return obj.history_user.id
+
     class Meta:
         model = HistoricalSpacetimeVolume
+        fields = "__all__"
+
+
+class TeHistorySerializer(ModelSerializer):
+    """
+    Serializes the HistoricalTerritorialEntity model
+    """
+
+    history_user = SerializerMethodField()
+    history_user_id = SerializerMethodField()
+
+    def get_history_user(self, obj):  # pylint: disable=R0201
+        """
+        Returns the username of the user who made the change.
+        """
+
+        return obj.history_user.username
+
+    def get_history_user_id(self, obj):  # pylint: disable=R0201
+        """
+        Returns the id of the user who made the change.
+        """
+
+        return obj.history_user.id
+
+    class Meta:
+        model = HistoricalTerritorialEntity
         fields = "__all__"

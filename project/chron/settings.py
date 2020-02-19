@@ -60,7 +60,7 @@ INSTALLED_APPS = [
     "drf_firebase_auth",
     "ordered_model",
     "silk",
-    "simple_history"
+    "simple_history",
 ]
 
 if DEBUG:
@@ -79,7 +79,6 @@ MIDDLEWARE = [
     # "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "chron.middleware.ErrorMessageFormatter",
     "simple_history.middleware.HistoryRequestMiddleware",
-
 ]
 
 if DEBUG:

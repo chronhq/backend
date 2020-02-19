@@ -36,6 +36,8 @@ ROUTER.register(r"profiles", views.ProfileViewSet)
 ROUTER.register(r"symbols", views.SymbolViewSet)
 ROUTER.register(r"symbol-features", views.SymbolFeatureViewSet)
 ROUTER.register(r"stv-history", views.StvHistoryViewSet)
+ROUTER.register(r"te-history", views.TeHistoryViewSet)
+
 
 urlpatterns = [
     path(
