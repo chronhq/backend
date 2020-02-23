@@ -59,7 +59,7 @@ lint: ## Lints python files to pass CI
 	docker-compose exec web black . --exclude /migrations/
 	docker-compose exec web pylint --ignore=tests ./api/
 	docker-compose exec web pylint --rcfile=api/tests/pylintrc ./api/tests
-	
+
 bash: ## Create shell in web container
 	docker-compose exec web sh
 
@@ -73,10 +73,9 @@ admin: ## Creates a super user based on the values supplied in the configuration
 	docker-compose exec web ./manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('$(ADMIN_USER)', '$(ADMIN_EMAIL)', '$(ADMIN_PASS)')"
 
 # Geometry
-
 mvt-stv: ## Generates mbtiles for STVs
 	docker-compose exec db bash /docker-entrypoint-initdb.d/scripts/getSTVGeoJSON.sh
-	docker-compose exec mbtiles /bin/sh /scripts/buildMVT.sh stv
+	docker-compose exec mbtiles /bin/sh /scripts/buildMVT.sh
 	docker-compose exec mbtiles /bin/rm -f /root/mbtiles/stv.mbtiles
 	docker-compose restart mbtiles
 	docker-compose exec mbtiles /bin/mv /tmp/stv.mbtiles /root/mbtiles/stv.mbtiles
