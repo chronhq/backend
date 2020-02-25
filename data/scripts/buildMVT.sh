@@ -18,18 +18,26 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 LAYER="stv"
-REMOVE=$1
+REMOVE=$@
 
 mkdir -p /tmp
 
 IN="/data/${LAYER}.json"
 TMP="/tmp/${LAYER}"
 
-if [[ -z "$1" ]]; then
+# ash-compatible array join implementation
+REMOVE_STRING=""
+DELIM=""
+for r in $@ ; do
+  REMOVE_STRING="${REMOVE_STRING}${DELIM}${r}"
+  DELIM=","
+done
+
+if [[ "$#" -eq 0 ]]; then
   tippecanoe -o $TMP -f -z${ZOOM} -s EPSG:4326 $IN
 else
   tippecanoe -f -o "$TMP-$REMOVE.mbtiles" -z${ZOOM} -s EPSG:4326 "/data/${LAYER}-${REMOVE}.json"
-  tile-join -j '{"*":["!=","id",'"${REMOVE}"']}' -f -o "${TMP}-cleaned.mbtiles" /root/mbtiles/stv.mbtiles
+  tile-join -j '{"*":["!in","id",'"${REMOVE_STRING}"']}' -f -o "${TMP}-cleaned.mbtiles" /root/mbtiles/stv.mbtiles
   tile-join -f -o "${TMP}.mbtiles" "${TMP}-cleaned.mbtiles" "$TMP-$REMOVE.mbtiles"
 fi
 

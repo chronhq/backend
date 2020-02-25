@@ -56,9 +56,8 @@ function feature() {
 
 SEPARATOR=""
 
-if [[ -z "$1" ]]; then
+if [[ "$#" -eq 0 ]]; then
   # build geojson for all STVs
-  rm $FCFILE
   echo '{"type": "FeatureCollection","features": [' > $FCFILE
   for id in $(eval $psql "'select id from $TABLE'"); do
     # echo This is id: $id;
@@ -69,10 +68,13 @@ if [[ -z "$1" ]]; then
   done
   echo ']}' >> $FCFILE
 else
-  # build geojson for pk=$1
-  rm "${DATA}/${LAYER}-$1.json"
-  echo '{"type": "FeatureCollection","features": [' > "${DATA}/${LAYER}-$1.json"
-  feature "$1"
-  eval $psql "\"$query\"" >> "${DATA}/${LAYER}-$1.json"
-  echo ']}' >> "${DATA}/${LAYER}-$1.json"
+  # build geojson for pk=$@
+  echo '{"type": "FeatureCollection","features": [' > "${DATA}/${LAYER}-$@.json"
+  for arg; do
+    echo -n $SEPARATOR >> "${DATA}/${LAYER}-$@.json"
+    feature "$arg"
+    eval $psql "\"$query\"" >> "${DATA}/${LAYER}-$@.json"
+    SEPARATOR=","
+  done
+  echo ']}' >> "${DATA}/${LAYER}-$@.json"
 fi
