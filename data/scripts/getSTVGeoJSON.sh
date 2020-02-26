@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Chron.
 # Copyright (C) 2019 Alisa Belyaeva, Ata Ali Kilicli, Amaury Martiny,
@@ -23,8 +23,6 @@ DATA="/data"
 mkdir -p $DATA
 LAYER='stv'
 FCFILE="${DATA}/${LAYER}.json"
-
-TABLE='api_spacetimevolume'
 
 
 function feature() {
@@ -67,6 +65,8 @@ if [[ "$#" -eq 0 ]]; then
     SEPARATOR=","
   done
   echo ']}' >> $FCFILE
+  echo "GeoJSON built successfully"
+  sh ./buildMVT.sh
 else
   # build geojson for pk=$@
   echo '{"type": "FeatureCollection","features": [' > $FCFILE
@@ -77,4 +77,6 @@ else
     SEPARATOR=","
   done
   echo ']}' >> $FCFILE
+  echo "GeoJSON built successfully"
+  sh ./buildMVT.sh $@
 fi

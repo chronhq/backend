@@ -17,31 +17,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-LAYER="stv"
-REMOVE=$@
+date=$(date +%D)
+time=$(date +%T)
+dt="$date $time"
 
-mkdir -p /tmp
+psql="psql -d \"host=db user=${POSTGRES_USER} password=${POSTGRES_PASSWORD}\" -t -c"
 
-IN="/data/${LAYER}.json"
-TMP="/tmp/${LAYER}"
+query="
+SELECT string_agg(id::text, ' ')
+FROM api_historicalspacetimevolume
+WHERE history_date >= ('${dt}'::date - interval '1 hour')
+"
 
-# ash-compatible array join implementation
-REMOVE_STRING=""
-DELIM=""
-for r in $@ ; do
-  REMOVE_STRING="${REMOVE_STRING}${DELIM}${r}"
-  DELIM=","
-done
-
-if [[ "$#" -eq 0 ]]; then
-  tippecanoe -o $TMP -f -z${ZOOM} -s EPSG:4326 $IN
-else
-  tippecanoe -f -o "$TMP-$REMOVE.mbtiles" -z${ZOOM} -s EPSG:4326 $IN
-  tile-join -j '{"*":["!in","id",'"${REMOVE_STRING}"']}' -f -o "${TMP}-cleaned.mbtiles" /root/mbtiles/stv.mbtiles
-  tile-join -f -o "${TMP}.mbtiles" "${TMP}-cleaned.mbtiles" "$TMP-$REMOVE.mbtiles"
-fi
-
-echo "Finished building mbtiles"
-
-# Can't be done from here because of the filesystem lock issues
-# /bin/mv $TMP $MVT
+updates=$(eval $psql "\"$query\"")
+echo "Updated STVs: ${updates}"
+sh ./getSTVGeoJSON.sh $updates
