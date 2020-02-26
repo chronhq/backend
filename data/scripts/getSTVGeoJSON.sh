@@ -69,12 +69,12 @@ if [[ "$#" -eq 0 ]]; then
   echo ']}' >> $FCFILE
 else
   # build geojson for pk=$@
-  echo '{"type": "FeatureCollection","features": [' > "${DATA}/${LAYER}-$@.json"
+  echo '{"type": "FeatureCollection","features": [' > $FCFILE
   for arg; do
-    echo -n $SEPARATOR >> "${DATA}/${LAYER}-$@.json"
+    echo -n $SEPARATOR >> $FCFILE
     feature "$arg"
-    eval $psql "\"$query\"" >> "${DATA}/${LAYER}-$@.json"
+    eval $psql "\"$query\"" >> $FCFILE
     SEPARATOR=","
   done
-  echo ']}' >> "${DATA}/${LAYER}-$@.json"
+  echo ']}' >> $FCFILE
 fi

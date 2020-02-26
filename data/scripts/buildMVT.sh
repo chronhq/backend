@@ -36,7 +36,7 @@ done
 if [[ "$#" -eq 0 ]]; then
   tippecanoe -o $TMP -f -z${ZOOM} -s EPSG:4326 $IN
 else
-  tippecanoe -f -o "$TMP-$REMOVE.mbtiles" -z${ZOOM} -s EPSG:4326 "/data/${LAYER}-${REMOVE}.json"
+  tippecanoe -f -o "$TMP-$REMOVE.mbtiles" -z${ZOOM} -s EPSG:4326 $IN
   tile-join -j '{"*":["!in","id",'"${REMOVE_STRING}"']}' -f -o "${TMP}-cleaned.mbtiles" /root/mbtiles/stv.mbtiles
   tile-join -f -o "${TMP}.mbtiles" "${TMP}-cleaned.mbtiles" "$TMP-$REMOVE.mbtiles"
 fi
