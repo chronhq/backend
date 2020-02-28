@@ -19,7 +19,8 @@
 
 psql="psql -d \"host=db user=${POSTGRES_USER} password=${POSTGRES_PASSWORD}\" -t -c"
 
-DATA="/data"
+DIR="$( cd "$( dirname "$0" )" && pwd )"
+DATA="${DIR}/../data"
 mkdir -p $DATA
 LAYER='stv'
 FCFILE="${DATA}/${LAYER}.json"
