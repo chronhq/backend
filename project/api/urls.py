@@ -35,8 +35,8 @@ ROUTER.register(r"narrative-votes", views.NarrativeVoteViewSet)
 ROUTER.register(r"profiles", views.ProfileViewSet)
 ROUTER.register(r"symbols", views.SymbolViewSet)
 ROUTER.register(r"symbol-features", views.SymbolFeatureViewSet)
-ROUTER.register(r"stv-history", views.StvHistoryViewSet)
-ROUTER.register(r"te-history", views.TeHistoryViewSet)
+ROUTER.register(r"stv-history", views.StvHistoryViewSet, basename='stv-history')
+ROUTER.register(r"te-history", views.TeHistoryViewSet, basename='te-history')
 
 
 urlpatterns = [

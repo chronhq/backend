@@ -269,14 +269,20 @@ class StvHistoryListSerializer(ModelSerializer):
         Returns the username of the user who made the change.
         """
 
-        return obj.history_user.username
+        if obj.history_user is not None:
+            return obj.history_user.username
+        else:
+            return None
 
     def get_history_user_id(self, obj):  # pylint: disable=R0201
         """
         Returns the id of the user who made the change.
         """
 
-        return obj.history_user.id
+        if obj.history_user is not None:
+            return obj.history_user.id
+        else:
+            return None
 
     class Meta:
         model = HistoricalSpacetimeVolume
@@ -296,14 +302,20 @@ class StvHistoryRetrieveSerializer(ModelSerializer):
         Returns the username of the user who made the change.
         """
 
-        return obj.history_user.username
+        if obj.history_user is not None:
+            return obj.history_user.username
+        else:
+            return None
 
     def get_history_user_id(self, obj):  # pylint: disable=R0201
         """
         Returns the id of the user who made the change.
         """
 
-        return obj.history_user.id
+        if obj.history_user is not None:
+            return obj.history_user.id
+        else:
+            return None
 
     class Meta:
         model = HistoricalSpacetimeVolume
@@ -323,14 +335,19 @@ class TeHistorySerializer(ModelSerializer):
         Returns the username of the user who made the change.
         """
 
-        return obj.history_user.username
+        if obj.history_user is not None:
+            return obj.history_user.username
+        else:
+            return None
 
     def get_history_user_id(self, obj):  # pylint: disable=R0201
         """
         Returns the id of the user who made the change.
         """
-
-        return obj.history_user.id
+        if obj.history_user is not None:
+            return obj.history_user.id
+        else:
+            return None
 
     class Meta:
         model = HistoricalTerritorialEntity
