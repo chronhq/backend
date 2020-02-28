@@ -24,7 +24,7 @@ dt="$date $time"
 psql="psql -d \"host=db user=${POSTGRES_USER} password=${POSTGRES_PASSWORD}\" -t -c"
 
 query="
-SELECT string_agg(id::text, ' ')
+SELECT string_agg(DISTINCT id::text, ' ')
 FROM api_historicalspacetimevolume
 WHERE history_date >= ('${dt}'::date - interval '1 hour')
 "
