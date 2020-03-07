@@ -42,3 +42,4 @@ services:
       - ./data/mbtiles:/root/mbtiles
       - ./data/scripts:/scripts
       - ./data/data:/data
+      - ./config/cronjobs:/etc/crontabs/root
