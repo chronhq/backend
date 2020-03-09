@@ -17,18 +17,42 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-date=$(date +%D)
-time=$(date +%T)
-dt="$date $time"
+DIR="$( cd "$( dirname "$0" )" && pwd )"
+ORIG="/root/mbtiles/stv.mbtiles"
+
+PREV_RUN=/data/PREV_RUN
+[ ! -f ${PREV_RUN} ] && echo -n 0 > ${PREV_RUN}
+
+CUR=$(date "+%s")
+PREV=`cat $PREV_RUN`
+
+if [[ "$PREV" -eq "$PREV" ]] 2>/dev/null; then
+    echo "$(date): Previous run was $(($CUR - $PREV)) seconds ago"
+else
+    echo "$(date): Previous run was not detected"
+    PREV=0
+fi
 
 psql="psql -d \"host=db user=${POSTGRES_USER} password=${POSTGRES_PASSWORD}\" -t -c"
 
 query="
 SELECT string_agg(DISTINCT id::text, ' ')
 FROM api_historicalspacetimevolume
-WHERE history_date >= ('${dt}'::date - interval '1 hour')
+WHERE history_date >= to_timestamp(${PREV})
 "
 
-updates=$(eval $psql "\"$query\"")
-echo "Updated STVs: ${updates}"
-sh ./getSTVGeoJSON.sh $updates
+updates=$(eval $psql "\"$query\"" | sed 's/^\s//')
+
+if [ -f "$ORIG" ]; then
+    if [[ ${#updates[@]} -eq 0 ]]; then
+        echo "$(date): Updated STVs: none"
+    else
+        echo "$(date): Updated STVs: ${updates}"
+        sh ${DIR}/getSTVGeoJSON.sh $updates
+    fi
+else
+    echo "$(date): Buiding STVs from scratch"
+    sh ${DIR}/getSTVGeoJSON.sh
+fi
+
+[ $? -eq 0 ] && echo -n ${CUR} > ${PREV_RUN}

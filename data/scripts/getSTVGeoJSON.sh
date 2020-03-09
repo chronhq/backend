@@ -17,20 +17,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+LOCK="/tmp/.getSTVGeoJSON.lock"
 
-# Check if Lock File exists, if not create it and set trap on exit
-if { set -C; 2>/dev/null > ./.getSTVGeoJSON.lock; }; then
-  trap "rm -f ./.getSTVGeoJSON.lock" EXIT
-else
+if [ -e ${LOCK} ] && kill -0 $(cat ${LOCK}) 2>/dev/null; then
   echo "Lock file exists... exiting"
-  exit
+  exit 1
 fi
 
+trap "rm -f ${LOCK}; exit" INT TERM EXIT
+echo $$ > ${LOCK}
 
 psql="psql -d \"host=db user=${POSTGRES_USER} password=${POSTGRES_PASSWORD}\" -t -c"
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
-DATA="${DIR}/../data"
+DATA="/data"
 mkdir -p $DATA
 LAYER='stv'
 FCFILE="${DATA}/${LAYER}.json"
@@ -66,28 +66,25 @@ function feature() {
 SEPARATOR=""
 
 if [[ "$#" -eq 0 ]]; then
-  # build geojson for all STVs
-  echo '{"type": "FeatureCollection","features": [' >| $FCFILE
-  for id in $(eval $psql "'select id from api_spacetimevolume'"); do
-    # echo This is id: $id;
-    echo -n $SEPARATOR >> $FCFILE
-    feature "$id"
-    eval $psql "\"$query\"" >> $FCFILE
-    SEPARATOR=","
-  done
-  echo ']}' >> $FCFILE
-  echo "GeoJSON built successfully"
-  sh ./buildMVT.sh
+  LIST=$(eval $psql "'select id from api_spacetimevolume'")
 else
-  # build geojson for pk=$@
-  echo '{"type": "FeatureCollection","features": [' >| $FCFILE
-  for arg; do
-    echo -n $SEPARATOR >> $FCFILE
-    feature "$arg"
-    eval $psql "\"$query\"" >> $FCFILE
-    SEPARATOR=","
-  done
-  echo ']}' >> $FCFILE
-  echo "GeoJSON built successfully"
-  sh ./buildMVT.sh $@
+  LIST=$@
 fi
+
+# build geojson for STVs
+echo '{"type": "FeatureCollection","features": [' >| $FCFILE
+for id in $LIST; do
+  feature "$id"
+  res=$(eval $psql "\"$query\"")
+  if [ "$res" != "" ]; then
+    echo -n $SEPARATOR >> $FCFILE
+    echo $res >> $FCFILE
+    SEPARATOR=","
+  fi
+done
+echo ']}' >> $FCFILE
+echo "$(date): GeoJSON built successfully"
+
+sh ${DIR}/buildMVT.sh $@
+
+rm -rf ${LOCK}

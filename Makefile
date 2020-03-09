@@ -73,9 +73,13 @@ admin: ## Creates a super user based on the values supplied in the configuration
 	docker-compose exec web ./manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('$(ADMIN_USER)', '$(ADMIN_EMAIL)', '$(ADMIN_PASS)')"
 
 # Geometry
-mvt-stv: ## Generates mbtiles for STVs
-	docker-compose exec db bash /docker-entrypoint-initdb.d/scripts/getSTVGeoJSON.sh
-	docker-compose exec mbtiles /bin/rm -f /root/mbtiles/stv.mbtiles
+mvt-build: ## Generates mbtiles for STVs
+	docker-compose exec mbtiles sh /scripts/getSTVGeoJSON.sh && /bin/rm -f /root/mbtiles/stv.mbtiles
+	docker-compose restart mbtiles
+	docker-compose exec mbtiles /bin/mv /tmp/stv.mbtiles /root/mbtiles/stv.mbtiles
+
+mvt-update: ## Update mbtiles for STVs
+	docker-compose exec mbtiles sh /scripts/pullUpdatedSTVs.sh && /bin/rm -f /root/mbtiles/stv.mbtiles
 	docker-compose restart mbtiles
 	docker-compose exec mbtiles /bin/mv /tmp/stv.mbtiles /root/mbtiles/stv.mbtiles
 

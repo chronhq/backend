@@ -18,12 +18,17 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 LAYER="stv"
-REMOVE=$@
 
 mkdir -p /tmp
 
+ORIG="/root/mbtiles/stv.mbtiles"
+
 IN="/data/${LAYER}.json"
 TMP="/tmp/${LAYER}"
+OUT="${TMP}.mbtiles"
+CLEAN="${TMP}-CLEAN.mbtiles"
+UPDATES="${TMP}-UPDATES.mbtiles"
+
 
 # ash-compatible array join implementation
 REMOVE_STRING=""
@@ -36,12 +41,13 @@ done
 if [[ "$#" -eq 0 ]]; then
   tippecanoe -o $TMP -f -z${ZOOM} -s EPSG:4326 $IN
 else
-  tippecanoe -f -o "$TMP-$REMOVE.mbtiles" -z${ZOOM} -s EPSG:4326 $IN
-  tile-join -j '{"*":["!in","id",'"${REMOVE_STRING}"']}' -f -o "${TMP}-cleaned.mbtiles" /root/mbtiles/stv.mbtiles
-  tile-join -f -o "${TMP}.mbtiles" "${TMP}-cleaned.mbtiles" "$TMP-$REMOVE.mbtiles"
+  tippecanoe -f -o ${UPDATES} -z${ZOOM} -s EPSG:4326 $IN
+  tile-join -j '{"*":["!in","id",'"${REMOVE_STRING}"']}' -f -o ${CLEAN} ${ORIG}
+  tile-join -f -o ${OUT} ${CLEAN} ${UPDATES}
+  rm -f $UPDATES $CLEAN
 fi
 
-echo "Finished building mbtiles"
+echo "$(date): Finished building mbtiles"
 
 # Can't be done from here because of the filesystem lock issues
 # /bin/mv $TMP $MVT
