@@ -23,7 +23,7 @@ import json
 from json.decoder import JSONDecodeError
 from cacheops import cached_as
 from django.conf import settings
-from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.geos import GEOSGeometry, GEOSException
 from django.contrib.gis.gdal.error import GDALException
 from django.utils.datastructures import MultiValueDictKeyError
 from django.core.files.uploadedfile import UploadedFile
@@ -86,15 +86,29 @@ def _validate_geometry(request):
                 feature_geom = feature["geometry"]
                 if "crs" in features:  # Copy SRID data if present
                     feature_geom["crs"] = features["crs"]
-                geom = geom.union(GEOSGeometry(json.dumps(feature_geom)))
+                tmp_geom = GEOSGeometry(json.dumps(feature_geom))
+                if tmp_geom.srid != geom.srid:
+                    tmp_geom.transform(geom.srid)
+                geom = geom.union(tmp_geom)
         except (GDALException, KeyError, JSONDecodeError):
             geom = GEOSGeometry(content)
     except GDALException:
         raise ValidationError("Geometry is not recognized")
+    if geom.srid != 4326:
+        try:
+            geom.transform(4326)
+        except GEOSException:
+            raise ValidationError("Geometry SRID must be 4326")
+    if geom.geom_type == "GeometryCollection":
+        # TODO find a better way to convert Geometry Collection to MultiPolygon
+        tmp_geom = GEOSGeometry("POINT EMPTY", srid=4326)
+        for i in geom:
+            tmp_geom = tmp_geom.union(i)
+        geom = tmp_geom
     if geom.geom_type not in ["Polygon", "MultiPolygon"]:
         raise ValidationError("Invalid geometry type")
-    if geom.srid != 4326:
-        raise ValidationError("Geometry SRID must be 4326")
+    if not geom.valid:
+        geom = geom.buffer(0)
     return geom
 
 
@@ -136,7 +150,7 @@ def _overlaps_queryset(geom, start_date, end_date):
                 SELECT *,
                     ST_Difference(
                         territory,
-                        %(geom)s::geometry
+                        ST_MakeValid(%(geom)s::geometry)
                     ) as diff
                 FROM (
                     SELECT *
@@ -145,7 +159,7 @@ def _overlaps_queryset(geom, start_date, end_date):
                         AND stv.start_date <= %(end_date)s::numeric(10,1)
                         AND ST_Intersects(
                             territory,
-                        %(geom)s::geometry)
+                        ST_MakeValid(%(geom)s::geometry))
                 ) as foo
             ) as foo
         ) as foo
