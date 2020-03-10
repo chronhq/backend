@@ -8,7 +8,7 @@ services:
       - postgres.env
       - mbtiles.env
     volumes:
-      - ./data:/docker-entrypoint-initdb.d
+      - ./data/db:/var/lib/postgresql/data 
   nginx:
     image: nginx:stable-alpine
     volumes:
