@@ -24,10 +24,10 @@ PREV_RUN=/data/PREV_RUN
 [ ! -f ${PREV_RUN} ] && echo -n 0 > ${PREV_RUN}
 
 CUR=$(date "+%s")
-PREV=`cat $PREV_RUN`
+PREV=$(cat $PREV_RUN)
 
 if [[ "$PREV" -eq "$PREV" ]] 2>/dev/null; then
-    echo "$(date): Previous run was $(($CUR - $PREV)) seconds ago"
+    echo "$(date): Previous run was $((CUR - PREV)) seconds ago"
 else
     echo "$(date): Previous run was not detected"
     PREV=0
