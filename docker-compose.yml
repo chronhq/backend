@@ -1,9 +1,9 @@
-version: '3'
+version: "3"
 services:
   db:
     image: mdillon/postgis:11-alpine
     ports:
-      - '5432'
+      - "5432"
     env_file:
       - postgres.env
       - mbtiles.env
@@ -23,8 +23,8 @@ services:
       - ./project:/src
       - ./config:/config
     ports:
-      - '8086:80'
-      - '8006:81'
+      - "8086:80"
+      - "8006:81"
     env_file:
       - django.env
       - postgres.env
@@ -32,12 +32,13 @@ services:
   redis:
     image: redis:alpine
   mbtiles:
-    image: morlov/mbtiles-server:latest
+    image: morlov/mbtiles-psql:latest
     env_file:
       - mbtiles.env
+      - postgres.env
     ports:
-    - "5000:5000"
+      - "5000:5000"
     volumes:
-    - ./data/mbtiles:/root/mbtiles
-    - ./data/scripts:/scripts
-    - ./data/data:/data
+      - ./data/mbtiles:/root/mbtiles
+      - ./data/scripts:/scripts
+      - ./data/data:/data
