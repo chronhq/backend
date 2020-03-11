@@ -20,7 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.db import connection
-from django.http import HttpResponse
+from django.http import JsonResponse
+
 
 def te_list(request):
     """
@@ -29,7 +30,7 @@ def te_list(request):
     with connection.cursor() as cursor:
         cursor.execute(
             """
-            SELECT json_agg(foo) FROM (
+            SELECT json_agg(row_to_json(foo))::text FROM (
                 SELECT
                     api_territorialentity.*,
                     stvs,
@@ -42,7 +43,7 @@ def te_list(request):
                             start_date,
                             end_date,
                             ST_AsGeoJSON(visual_center)::json AS visual_center,
-                            "references"	
+                            "references"
                         FROM api_spacetimevolume
                         ) as foo
                     GROUP BY entity
@@ -53,5 +54,5 @@ def te_list(request):
         )
         data = cursor.fetchone()[0]
         if data is None:
-            data = '[]'
-        return HttpResponse(data, content_type="application/json")
+            data = "[]"
+        return JsonResponse(data)
