@@ -20,10 +20,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.db import connection
-from django.http import JsonResponse
+from django.http import HttpResponse
 
 
 def te_list(request):
+    # pylint: disable=R5102
     """
     Custom view to serve list of the Territorial Entities faster
     """
@@ -55,4 +56,4 @@ def te_list(request):
         data = cursor.fetchone()[0]
         if data is None:
             data = "[]"
-        return JsonResponse(data)
+        return HttpResponse(data, content_type="application/json")
