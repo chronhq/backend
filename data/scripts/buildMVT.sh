@@ -39,7 +39,7 @@ for r in $@ ; do
 done
 
 if [[ "$#" -eq 0 ]]; then
-  tippecanoe -o $TMP -f -z${ZOOM} -s EPSG:4326 $IN
+  tippecanoe -o $OUT -f -z${ZOOM} -s EPSG:4326 $IN
 else
   tippecanoe -f -o ${UPDATES} -z${ZOOM} -s EPSG:4326 $IN
   tile-join -j '{"*":["!in","id",'"${REMOVE_STRING}"']}' -f -o ${CLEAN} ${ORIG}
