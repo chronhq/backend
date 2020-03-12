@@ -29,6 +29,31 @@ from ordered_model.models import OrderedModel
 from simple_history.models import HistoricalRecords
 
 
+class TileLayout(models.Model):
+    """ TileBBox to polygon mapping """
+
+    zoom = models.PositiveIntegerField()
+    x_coor = models.PositiveIntegerField()
+    y_coor = models.PositiveIntegerField()
+    bbox = models.GeometryField()
+
+    class Meta:
+        unique_together = ("zoom", "x_coor", "y_coor")
+
+
+class MVTLayers(models.Model):
+    """ Store generated MVT layers """
+
+    zoom = models.PositiveIntegerField()
+    x_coor = models.PositiveIntegerField()
+    y_coor = models.PositiveIntegerField()
+    layer = models.TextField(max_length=64)
+    tile = models.BinaryField()
+
+    class Meta:
+        unique_together = ("zoom", "x_coor", "y_coor", "layer")
+
+
 class Vote(models.Model):
     """
     Abstract class to store User's votes
