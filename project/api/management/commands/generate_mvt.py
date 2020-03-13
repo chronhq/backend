@@ -21,7 +21,7 @@ from django.db import connection
 from django.core.management.base import BaseCommand
 from api.models import TileLayout, MVTLayers
 
-ZOOM = os.environ.get("ZOOM", 4)
+ZOOM = int(os.environ.get("ZOOM", 8))
 
 
 def create_tile_layout(zoom, x_coor, y_coor):
@@ -157,7 +157,7 @@ class Command(BaseCommand):
         # Remove tiles with precision greater than zoom
         TileLayout.objects.filter(zoom__gt=ZOOM).delete()
         MVTLayers.objects.filter(zoom__gt=ZOOM).delete()
-        for zoom in range(0, ZOOM):
+        for zoom in range(0, ZOOM + 1):
             tiles = pow(2, zoom)
             new_layout = populate_tile_layout(zoom, tiles)
             if not options["update"] or new_layout:
