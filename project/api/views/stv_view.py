@@ -103,7 +103,10 @@ def _validate_geometry(request):
         # TODO find a better way to convert Geometry Collection to MultiPolygon
         tmp_geom = GEOSGeometry("POINT EMPTY", srid=4326)
         for i in geom:
-            tmp_geom = tmp_geom.union(i)
+            try:
+                tmp_geom = tmp_geom.union(i.buffer(0))
+            except GEOSException:
+                raise ValidationError('Invalid geometry')
         geom = tmp_geom
     if geom.geom_type not in ["Polygon", "MultiPolygon"]:
         raise ValidationError("Invalid geometry type")
