@@ -149,6 +149,9 @@ class Command(BaseCommand):
         parser.add_argument(
             "--update", action="store_true", help="Update STVs",
         )
+        parser.add_argument(
+            "--timestamp", type=int, help="Previous run", default=0
+        )
 
     def handle(self, *args, **options):
         # Remove tiles with precision greater than zoom
@@ -160,5 +163,4 @@ class Command(BaseCommand):
             if not options["update"] or new_layout:
                 populate_mvt_stv_layer(zoom, tiles)
         if options["update"] and not new_layout:
-            # TODO pass valid timestamp
-            update_affected_mvts(0)
+            update_affected_mvts(options["timestamp"])
