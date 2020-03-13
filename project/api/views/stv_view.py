@@ -106,12 +106,18 @@ def _validate_geometry(request):
             try:
                 tmp_geom = tmp_geom.union(i.buffer(0))
             except GEOSException:
-                raise ValidationError('Invalid geometry')
+                raise ValidationError("Invalid geometry")
         geom = tmp_geom
     if geom.geom_type not in ["Polygon", "MultiPolygon"]:
         raise ValidationError("Invalid geometry type")
     if not geom.valid:
         geom = geom.buffer(0)
+    if not geom.within(
+        GEOSGeometry("POLYGON ((-180 -90, -180 90, 180 90, 180 -90, -180 -90))")
+    ):
+        raise ValidationError(
+            "Not bounded by EPSG:4326 coordinates, check file projection"
+        )
     return geom
 
 
