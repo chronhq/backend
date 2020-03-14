@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.db.models import Count
+from django.http import JsonResponse
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -229,22 +230,15 @@ class StvHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = HistoryPagination
 
     def get_queryset(self):
-
         queryset = self.queryset
-
         if self.action == "list":
             stv = self.request.query_params.get("stv", None)
-
             if stv is not None:
                 queryset = queryset.filter(id=stv)
-
             entity = self.request.query_params.get("entity", None)
-
             if entity is not None:
                 queryset = queryset.filter(entity=entity)
-
             user = self.request.query_params.get("user", None)
-
             if user is not None:
                 queryset = queryset.filter(history_user=user)
 
@@ -256,6 +250,13 @@ class StvHistoryViewSet(viewsets.ReadOnlyModelViewSet):
         if self.action == "retrieve":
             return StvHistoryRetrieveSerializer
         return StvHistoryListSerializer
+
+    def update(self, request, pk=None):  # pylint: disable=R0201
+        """
+        Reverts model to a certain HistoricalRecord on PUT
+        """
+        HistoricalSpacetimeVolume.objects.get(history_id=pk).instance.save()
+        return JsonResponse({"status": "Model reverted successfully"})
 
 
 class TeHistoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -284,3 +285,10 @@ class TeHistoryViewSet(viewsets.ReadOnlyModelViewSet):
                 queryset = queryset.filter(history_user=user)
 
         return queryset
+
+    def update(self, request, pk=None):  # pylint: disable=R0201
+        """
+        Reverts model to a certain HistoricalRecord on PUT
+        """
+        HistoricalTerritorialEntity.objects.get(history_id=pk).instance.save()
+        return JsonResponse({"status": "Model reverted successfully"})

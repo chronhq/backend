@@ -175,13 +175,11 @@ class STVTests(APITest):
         Ensure we can query for all Cities
         """
 
-        url = reverse('stv-history-list')
+        url = reverse("stv-history-list")
         response = self.client.get(url, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]["id"], 11)
-
-
 
     @authorized
     def test_api_can_query_te_history_detail(self):
@@ -189,7 +187,7 @@ class STVTests(APITest):
         Ensure we can query for all Cities
         """
 
-        url = reverse('stv-history-detail', args=[11])
+        url = reverse("stv-history-detail", args=[11])
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["id"], 11)
