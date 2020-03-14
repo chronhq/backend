@@ -104,7 +104,7 @@ class TerritorialEntity(models.Model):
         through="PoliticalRelation",
         related_name="political_relations",
     )
-    history = HistoricalRecords(related_name="records")
+    history = HistoricalRecords()
 
     def clean(self, *args, **kwargs):  # pylint: disable=W0221
         if not self.inception_date is None and not self.dissolution_date is None:
@@ -272,7 +272,7 @@ class SpacetimeVolume(models.Model):
     references = ArrayField(models.TextField(max_length=500), blank=True, null=True)
     visual_center = models.PointField(blank=True, null=True)
     related_events = models.ManyToManyField(CachedData, blank=True)
-    history = HistoricalRecords(related_name="records")
+    history = HistoricalRecords()
 
     def calculate_center(self):
         """
