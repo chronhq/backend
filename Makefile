@@ -81,9 +81,9 @@ mvt-build: ## Generates mbtiles for STVs
 
 mvt-update: ## Update mbtiles for STVs
 	docker-compose exec mbtiles sh /scripts/pullUpdatedSTVs.sh 
-	docker-compose exec mbtiles /bin/rm -f /root/mbtiles/stv.mbtiles
+	docker-compose exec mbtiles sh -c "[ -f /tmp/stv.mbtiles ] && /bin/rm -f /root/mbtiles/stv.mbtiles || echo No changes"
 	docker-compose restart mbtiles
-	docker-compose exec mbtiles /bin/mv /tmp/stv.mbtiles /root/mbtiles/stv.mbtiles
+	docker-compose exec mbtiles sh -c "[ -f /tmp/stv.mbtiles ] && /bin/mv /tmp/stv.mbtiles /root/mbtiles/stv.mbtiles || echo skipping"
 
 # Docker images
 image: ## Build backend:latest image
