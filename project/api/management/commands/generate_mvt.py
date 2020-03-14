@@ -116,7 +116,7 @@ def create_mvt_stv(zoom, x_coor, y_coor):
             FROM api_spacetimevolume
             JOIN api_territorialentity
             ON api_spacetimevolume.entity_id = api_territorialentity.id
-            WHERE territory && TileBBox(%(zoom)s, %(x_coor)s, %(y_coor)s, 4326)
+            WHERE ST_Intersects(territory, TileBBox(%(zoom)s, %(x_coor)s, %(y_coor)s, 4326))
             ) as a
             ON CONFLICT (zoom, x_coor, y_coor, layer) DO UPDATE SET tile = EXCLUDED.tile
             """,
