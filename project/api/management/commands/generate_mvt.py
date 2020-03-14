@@ -17,16 +17,31 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 import os
-from django.db import connection
+from django import db
 from django.core.management.base import BaseCommand
 from api.models import TileLayout, MVTLayers
+
+try:
+    THREADS = os.cpu_count() - 1
+except TypeError:
+    THREADS = 1
+THREADS = int(os.environ.get("MVT_THREADS", THREADS))
 
 ZOOM = int(os.environ.get("ZOOM", 8))
 
 
+def split_list(alist, wanted_parts=1):
+    """ Split array into smaller arrays """
+    length = len(alist)
+    return [
+        alist[i * length // wanted_parts : (i + 1) * length // wanted_parts]
+        for i in range(wanted_parts)
+    ]
+
+
 def create_tile_layout(zoom, x_coor, y_coor):
     """ Add one TileLayout entity with plain SQL query """
-    with connection.cursor() as cursor:
+    with db.connection.cursor() as cursor:
         cursor.execute(
             """
             INSERT INTO api_tilelayout (zoom, x_coor, y_coor, bbox)
@@ -65,7 +80,7 @@ def create_mvt_stv(zoom, x_coor, y_coor):
     tolerance_multiplier = 1 if zoom > 5 else 2.2 - 0.2 * zoom
     simplification = tolerance * tolerance_multiplier
 
-    with connection.cursor() as cursor:
+    with db.connection.cursor() as cursor:
         cursor.execute(
             """
             INSERT INTO api_mvtlayers (zoom, x_coor, y_coor, layer, tile)
@@ -114,12 +129,38 @@ def create_mvt_stv(zoom, x_coor, y_coor):
         )
 
 
-def populate_mvt_stv_layer(zoom, tiles):
+def mvt_worker(zoom, tiles, update, t_id):
+    """ Start MVT updating process """
+    db.connections.close_all()
+    if not update:
+        print("Thread #{}, Tiles {}".format(t_id, tiles))
+        for y_coor in tiles:
+            for x_coor in tiles:
+                create_mvt_stv(zoom, x_coor, y_coor)
+    else:
+        print("Thread #{} Updating {} tiles".format(t_id, len(tiles)))
+        for tile in tiles:
+            create_mvt_stv(tile.zoom, tile.x_coor, tile.y_coor)
+    os._exit(0)  # pylint: disable=protected-access
+
+
+def populate_mvt_stv_layer(zoom, tile_set, update=False):
     """ Populate MVTLayer table with STV """
-    print("Generating tiles for zoom {}".format(zoom))
-    for y_coor in range(0, tiles):
-        for x_coor in range(0, tiles):
-            create_mvt_stv(zoom, x_coor, y_coor)
+    tiles = (
+        split_list(tile_set, THREADS)
+        if update
+        else split_list(range(0, tile_set), THREADS)
+    )
+    pids = []
+    db.connections.close_all()
+    for t_id in range(0, THREADS):
+        newpid = os.fork()
+        if newpid == 0:
+            mvt_worker(zoom, tiles[t_id], update, t_id)
+        else:
+            pids.append(newpid)
+    for pid in pids:
+        os.waitpid(pid, 0)
 
 
 def update_affected_mvts(timestamp):
@@ -137,9 +178,8 @@ def update_affected_mvts(timestamp):
         """,
         [timestamp],
     )
-    print("Updating {} tiles".format(len(tiles)))
-    for tile in tiles:
-        create_mvt_stv(tile.zoom, tile.x_coor, tile.y_coor)
+    print("Total tiles to update", len(tiles))
+    populate_mvt_stv_layer(0, tiles, True)
 
 
 class Command(BaseCommand):
@@ -149,9 +189,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--update", action="store_true", help="Update STVs",
         )
-        parser.add_argument(
-            "--timestamp", type=int, help="Previous run", default=0
-        )
+        parser.add_argument("--timestamp", type=int, help="Previous run", default=0)
 
     def handle(self, *args, **options):
         # Remove tiles with precision greater than zoom
@@ -161,6 +199,7 @@ class Command(BaseCommand):
             tiles = pow(2, zoom)
             new_layout = populate_tile_layout(zoom, tiles)
             if not options["update"] or new_layout:
+                print("Generating tiles for zoom {}".format(zoom))
                 populate_mvt_stv_layer(zoom, tiles)
         if options["update"] and not new_layout:
             update_affected_mvts(options["timestamp"])

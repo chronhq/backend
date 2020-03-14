@@ -75,7 +75,7 @@ def _calculate_area(geom):
     return row
 
 
-def _validate_geometry(request):
+def _parse_geometry(request):
     content = request.data["territory"].read().decode("utf-8")
     try:
         try:
@@ -94,6 +94,10 @@ def _validate_geometry(request):
             geom = GEOSGeometry(content)
     except GDALException:
         raise ValidationError("Geometry is not recognized")
+    return geom
+
+
+def _validate_geometry(geom):
     if geom.srid != 4326:
         try:
             geom.transform(4326)
@@ -136,7 +140,7 @@ def _stv_form_validate(request):
     except (ValueError, MultiValueDictKeyError):
         raise ValidationError("Use JDN for start_date and end_date")
 
-    geom = _validate_geometry(request)
+    geom = _validate_geometry(_parse_geometry(request))
 
     try:
         request.data["visual_center"] = GEOSGeometry(request.data["visual_center"])
