@@ -12,7 +12,10 @@ services:
       - ./data/db:/var/lib/postgresql/data
   nginx:
     image: nginx:stable-alpine
+    ports:
+      - '3080:80'
     volumes:
+      - ./config/nginx:/etc/nginx/conf.d
       - ./project:/src
     depends_on:
       - web
