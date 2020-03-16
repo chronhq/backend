@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from itertools import tee
 
-from django.db import transaction
+from django.db import transaction, connection
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.management.base import BaseCommand
 from django.contrib.gis.db.models.functions import MakeValid
@@ -47,6 +47,38 @@ def make_stvs_valid(entity):
             )
             stvs.filter(id=stv.id).update(territory=MakeValid("territory"))
 
+def fix_antimeridian():
+    """ Fix polygons along 180th meridian """
+    positive = "SRID=4326;LINESTRING(180 90,180 -90)"
+    negative = "SRID=4326;LINESTRING(-180 90,-180 -90)"
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            UPDATE api_spacetimevolume
+            SET territory=foo.territory
+            FROM (
+                SELECT id,
+                    ST_Split(ST_Split(
+                        territory, ST_GeomFromEWKT(%(antimeridian_positive)s)
+                        ), ST_GeomFromEWKT(%(antimeridian_negative)s)
+                    ) AS territory
+                FROM (
+                    SELECT *
+                    FROM api_spacetimevolume
+                    WHERE
+                        ST_Intersects(territory, ST_GeomFromEWKT(%(antimeridian_positive)s))
+                    OR	ST_Intersects(territory, ST_GeomFromEWKT(%(antimeridian_negative)s))
+                ) AS foo
+                WHERE ST_IsValid(ST_Transform(territory, 3857)) is not True
+            ) AS foo
+            WHERE api_spacetimevolume.id = foo.id
+            """,
+            {
+                "antimeridian_positive": positive,
+                "antimeridian_negative": negative
+            }
+        )
 
 @transaction.atomic
 def recreate_stvs(to_create, to_remove):
@@ -167,7 +199,29 @@ class Command(BaseCommand):
 
     help = "Clean time overlaps for STVs"
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--time-overlaps", action="store_true", help="Fix STVs time overlaps"
+        )
+        parser.add_argument(
+            "--duplicates", action="store_true", help="Merge identical STVs"
+        )
+        parser.add_argument(
+            "--make-valid", action="store_true", help="Fix polygons to be valid"
+        )
+        parser.add_argument(
+            "--antimeridian", action="store_true", help="Fix polygons on antimeridian",
+        )
+        parser.add_argument(
+            "--all", action="store_true", help="Use all methods to fix STVs"
+        )
+
     def handle(self, *args, **options):
+        options_list = ["time_overlaps", "duplicateds", "make_valid", "antimeridian"]
+        if options["all"]:
+            for o in options_list:
+                options[o] = True
+
         entities = TerritorialEntity.objects.all()
 
         for entity in entities:
@@ -180,6 +234,13 @@ class Command(BaseCommand):
                 print("* Removing empty entity")
                 entity.delete()
                 continue
-            make_stvs_valid(entity)
-            handle_te_time(entity)
-            handle_stv_duplicates(entity)
+            if options["make_valid"]:
+                make_stvs_valid(entity)
+            if options["time_overlaps"]:
+                handle_te_time(entity)
+            if options["duplicates"]:
+                handle_stv_duplicates(entity)
+        if options["antimeridian"]:
+            print("Fixing issues around antimeridian")
+            fix_antimeridian()
+            print("Done")

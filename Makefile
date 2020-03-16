@@ -133,3 +133,7 @@ loaddata: ## Restore data from previous dump
 	else \
 		echo Error: No file to load; \
 	fi;
+
+dumpsql: ## dump all data using pg_dumpall
+	docker-compose exec -T db sh -c 'echo localhost:5432:$$POSTGRES_DB:$$POSTGRES_USER:$$POSTGRES_PASSWORD > ~/.pgpass; chmod 600 ~/.pgpass'
+	docker-compose exec -T db sh -c 'pg_dumpall -U $$POSTGRES_USER -f /docker-entrypoint-initdb.d/$$(date "+%Y-%m-%d").dump'

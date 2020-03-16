@@ -129,12 +129,12 @@ def create_mvt_stv(zoom, x_coor, y_coor):
         )
 
 
-def mvt_worker(zoom, tiles, update, t_id):
+def mvt_worker(zoom, tiles, total, update, t_id):
     """ Start MVT updating process """
     db.connections.close_all()
     if not update:
         print("Thread #{}, Tiles {}".format(t_id, tiles))
-        for y_coor in tiles:
+        for y_coor in range(0, total):
             for x_coor in tiles:
                 create_mvt_stv(zoom, x_coor, y_coor)
     else:
@@ -156,7 +156,7 @@ def populate_mvt_stv_layer(zoom, tile_set, update=False):
     for t_id in range(0, THREADS):
         newpid = os.fork()
         if newpid == 0:
-            mvt_worker(zoom, tiles[t_id], update, t_id)
+            mvt_worker(zoom, tiles[t_id], tile_set, update, t_id)
         else:
             pids.append(newpid)
     for pid in pids:
@@ -199,7 +199,7 @@ class Command(BaseCommand):
             tiles = pow(2, zoom)
             new_layout = populate_tile_layout(zoom, tiles)
             if not options["update"] or new_layout:
-                print("Generating tiles for zoom {}".format(zoom))
+                print("Generating tiles for zoom {}. Tiles per row {}".format(zoom, tiles))
                 populate_mvt_stv_layer(zoom, tiles)
         if options["update"] and not new_layout:
             update_affected_mvts(options["timestamp"])
