@@ -64,8 +64,8 @@ def populate_tile_layout(zoom, tiles):
     return True
 
 
-def create_mvt_stv(zoom, x_coor, y_coor):
-    """ Mapbox Vector Tiles for Political Borders """
+def mvt_geom_params(zoom):
+    """ Simplification for territory field """
     # For WebMercator (3857) X coordinate bounds are ±20037508.3427892 meters
     # For SRID 4326 X coordinated bounds are ±180 degrees
     # resolution = (xmax - xmin) or (xmax * 2)
@@ -82,6 +82,24 @@ def create_mvt_stv(zoom, x_coor, y_coor):
     tolerance_multiplier = 1 if zoom > 5 else 2.2 - 0.2 * zoom
     simplification = tolerance * tolerance_multiplier
 
+    return """
+        ST_SnapToGrid(
+            ST_Transform(
+                ST_Simplify(
+                    territory
+                    , {}
+                )
+                , 3857
+            )
+            , 1
+        )
+    """.format(
+        simplification
+    )
+
+
+def create_mvt_stv(zoom, x_coor, y_coor):
+    """ Mapbox Vector Tiles for Political Borders """
     with db.connection.cursor() as cursor:
         cursor.execute(
             """
@@ -94,40 +112,16 @@ def create_mvt_stv(zoom, x_coor, y_coor):
                 , ST_AsMVT(a, 'stv') AS tile
             FROM (
             SELECT
-                api_spacetimevolume.id
-                , api_spacetimevolume.start_date::INTEGER
-                , api_spacetimevolume.end_date::INTEGER
-                , api_spacetimevolume.references
-                , ST_AsMVTGeom(
-                    ST_SnapToGrid(
-                        ST_Transform(
-                            ST_Simplify(
-                                api_spacetimevolume.territory
-                                , %(simplification)s
-                            )
-                            , 3857
-                        )
-                        , 1
-                    )
-                    , TileBBox(%(zoom)s, %(x_coor)s, %(y_coor)s)
-                ) as territory
-                , api_spacetimevolume.entity_id
-                , api_territorialentity.wikidata_id
-                , api_territorialentity.color
-                , api_territorialentity.admin_level
-            FROM api_spacetimevolume
-            JOIN api_territorialentity
-            ON api_spacetimevolume.entity_id = api_territorialentity.id
+                id, start_date, end_date, "references", entity_id, wikidata_id, color, admin_level
+                , ST_AsMVTGeom({}, TileBBox(%(zoom)s, %(x_coor)s, %(y_coor)s)) as territory
+            FROM view_stvmap
             WHERE ST_Intersects(territory, TileBBox(%(zoom)s, %(x_coor)s, %(y_coor)s, 4326))
-            ) as a
+            ) AS a
             ON CONFLICT (zoom, x_coor, y_coor, layer) DO UPDATE SET tile = EXCLUDED.tile
-            """,
-            {
-                "simplification": simplification,
-                "zoom": zoom,
-                "x_coor": x_coor,
-                "y_coor": y_coor,
-            },
+            """.format(
+                mvt_geom_params(zoom)
+            ),
+            {"zoom": zoom, "x_coor": x_coor, "y_coor": y_coor,},
         )
 
 
@@ -203,7 +197,9 @@ class Command(BaseCommand):
             new_layout = populate_tile_layout(zoom, tiles)
             if not options["update"] or new_layout:
                 print(
-                    "Generating tiles for zoom {}. Tiles per row {}".format(zoom, tiles)
+                    "Zoom {0}; Tiles {1}x{1}; Total {2}".format(
+                        zoom, tiles, pow(tiles, 2)
+                    )
                 )
                 populate_mvt_stv_layer(zoom, tiles)
         if options["update"] and not new_layout:
