@@ -25,7 +25,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.gis.db.models.functions import MakeValid
 
 from api.models import TerritorialEntity, SpacetimeVolume
-from api.views.stv_view import _find_difference, _calculate_area
+from api.views.stv_view import find_difference, calculate_area
 
 
 def pairwise(iterable):
@@ -194,16 +194,16 @@ def handle_stv_duplicates(entity):
     for prev, cur in pairwise(stvs):
         if cur.start_date - prev.end_date > 1:
             continue
-        areas = [_calculate_area(prev.territory), _calculate_area(cur.territory)]
+        areas = [calculate_area(prev.territory), calculate_area(cur.territory)]
         # Skip big difference
         if abs(areas[0] - areas[1]) > 100:
             continue
         if areas[0] == areas[1]:
             diff = None
         else:
-            diff = _find_difference(cur.territory, prev.territory)
+            diff = find_difference(cur.territory, prev.territory)
             if diff is None:
-                diff = _find_difference(prev.territory, cur.territory)
+                diff = find_difference(prev.territory, cur.territory)
 
         if diff is None:
             print(

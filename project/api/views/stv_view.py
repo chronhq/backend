@@ -39,10 +39,10 @@ from api.serializers import SpacetimeVolumeSerializer
 AREA_TOLERANCE = 100.0
 
 
-def _find_difference(geom_a, geom_b):
+def find_difference(geom_a, geom_b):
     """
     Calculate difference between two polygons
-    null if no difference
+    None if no difference
     """
     with connection.cursor() as cursor:
         cursor.execute(
@@ -61,8 +61,15 @@ def _find_difference(geom_a, geom_b):
         row = cursor.fetchone()[0]
     return row
 
+def geom_difference(geom_a, geom_b):
+    """ Return a GEOS object from SQL query """
+    diff = find_difference(geom_a, geom_b)
+    if diff is None:
+        return GEOSGeometry("MULTIPOLYGON EMPTY", srid=4326)
+    # Might raise GDALException
+    return GEOSGeometry(diff)
 
-def _calculate_area(geom):
+def calculate_area(geom):
     """
     Calculates area of the provided geometry using geography
     Result would be in square meters
@@ -196,14 +203,14 @@ def _subtract_geometry(request, overlaps, geom):
 
     # Important to subtract from staging geometry first
     for overlap in overlaps["keep"]:
-        geom = geom.difference(overlap.territory)
+        geom = geom_difference(geom, overlap.territory)
 
-    if _calculate_area(geom) < AREA_TOLERANCE:
+    if calculate_area(geom) < AREA_TOLERANCE:
         raise ValidationError("Polygon is too small")
 
     for overlap in overlaps["modify"]:
-        overlap.territory = overlap.territory.difference(geom)
-        if _calculate_area(overlap.territory) < AREA_TOLERANCE:
+        overlap.territory = geom_difference(overlap.territory, geom)
+        if calculate_area(overlap.territory) < AREA_TOLERANCE:
             overlap.delete()
         else:
             overlap.save()
