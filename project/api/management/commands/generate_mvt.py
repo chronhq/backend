@@ -21,6 +21,8 @@ from django import db
 from django.core.management.base import BaseCommand
 from api.models import TileLayout, MVTLayers
 
+from .clean_stvs import fix_antimeridian
+
 try:
     THREADS = os.cpu_count() - 1
 except TypeError:
@@ -195,11 +197,15 @@ class Command(BaseCommand):
         # Remove tiles with precision greater than zoom
         TileLayout.objects.filter(zoom__gt=ZOOM).delete()
         MVTLayers.objects.filter(zoom__gt=ZOOM).delete()
+
         for zoom in range(0, ZOOM + 1):
             tiles = pow(2, zoom)
             new_layout = populate_tile_layout(zoom, tiles)
             if not options["update"] or new_layout:
-                print("Generating tiles for zoom {}. Tiles per row {}".format(zoom, tiles))
+                print(
+                    "Generating tiles for zoom {}. Tiles per row {}".format(zoom, tiles)
+                )
                 populate_mvt_stv_layer(zoom, tiles)
         if options["update"] and not new_layout:
+            fix_antimeridian(options["timestamp"])
             update_affected_mvts(options["timestamp"])

@@ -85,6 +85,13 @@ mvt-update: ## Update mbtiles for STVs
 	[ -f ./data/mbtiles/stv.mbtiles ] && echo "No need for restart" || docker-compose restart mbtiles
 	docker-compose exec -T mbtiles sh -c "[ -f /tmp/stv.mbtiles ] && /bin/mv /tmp/stv.mbtiles /root/mbtiles/stv.mbtiles || echo skipping"
 
+mvt-pg-build: ## Populate api_mvtlayers with mbtiles
+	docker-compose exec web python manage.py clean_stvs --antimeridian --make-valid
+	docker-compose exec web python manage.py generate_mvt
+
+mvt-pg-update:
+	bash ./data/scripts/updateTiles.sh
+
 # Docker images
 image: ## Build backend:latest image
 	docker build -t chronmaps/backend:latest .

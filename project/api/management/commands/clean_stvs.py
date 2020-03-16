@@ -47,38 +47,70 @@ def make_stvs_valid(entity):
             )
             stvs.filter(id=stv.id).update(territory=MakeValid("territory"))
 
-def fix_antimeridian():
+
+def fix_antimeridian(timestamp=None):
     """ Fix polygons along 180th meridian """
-    positive = "SRID=4326;LINESTRING(180 90,180 -90)"
-    negative = "SRID=4326;LINESTRING(-180 90,-180 -90)"
+    options = {
+        "antimeridian_positive": "SRID=4326;LINESTRING(180 90,180 -90)",
+        "antimeridian_negative": "SRID=4326;LINESTRING(-180 90,-180 -90)",
+    }
+
+    initial = (
+        "api_spacetimevolume"
+        if timestamp is None
+        else """
+        (SELECT api_spacetimevolume.* FROM (
+                SELECT DISTINCT id
+                FROM api_historicalspacetimevolume WHERE history_date >= to_timestamp({})
+            ) AS foo
+            JOIN api_spacetimevolume ON foo.id = api_spacetimevolume.id
+        ) AS foo
+    """.format(
+            timestamp
+        )
+    )
+
+    ids_req = """
+        SELECT array_agg(id)
+        FROM {}
+        WHERE
+            ST_Intersects(territory, ST_GeomFromEWKT(%(antimeridian_positive)s))
+        OR	ST_Intersects(territory, ST_GeomFromEWKT(%(antimeridian_negative)s))
+    """.format(
+        initial
+    )
 
     with connection.cursor() as cursor:
-        cursor.execute(
-            """
-            UPDATE api_spacetimevolume
-            SET territory=foo.territory
-            FROM (
-                SELECT id,
-                    ST_Split(ST_Split(
-                        territory, ST_GeomFromEWKT(%(antimeridian_positive)s)
-                        ), ST_GeomFromEWKT(%(antimeridian_negative)s)
-                    ) AS territory
+        cursor.execute(ids_req, options)
+        ids = cursor.fetchone()[0]
+        if ids is not None:
+            options["ids"] = "(" + str(ids)[1:-1] + ")"
+            print(
+                "Fixing issues around antimeridian. Total polygons {}".format(len(ids))
+            )
+            affected = cursor.execute(
+                """
+                UPDATE api_spacetimevolume
+                SET territory=foo.territory
                 FROM (
-                    SELECT *
-                    FROM api_spacetimevolume
-                    WHERE
-                        ST_Intersects(territory, ST_GeomFromEWKT(%(antimeridian_positive)s))
-                    OR	ST_Intersects(territory, ST_GeomFromEWKT(%(antimeridian_negative)s))
+                    SELECT id,
+                        ST_Split(ST_Split(
+                            territory, ST_GeomFromEWKT(%(antimeridian_positive)s)
+                            ), ST_GeomFromEWKT(%(antimeridian_negative)s)
+                        ) AS territory
+                    FROM (
+                        SELECT * FROM api_spacetimevolume WHERE id IN {}
+                    ) AS foo
+                    WHERE ST_IsValid(ST_Transform(territory, 3857)) is not True
                 ) AS foo
-                WHERE ST_IsValid(ST_Transform(territory, 3857)) is not True
-            ) AS foo
-            WHERE api_spacetimevolume.id = foo.id
-            """,
-            {
-                "antimeridian_positive": positive,
-                "antimeridian_negative": negative
-            }
-        )
+                WHERE api_spacetimevolume.id = foo.id
+                """.format(
+                    options["ids"]
+                ),
+                options,
+            )
+            print("{} rows affected".format(affected))
+
 
 @transaction.atomic
 def recreate_stvs(to_create, to_remove):
@@ -217,14 +249,20 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        options_list = ["time_overlaps", "duplicateds", "make_valid", "antimeridian"]
+        options_list = ["time_overlaps", "duplicates", "make_valid", "antimeridian"]
         if options["all"]:
-            for o in options_list:
-                options[o] = True
+            for opt in options_list:
+                options[opt] = True
 
         entities = TerritorialEntity.objects.all()
 
         for entity in entities:
+            if not (
+                options["time_overlaps"]
+                or options["duplicates"]
+                or options["make_valid"]
+            ):
+                break
             print(
                 "Processing Territorial Entity: {}, id {}".format(
                     entity.label, entity.id
@@ -241,6 +279,4 @@ class Command(BaseCommand):
             if options["duplicates"]:
                 handle_stv_duplicates(entity)
         if options["antimeridian"]:
-            print("Fixing issues around antimeridian")
             fix_antimeridian()
-            print("Done")
