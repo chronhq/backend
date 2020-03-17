@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('color', colorfield.fields.ColorField(default='#F7F7F7', max_length=18, unique=True)),
-                ('pallete', models.TextField(blank=True, max_length=64, null=True)),
+                ('palette', models.TextField(blank=True, max_length=64, null=True)),
                 ('main', models.BooleanField(blank=True, default=False)),
             ],
         ),
@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                 , api_territorialentity.admin_level
             FROM api_spacetimevolume
             JOIN api_territorialentity ON api_spacetimevolume.entity_id = api_territorialentity.id
-            JOIN api_mapcolorscheme ON api_territorialentity.color = api_mapcolorscheme.id
+            JOIN api_mapcolorscheme ON api_territorialentity.color_id = api_mapcolorscheme.id
             """,
             reverse_sql='DROP VIEW IF EXISTS view_stvmap;'
         )

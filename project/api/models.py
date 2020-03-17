@@ -55,9 +55,9 @@ class MVTLayers(models.Model):
         unique_together = ("zoom", "x_coor", "y_coor", "layer")
 
 class MapColorScheme(models.Model):
-    """ Available Pallette for STVs """
+    """ Available Color Palette for STVs """
     color = ColorField(default='#F7F7F7', unique=True)
-    pallete = models.TextField(max_length=64, blank=True, null=True)
+    palette = models.TextField(max_length=64, blank=True, null=True)
     main = models.BooleanField(default=False, blank=True)
 
 class Vote(models.Model):
