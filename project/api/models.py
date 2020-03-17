@@ -27,6 +27,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from ordered_model.models import OrderedModel
 from simple_history.models import HistoricalRecords
+from colorfield.fields import ColorField
 
 
 class TileLayout(models.Model):
@@ -53,6 +54,11 @@ class MVTLayers(models.Model):
     class Meta:
         unique_together = ("zoom", "x_coor", "y_coor", "layer")
 
+class MapColorScheme(models.Model):
+    """ Available Pallette for STVs """
+    color = ColorField(default='#F7F7F7', unique=True)
+    pallete = models.TextField(max_length=64, blank=True, null=True)
+    main = models.BooleanField(default=False, blank=True)
 
 class Vote(models.Model):
     """
@@ -111,7 +117,7 @@ class TerritorialEntity(models.Model):
 
     wikidata_id = models.PositiveIntegerField()  # Excluding the Q
     label = models.TextField(max_length=90)
-    color = models.TextField(max_length=20)
+    color = models.ForeignKey(MapColorScheme, on_delete=models.CASCADE)
     admin_level = models.PositiveIntegerField()
     inception_date = models.DecimalField(
         decimal_places=1, max_digits=10, blank=True, null=True
