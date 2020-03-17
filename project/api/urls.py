@@ -23,6 +23,7 @@ from rest_framework.routers import DefaultRouter
 from . import views
 
 ROUTER = DefaultRouter()
+ROUTER.register(r"mapcolorscheme", views.MapColorSchemeViewSet)
 ROUTER.register(r"territorial-entities", views.TerritorialEntityViewSet)
 ROUTER.register(r"political-relations", views.PoliticalRelationViewSet)
 ROUTER.register(r"cached-data", views.CachedDataViewSet)
