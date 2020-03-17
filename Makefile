@@ -142,5 +142,12 @@ loaddata: ## Restore data from previous dump
 	fi;
 
 dumpsql: ## dump all data using pg_dumpall
-	docker-compose exec -T db sh -c 'echo localhost:5432:$$POSTGRES_DB:$$POSTGRES_USER:$$POSTGRES_PASSWORD > ~/.pgpass; chmod 600 ~/.pgpass'
-	docker-compose exec -T db sh -c 'pg_dumpall -U $$POSTGRES_USER -f /docker-entrypoint-initdb.d/$$(date "+%Y-%m-%d").dump'
+	docker-compose exec -T db sh -c '\
+		echo localhost:5432:$$POSTGRES_DB:$$POSTGRES_USER:$$POSTGRES_PASSWORD > ~/.pgpass; \
+		chmod 600 ~/.pgpass; cd /docker-entrypoint-initdb.d/; \
+		NAME=$$(echo $$(date "+%Y-%m-%d").dump); echo Dumping database to $${NAME}; \
+		pg_dumpall -U $$POSTGRES_USER -f $${NAME}; \
+		sed -e "s/^CREATE ROLE/-- CREATE ROLE/" -e "s/^ALTER ROLE/-- ALTER ROLE/" -i $${NAME}; \
+		if [[ -f latest.sql ]]; then /bin/rm -f latest.sql; fi; \
+		/bin/ln -s $${NAME} latest.sql \
+	'
