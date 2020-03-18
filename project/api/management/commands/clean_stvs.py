@@ -88,7 +88,7 @@ def fix_antimeridian(timestamp=None):
             print(
                 "Fixing issues around antimeridian. Total polygons {}".format(len(ids))
             )
-            cursor.execute(
+            cursor.execute(  # noqa
                 """
                 UPDATE api_spacetimevolume
                 SET territory=foo.territory
@@ -104,8 +104,8 @@ def fix_antimeridian(timestamp=None):
                     WHERE ST_IsValid(ST_Transform(territory, 3857)) is not True
                 ) AS foo
                 WHERE api_spacetimevolume.id = foo.id
-                """.format(
-                    options["ids"] # noqa
+                """.format(  # noqa
+                    options["ids"]
                 ),
                 options,
             )

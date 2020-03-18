@@ -68,7 +68,7 @@ def populate_tile_layout(zoom, tiles):
 def create_mvt_stv(zoom, x_coor, y_coor):
     """ Mapbox Vector Tiles for Political Borders """
     with db.connection.cursor() as cursor:
-        cursor.execute(
+        cursor.execute(  # noqa
             """
             INSERT INTO api_mvtlayers (zoom, x_coor, y_coor, layer, tile)
             SELECT
@@ -79,8 +79,8 @@ def create_mvt_stv(zoom, x_coor, y_coor):
                 , ST_AsMVT(a, 'stv') AS tile
             FROM ({}) AS a
             ON CONFLICT (zoom, x_coor, y_coor, layer) DO UPDATE SET tile = EXCLUDED.tile
-            """.format(
-                stv_mvt_geom_query(zoom) # noqa
+            """.format(  # noqa
+                stv_mvt_geom_query(zoom)
             ),
             {"zoom": zoom, "x_coor": x_coor, "y_coor": y_coor,},
         )
@@ -152,6 +152,7 @@ def update_affected_mvts(timestamp):
     )
     print("Total tiles to update", len(tiles))
     populate_mvt_stv_layer(0, tiles, True)
+
 
 class Command(BaseCommand):
     """ Populate database with MVT for STVs """
