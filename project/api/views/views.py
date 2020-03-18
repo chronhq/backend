@@ -61,6 +61,7 @@ class MapColorSchemeViewSet(viewsets.ModelViewSet):
     queryset = MapColorScheme.objects.all()
     serializer_class = MapColorSchemeSerializer
 
+
 class TerritorialEntityViewSet(viewsets.ModelViewSet):
     """
     ViewSet for TerritorialEntities

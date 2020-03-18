@@ -53,6 +53,7 @@ class MapColorSchemeSerializer(ModelSerializer):
         model = MapColorScheme
         fields = "__all__"
 
+
 class NarrativeVoteSerializer(ModelSerializer):
     """
     Serializes User votes for Narratives

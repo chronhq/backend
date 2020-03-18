@@ -26,7 +26,7 @@ from django.contrib.gis.geos import GEOSGeometry
 from django.urls import reverse
 from django.test import override_settings
 from api.models import SpacetimeVolume
-from api.views.stv_view import _calculate_area
+from api.views.stv_view import calculate_area
 from .api_tests import APITest, authorized
 
 
@@ -37,10 +37,8 @@ class STVTests(APITest):
 
     def test_stv_area_is_correct(self):
         """ Check Area computations """
-        self.assertEqual(
-            _calculate_area(GEOSGeometry("POLYGON(EMPTY)", srid=4326)), 0.0
-        )
-        area = _calculate_area(
+        self.assertEqual(calculate_area(GEOSGeometry("POLYGON(EMPTY)", srid=4326)), 0.0)
+        area = calculate_area(
             GEOSGeometry("SRID=4326;POLYGON((-1 -1,-1 1,1 1, 1 -1, -1 -1))")
         )
         self.assertEqual(area, 49238887518.5544)

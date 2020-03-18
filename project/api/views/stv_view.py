@@ -61,6 +61,7 @@ def find_difference(geom_a, geom_b):
         row = cursor.fetchone()[0]
     return row
 
+
 def geom_difference(geom_a, geom_b):
     """ Return a GEOS object from SQL query """
     diff = find_difference(geom_a, geom_b)
@@ -68,6 +69,7 @@ def geom_difference(geom_a, geom_b):
         return GEOSGeometry("MULTIPOLYGON EMPTY", srid=4326)
     # Might raise GDALException
     return GEOSGeometry(diff)
+
 
 def calculate_area(geom):
     """

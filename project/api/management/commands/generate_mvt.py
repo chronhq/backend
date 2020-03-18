@@ -98,6 +98,19 @@ def mvt_geom_params(zoom):
     )
 
 
+def stv_mvt_geom_query(zoom):
+    """ query for stv mvt tile """
+    return """
+        SELECT
+            id, start_date, end_date, "references", entity_id, wikidata_id, color, admin_level
+            , ST_AsMVTGeom({}, TileBBox(%(zoom)s, %(x_coor)s, %(y_coor)s)) as territory
+        FROM view_stvmap
+        WHERE ST_Intersects(territory, TileBBox(%(zoom)s, %(x_coor)s, %(y_coor)s, 4326))
+    """.format(
+        mvt_geom_params(zoom)
+    )
+
+
 def create_mvt_stv(zoom, x_coor, y_coor):
     """ Mapbox Vector Tiles for Political Borders """
     with db.connection.cursor() as cursor:
@@ -110,16 +123,10 @@ def create_mvt_stv(zoom, x_coor, y_coor):
                 , %(y_coor)s AS y_coor
                 , 'stv' AS layer
                 , ST_AsMVT(a, 'stv') AS tile
-            FROM (
-            SELECT
-                id, start_date, end_date, "references", entity_id, wikidata_id, color, admin_level
-                , ST_AsMVTGeom({}, TileBBox(%(zoom)s, %(x_coor)s, %(y_coor)s)) as territory
-            FROM view_stvmap
-            WHERE ST_Intersects(territory, TileBBox(%(zoom)s, %(x_coor)s, %(y_coor)s, 4326))
-            ) AS a
+            FROM ({}) AS a
             ON CONFLICT (zoom, x_coor, y_coor, layer) DO UPDATE SET tile = EXCLUDED.tile
             """.format(
-                mvt_geom_params(zoom)
+                stv_mvt_geom_query(zoom)
             ),
             {"zoom": zoom, "x_coor": x_coor, "y_coor": y_coor,},
         )
@@ -197,7 +204,7 @@ def update_affected_mvts(timestamp):
 # 	SELECT api_historicalspacetimevolume.id, api_historicalspacetimevolume.history_date
 # 	, api_historicalspacetimevolume.territory
 # 	FROM api_historicalspacetimevolume
-# 	UNION 
+# 	UNION
 # 	SELECT api_spacetimevolume.id, api_historicalterritorialentity.history_date
 # 	, api_spacetimevolume.territory
 # 	FROM api_spacetimevolume
@@ -211,6 +218,7 @@ def update_affected_mvts(timestamp):
 # 	)
 # ) AS foo
 # WHERE history_date >= to_timestamp(0)
+
 
 class Command(BaseCommand):
     """ Populate database with MVT for STVs """
