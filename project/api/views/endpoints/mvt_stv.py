@@ -55,7 +55,7 @@ def mvt_stv(request, zoom, x_coor, y_coor):
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT ST_AsMVT(a, 'stv') AS tile
+                SELECT ST_AsMVT(a, 'stv_admin') AS tile
                 FROM ({} AND ({})) AS a
                 """.format(stv_mvt_geom_query(zoom), " OR ".join(where)),
                 {"zoom": zoom, "x_coor": x_coor, "y_coor": y_coor,},
