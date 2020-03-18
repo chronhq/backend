@@ -34,7 +34,7 @@ def te_list(request):
             SELECT json_agg(row_to_json(foo))::text FROM (
                 SELECT
                     id, wikidata_id, color_id AS color, admin_level,
-                    dissolution_date, inception_date, label
+                    dissolution_date, inception_date, label,
                     stvs,
                     json_array_length(stvs) AS stv_count
                     FROM (
