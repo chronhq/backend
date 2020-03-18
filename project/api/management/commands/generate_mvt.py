@@ -20,6 +20,7 @@ import os
 from django import db
 from django.core.management.base import BaseCommand
 from api.models import TileLayout, MVTLayers
+from api.views.endpoints.mvt_stv import stv_mvt_geom_query
 
 from .clean_stvs import fix_antimeridian
 
@@ -62,53 +63,6 @@ def populate_tile_layout(zoom, tiles):
         for x_coor in range(0, tiles):
             create_tile_layout(zoom, x_coor, y_coor)
     return True
-
-
-def mvt_geom_params(zoom):
-    """ Simplification for territory field """
-    # For WebMercator (3857) X coordinate bounds are ±20037508.3427892 meters
-    # For SRID 4326 X coordinated bounds are ±180 degrees
-    # resolution = (xmax - xmin) or (xmax * 2)
-    # It is 5-10 times faster work with SRID 4326,
-    # We will apply ST_Simplify before ST_Transform
-    resolution = 360
-    # https://postgis.net/docs/ST_AsMVT.html
-    # tile extent in screen space as defined by the specification
-    extent = 4096
-
-    # Find safe tolerance for ST_Simplfy
-    tolerance = (float(resolution) / 2 ** zoom) / float(extent)
-    # Apply additional simplification for distant zoom levels
-    tolerance_multiplier = 1 if zoom > 5 else 2.2 - 0.2 * zoom
-    simplification = tolerance * tolerance_multiplier
-
-    return """
-        ST_SnapToGrid(
-            ST_Transform(
-                ST_Simplify(
-                    territory
-                    , {}
-                )
-                , 3857
-            )
-            , 1
-        )
-    """.format(
-        simplification
-    )
-
-
-def stv_mvt_geom_query(zoom):
-    """ query for stv mvt tile """
-    return """
-        SELECT
-            id, start_date, end_date, "references", entity_id, wikidata_id, color, admin_level
-            , ST_AsMVTGeom({}, TileBBox(%(zoom)s, %(x_coor)s, %(y_coor)s)) as territory
-        FROM view_stvmap
-        WHERE ST_Intersects(territory, TileBBox(%(zoom)s, %(x_coor)s, %(y_coor)s, 4326))
-    """.format(
-        mvt_geom_params(zoom)
-    )
 
 
 def create_mvt_stv(zoom, x_coor, y_coor):
