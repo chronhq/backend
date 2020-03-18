@@ -80,7 +80,7 @@ def create_mvt_stv(zoom, x_coor, y_coor):
             FROM ({}) AS a
             ON CONFLICT (zoom, x_coor, y_coor, layer) DO UPDATE SET tile = EXCLUDED.tile
             """.format(
-                stv_mvt_geom_query(zoom)
+                stv_mvt_geom_query(zoom) # noqa
             ),
             {"zoom": zoom, "x_coor": x_coor, "y_coor": y_coor,},
         )
@@ -152,27 +152,6 @@ def update_affected_mvts(timestamp):
     )
     print("Total tiles to update", len(tiles))
     populate_mvt_stv_layer(0, tiles, True)
-
-
-# SELECT ST_Union(territory) AS territory FROM (
-# 	SELECT api_historicalspacetimevolume.id, api_historicalspacetimevolume.history_date
-# 	, api_historicalspacetimevolume.territory
-# 	FROM api_historicalspacetimevolume
-# 	UNION
-# 	SELECT api_spacetimevolume.id, api_historicalterritorialentity.history_date
-# 	, api_spacetimevolume.territory
-# 	FROM api_spacetimevolume
-# 	JOIN api_historicalterritorialentity
-# 	ON api_historicalterritorialentity.id = entity_id
-# 	JOIN api_territorialentity
-# 	ON api_territorialentity.id = entity_id
-# 	WHERE NOT (
-# 		api_historicalterritorialentity.color_id=api_territorialentity.color_id
-# 		AND api_historicalterritorialentity.admin_level=api_territorialentity.admin_level
-# 	)
-# ) AS foo
-# WHERE history_date >= to_timestamp(0)
-
 
 class Command(BaseCommand):
     """ Populate database with MVT for STVs """

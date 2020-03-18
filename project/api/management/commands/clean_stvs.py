@@ -105,7 +105,7 @@ def fix_antimeridian(timestamp=None):
                 ) AS foo
                 WHERE api_spacetimevolume.id = foo.id
                 """.format(
-                    options["ids"]
+                    options["ids"] # noqa
                 ),
                 options,
             )

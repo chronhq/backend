@@ -100,7 +100,7 @@ def mvt_stv(request, zoom, x_coor, y_coor):
                 SELECT ST_AsMVT(a, 'stv_admin') AS tile
                 FROM ({} AND ({})) AS a
                 """.format(
-                    stv_mvt_geom_query(zoom), " OR ".join(where)
+                    stv_mvt_geom_query(zoom), " OR ".join(where) # noqa
                 ),
                 {"zoom": zoom, "x_coor": x_coor, "y_coor": y_coor,},
             )
