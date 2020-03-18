@@ -163,20 +163,54 @@ def update_affected_mvts(timestamp):
     """ Update tiles based on history """
     tiles = TileLayout.objects.raw(
         """
-        SELECT
-            DISTINCT api_tilelayout.id, zoom, x_coor, y_coor
-        FROM api_tilelayout
-        CROSS JOIN api_historicalspacetimevolume AS hstv
-        WHERE
-            hstv.history_date > to_timestamp(%s)
-            AND ST_Intersects(api_tilelayout.bbox, hstv.territory)
-            ORDER BY zoom ASC;
+        SELECT DISTINCT id, zoom, x_coor, y_coor FROM (
+            SELECT territory FROM (
+                SELECT api_historicalspacetimevolume.id, api_historicalspacetimevolume.history_date
+                , api_historicalspacetimevolume.territory
+                FROM api_historicalspacetimevolume
+                UNION
+                SELECT api_spacetimevolume.id, api_historicalterritorialentity.history_date
+                , api_spacetimevolume.territory
+                FROM api_spacetimevolume
+                JOIN api_historicalterritorialentity
+                ON api_historicalterritorialentity.id = entity_id
+                JOIN api_territorialentity
+                ON api_territorialentity.id = entity_id
+                WHERE NOT (
+                api_historicalterritorialentity.color_id=api_territorialentity.color_id
+                AND api_historicalterritorialentity.admin_level=api_territorialentity.admin_level
+                )
+            ) AS foo
+            WHERE history_date >= to_timestamp(%s)
+        ) AS foo
+        CROSS JOIN api_tilelayout
+        WHERE ST_Intersects(bbox, territory)
+        ORDER BY zoom ASC;
         """,
         [timestamp],
     )
     print("Total tiles to update", len(tiles))
     populate_mvt_stv_layer(0, tiles, True)
 
+
+# SELECT ST_Union(territory) AS territory FROM (
+# 	SELECT api_historicalspacetimevolume.id, api_historicalspacetimevolume.history_date
+# 	, api_historicalspacetimevolume.territory
+# 	FROM api_historicalspacetimevolume
+# 	UNION 
+# 	SELECT api_spacetimevolume.id, api_historicalterritorialentity.history_date
+# 	, api_spacetimevolume.territory
+# 	FROM api_spacetimevolume
+# 	JOIN api_historicalterritorialentity
+# 	ON api_historicalterritorialentity.id = entity_id
+# 	JOIN api_territorialentity
+# 	ON api_territorialentity.id = entity_id
+# 	WHERE NOT (
+# 		api_historicalterritorialentity.color_id=api_territorialentity.color_id
+# 		AND api_historicalterritorialentity.admin_level=api_territorialentity.admin_level
+# 	)
+# ) AS foo
+# WHERE history_date >= to_timestamp(0)
 
 class Command(BaseCommand):
     """ Populate database with MVT for STVs """

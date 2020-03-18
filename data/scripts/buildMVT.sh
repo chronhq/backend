@@ -19,12 +19,10 @@
 
 LAYER="stv"
 
-mkdir -p /tmp
-
 ORIG="/root/mbtiles/stv.mbtiles"
 
 IN="/data/${LAYER}.json"
-TMP="/tmp/${LAYER}"
+TMP="/data/${LAYER}"
 OUT="${TMP}.mbtiles"
 CLEAN="${TMP}-CLEAN.mbtiles"
 UPDATES="${TMP}-UPDATES.mbtiles"
