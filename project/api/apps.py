@@ -21,7 +21,7 @@ from django.apps import AppConfig
 from simple_history.signals import pre_create_historical_record
 
 
-def add_invoice_to_historical_balance(sender, **kwargs):  # pylint: disable=W0613
+def add_group_to_historical_record(sender, **kwargs):  # pylint: disable=W0613
     """
     Save group to historical record
     """
@@ -42,5 +42,5 @@ class ApiConfig(AppConfig):
         from .models import HistoricalSpacetimeVolume  # pylint: disable=C0415
 
         pre_create_historical_record.connect(
-            add_invoice_to_historical_balance, sender=HistoricalSpacetimeVolume
+            add_group_to_historical_record, sender=HistoricalSpacetimeVolume
         )

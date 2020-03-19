@@ -335,7 +335,6 @@ class SpacetimeVolume(models.Model):
                 self.territory.geom_type != "Polygon"
                 and self.territory.geom_type != "MultiPolygon"
             ):
-                print(self.territory.geom_type)
                 raise ValidationError(
                     "Only Polygon and MultiPolygon objects are acceptable geometry types."
                 )
