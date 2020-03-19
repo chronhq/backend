@@ -258,6 +258,18 @@ class City(models.Model):
         super(City, self).save(*args, **kwargs)
 
 
+class OverlapGroupedHistoricalModel(models.Model):
+    """
+    Abstract model for history models in which
+    the territory changed due to an overlap
+    """
+
+    group = models.PositiveIntegerField(null=True, blank=True)
+
+    class Meta:
+        abstract = True
+
+
 class SpacetimeVolume(models.Model):
     """
     Maps a set of Territories to a TerritorialEntity at a specific time
@@ -272,7 +284,7 @@ class SpacetimeVolume(models.Model):
     references = ArrayField(models.TextField(max_length=500), blank=True, null=True)
     visual_center = models.PointField(blank=True, null=True)
     related_events = models.ManyToManyField(CachedData, blank=True)
-    history = HistoricalRecords()
+    history = HistoricalRecords(bases=[OverlapGroupedHistoricalModel,])
 
     def calculate_center(self):
         """
@@ -323,6 +335,7 @@ class SpacetimeVolume(models.Model):
                 self.territory.geom_type != "Polygon"
                 and self.territory.geom_type != "MultiPolygon"
             ):
+                print(self.territory.geom_type)
                 raise ValidationError(
                     "Only Polygon and MultiPolygon objects are acceptable geometry types."
                 )
@@ -334,6 +347,17 @@ class SpacetimeVolume(models.Model):
         super(SpacetimeVolume, self).save(*args, **kwargs)
         if not self.visual_center:
             self.calculate_center()
+
+    def save_without_historical_record(self, *args, **kwargs):
+        """
+        Saves the model without creating a new historical record
+        """
+        self.skip_history_when_saving = True  # pylint: disable=W0201
+        try:
+            ret = self.save(*args, **kwargs)  # pylint: disable=E1111
+        finally:
+            del self.skip_history_when_saving
+        return ret
 
 
 class Narrative(models.Model):

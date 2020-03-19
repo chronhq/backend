@@ -29,10 +29,12 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.core.files.uploadedfile import UploadedFile
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction, connection
+from django.db.models import Max
 from django.http import JsonResponse
-from rest_framework import viewsets
+from rest_framework import status, viewsets
+from rest_framework.response import Response
 
-from api.models import SpacetimeVolume
+from api.models import SpacetimeVolume, HistoricalSpacetimeVolume
 from api.serializers import SpacetimeVolumeSerializer
 
 
@@ -175,7 +177,7 @@ def _overlaps_queryset(geom, start_date, end_date):
     )
 
 
-def _subtract_geometry(request, overlaps, geom):
+def _subtract_geometry(request, overlaps, geom, gid):
     for entity, stvs in overlaps["db"].items():
         overlaps[
             "keep" if str(entity) not in request.POST.getlist("overlaps") else "modify"
@@ -190,6 +192,7 @@ def _subtract_geometry(request, overlaps, geom):
 
     for overlap in overlaps["modify"]:
         overlap.territory = overlap.territory.difference(geom)
+        overlap.group = gid
         if _calculate_area(overlap.territory) < AREA_TOLERANCE:
             overlap.delete()
         else:
@@ -215,6 +218,12 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         """
         Solve overlaps if included in request body
         """
+
+        # Get next historical group id
+        gid_max = HistoricalSpacetimeVolume.objects.all().aggregate(Max("group"))[
+            "group__max"
+        ]
+        gid_next = gid_max + 1 if gid_max else 1
 
         # Validate other data before overlaps
         empty_territory_data = request.data.copy()
@@ -255,9 +264,29 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
 
         if "overlaps" not in request.data and len(overlaps["db"]) > 0:
             return JsonResponse({"overlaps": overlaps["db"]}, status=409)
-        request.data["territory"] = _subtract_geometry(request, overlaps, geom)
+        request.data["territory"] = _subtract_geometry(
+            request, overlaps, geom, gid_next
+        )
 
-        return super().create(request, *args, **kwargs)
+        # Group new record
+        new_serializer = self.get_serializer(data=request.data)
+        new_serializer.is_valid(raise_exception=True)
+        data = new_serializer.validated_data.copy()
+        events = data.pop("related_events", [])
+
+        new_instance = SpacetimeVolume(**data)
+        if len(overlaps["db"]) > 0:
+            new_instance.group = gid_next
+        new_instance.save()
+        new_instance.related_events.set(events)
+        new_instance.save_without_historical_record()
+
+        # Return response
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=self.get_success_headers(serializer.data),
+        )
 
     def update(self, request, *args, **kwargs):
         """

@@ -271,8 +271,7 @@ class StvHistoryListSerializer(ModelSerializer):
 
         if obj.history_user is not None:
             return obj.history_user.username
-        else:
-            return None
+        return None
 
     def get_history_user_id(self, obj):  # pylint: disable=R0201
         """
@@ -281,8 +280,7 @@ class StvHistoryListSerializer(ModelSerializer):
 
         if obj.history_user is not None:
             return obj.history_user.id
-        else:
-            return None
+        return None
 
     class Meta:
         model = HistoricalSpacetimeVolume
@@ -304,8 +302,7 @@ class StvHistoryRetrieveSerializer(ModelSerializer):
 
         if obj.history_user is not None:
             return obj.history_user.username
-        else:
-            return None
+        return None
 
     def get_history_user_id(self, obj):  # pylint: disable=R0201
         """
@@ -314,8 +311,7 @@ class StvHistoryRetrieveSerializer(ModelSerializer):
 
         if obj.history_user is not None:
             return obj.history_user.id
-        else:
-            return None
+        return None
 
     class Meta:
         model = HistoricalSpacetimeVolume
@@ -337,8 +333,7 @@ class TeHistorySerializer(ModelSerializer):
 
         if obj.history_user is not None:
             return obj.history_user.username
-        else:
-            return None
+        return None
 
     def get_history_user_id(self, obj):  # pylint: disable=R0201
         """
@@ -346,8 +341,7 @@ class TeHistorySerializer(ModelSerializer):
         """
         if obj.history_user is not None:
             return obj.history_user.id
-        else:
-            return None
+        return None
 
     class Meta:
         model = HistoricalTerritorialEntity

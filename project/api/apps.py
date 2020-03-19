@@ -18,6 +18,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.apps import AppConfig
+from simple_history.signals import pre_create_historical_record
+
+
+def add_invoice_to_historical_balance(sender, **kwargs):  # pylint: disable=W0613
+    """
+    Save group to historical record
+    """
+    instance = kwargs["instance"]
+    if getattr(instance, "group", None):
+        kwargs["history_instance"].group = instance.group
+        del instance.group
 
 
 class ApiConfig(AppConfig):
@@ -26,3 +37,10 @@ class ApiConfig(AppConfig):
     """
 
     name = "api"
+
+    def ready(self):
+        from .models import HistoricalSpacetimeVolume  # pylint: disable=C0415
+
+        pre_create_historical_record.connect(
+            add_invoice_to_historical_balance, sender=HistoricalSpacetimeVolume
+        )
