@@ -73,17 +73,10 @@ admin: ## Creates a super user based on the values supplied in the configuration
 	docker-compose exec web ./manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('$(ADMIN_USER)', '$(ADMIN_EMAIL)', '$(ADMIN_PASS)')"
 
 # Geometry
-mvt-build: ## Generates mbtiles for STVs
-	docker-compose exec mbtiles sh /scripts/getSTVGeoJSON.sh 
-	docker-compose exec mbtiles /bin/rm -f /root/mbtiles/stv.mbtiles
-	docker-compose restart mbtiles
-	docker-compose exec mbtiles /bin/mv /data/stv.mbtiles /root/mbtiles/stv.mbtiles
-
+mvt-build: ## Generates mbtiles for STVs 
+	docker-compose exec -T mbtiles sh /scripts/pullUpdatedSTVs.sh full
 mvt-update: ## Update mbtiles for STVs
-	docker-compose exec -T mbtiles sh /scripts/pullUpdatedSTVs.sh 
-	docker-compose exec -T mbtiles sh -c "[ -f /data/stv.mbtiles ] && /bin/rm -f /root/mbtiles/stv.mbtiles || echo No changes"
-	[ -f ./data/mbtiles/stv.mbtiles ] && echo "No need for restart" || docker-compose restart mbtiles
-	docker-compose exec -T mbtiles sh -c "[ -f /data/stv.mbtiles ] && /bin/mv /data/stv.mbtiles /root/mbtiles/stv.mbtiles || echo skipping"
+	docker-compose exec -T mbtiles sh /scripts/pullUpdatedSTVs.sh
 
 mvt-pg-build: ## Populate api_mvtlayers with mbtiles
 	docker-compose exec web python manage.py clean_stvs --antimeridian --make-valid

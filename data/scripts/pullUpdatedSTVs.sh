@@ -20,6 +20,8 @@
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 ORIG="/root/mbtiles/stv.mbtiles"
 
+FULL=$1
+
 PREV_RUN=/data/PREV_RUN
 [ ! -f ${PREV_RUN} ] && echo -n 0 > ${PREV_RUN}
 
@@ -56,16 +58,26 @@ WHERE history_date >= to_timestamp(${PREV})
 
 updates=$(eval $psql "\"$query\"" | sed 's/^\s//')
 
-if [ -f "$ORIG" ]; then
+if [[ -f "${ORIG}" && "${FULL}" == "" ]]; then
     if [[ ${#updates[@]} -eq 0 ]]; then
         echo "$(date): Updated STVs: none"
+		status=0
     else
         echo "$(date): Updated STVs: ${updates}"
         sh ${DIR}/getSTVGeoJSON.sh $updates
+		status=$?
     fi
 else
     echo "$(date): Buiding STVs from scratch"
     sh ${DIR}/getSTVGeoJSON.sh
+	status=$?
 fi
 
-[ $? -eq 0 ] && echo -n ${CUR} > ${PREV_RUN}
+if [ ${status} -eq 0 ]; then
+	echo -n ${CUR} > ${PREV_RUN};
+	if [ -f /data/stv.mbtiles ]; then
+		/bin/mv /data/stv.mbtiles /root/mbtiles/stv.mbtiles;
+	fi
+fi
+
+exit ${status}
