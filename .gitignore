@@ -158,3 +158,6 @@ project/profiles/
 
 # firebase secrets
 config/firebase.json
+
+notipsta/node_modules
+notipsta/package-lock.json

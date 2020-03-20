@@ -1,0 +1,22 @@
+{
+  "name": "notipsta",
+  "version": "1.0.0",
+  "description": "Run something and return status",
+  "main": "notipsta.js",
+  "author": "Michael Orlov",
+  "license": "GPLv3",
+  "scripts": {
+    "start": "node notipsta.js",
+    "dev": "nodemon notipsta.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chronhq/backend.git"
+  },
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.2"
+  }
+}

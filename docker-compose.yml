@@ -46,3 +46,16 @@ services:
       - ./data/mbtiles:/root/mbtiles
       - ./data/scripts:/scripts
       - ./data/data:/data
+  notipsta:
+    depends_on:
+      - db
+    image: chronmaps/backend:notipsta
+    env_file:
+      - mbtiles.env
+      - postgres.env
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./data/mbtiles:/root/mbtiles
+      - ./data/scripts:/scripts
+      - ./data/data:/data

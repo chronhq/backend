@@ -74,9 +74,9 @@ admin: ## Creates a super user based on the values supplied in the configuration
 
 # Geometry
 mvt-build: ## Generates mbtiles for STVs 
-	docker-compose exec -T mbtiles sh /scripts/pullUpdatedSTVs.sh full
+	docker-compose exec -T notipsta sh /scripts/pullUpdatedSTVs.sh full
 mvt-update: ## Update mbtiles for STVs
-	docker-compose exec -T mbtiles sh /scripts/pullUpdatedSTVs.sh
+	docker-compose exec -T nitipsta sh /scripts/pullUpdatedSTVs.sh
 
 mvt-pg-build: ## Populate api_mvtlayers with mbtiles
 	docker-compose exec web python manage.py clean_stvs --antimeridian --make-valid
@@ -108,6 +108,12 @@ system-image: ## Build alpine with dependencies
 push-system: ## Push alpine with dependencies
 	docker push chronmaps/backend:deps-base
 	docker push chronmaps/backend:deps-build
+
+notipsta-image:
+	docker build -t chronmaps/backend:notipsta -f notipsta/Dockerfile notipsta/
+
+push-notipsta:
+	docker push chronmaps/backend:notipsta
 
 pull-images: ## Pull all images from docker.hub
 	docker pull --all-tags chronmaps/backend
