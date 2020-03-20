@@ -84,7 +84,7 @@ def fix_antimeridian(timestamp=None):
         cursor.execute(ids_req, options)
         ids = cursor.fetchone()[0]
         if ids is not None:
-            options["ids"] = "(" + str(ids)[1:-1] + ")"
+            options["ids"] = ids
             print(
                 "Fixing issues around antimeridian. Total polygons {}".format(len(ids))
             )
@@ -99,14 +99,12 @@ def fix_antimeridian(timestamp=None):
                             ), ST_GeomFromEWKT(%(antimeridian_negative)s)
                         ) AS territory
                     FROM (
-                        SELECT * FROM api_spacetimevolume WHERE id IN {}
+                        SELECT * FROM api_spacetimevolume WHERE id=ANY(%(ids)s)
                     ) AS foo
                     WHERE ST_IsValid(ST_Transform(territory, 3857)) is not True
                 ) AS foo
                 WHERE api_spacetimevolume.id = foo.id
-                """.format(  # noqa
-                    options["ids"]
-                ),
+                """,
                 options,
             )
             affected = cursor.rowcount

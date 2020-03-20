@@ -23,8 +23,18 @@ from django.http import HttpResponse
 from django.db import connection
 from api.models import MVTLayers
 
+MVT_STV_QUERY = """
+    SELECT
+        id, start_date, end_date, "references", entity_id, wikidata_id, color, admin_level
+        , ST_AsMVTGeom(
+            ST_SnapToGrid(ST_Transform(ST_Simplify(territory, %(simplification)s), 3857), 1)
+            , TileBBox(%(zoom)s, %(x_coor)s, %(y_coor)s)) as territory
+    FROM view_stvmap
+    WHERE ST_Intersects(territory, TileBBox(%(zoom)s, %(x_coor)s, %(y_coor)s, 4326))
+"""
 
-def mvt_geom_params(zoom):
+
+def mvt_geom_simplification(zoom):
     """ Simplification for territory field """
     # For WebMercator (3857) X coordinate bounds are ±20037508.3427892 meters
     # For SRID 4326 X coordinated bounds are ±180 degrees
@@ -41,30 +51,7 @@ def mvt_geom_params(zoom):
     # Apply additional simplification for distant zoom levels
     tolerance_multiplier = 1 if zoom > 5 else 2.2 - 0.2 * zoom
     simplification = tolerance * tolerance_multiplier
-
-    return """
-        ST_SnapToGrid(
-            ST_Transform(
-                ST_Simplify(territory, {})
-                , 3857
-            ), 1
-        )
-    """.format(
-        simplification
-    )
-
-
-def stv_mvt_geom_query(zoom):
-    """ query for stv mvt tile """
-    return """
-        SELECT
-            id, start_date, end_date, "references", entity_id, wikidata_id, color, admin_level
-            , ST_AsMVTGeom({}, TileBBox(%(zoom)s, %(x_coor)s, %(y_coor)s)) as territory
-        FROM view_stvmap
-        WHERE ST_Intersects(territory, TileBBox(%(zoom)s, %(x_coor)s, %(y_coor)s, 4326))
-    """.format(
-        mvt_geom_params(zoom)
-    )
+    return simplification
 
 
 def parse_ints(arr):
@@ -88,21 +75,28 @@ def mvt_stv(request, zoom, x_coor, y_coor):
 
     where = []
     if len(tes) > 0:
-        where.append("entity_id IN ({})".format(str(tes)[1:-1]))
+        where.append("entity_id=ANY(%(tes)s)")
     if len(stv) > 0:
-        where.append("id IN ({})".format(str(stv)[1:-1]))
+        where.append("id=ANY(%(stv)s)")
 
     tile = None
     if len(where) > 0:
         with connection.cursor() as cursor:
-            cursor.execute(  # noqa
+            cursor.execute(
                 """
                 SELECT ST_AsMVT(a, 'stv_admin') AS tile
                 FROM ({} AND ({})) AS a
-                """.format(  # noqa
-                    stv_mvt_geom_query(zoom), " OR ".join(where)
+                """.format(
+                    MVT_STV_QUERY, " OR ".join(where)
                 ),
-                {"zoom": zoom, "x_coor": x_coor, "y_coor": y_coor,},
+                {
+                    "zoom": zoom,
+                    "x_coor": x_coor,
+                    "y_coor": y_coor,
+                    "simplification": mvt_geom_simplification(zoom),
+                    "stv": stv,
+                    "tes": tes,
+                },
             )
             tile = bytes(cursor.fetchone()[0])
     else:
