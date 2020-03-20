@@ -22,18 +22,11 @@ import json
 from django.core.serializers import serialize
 from django.http import HttpResponse, JsonResponse
 from jdcal import jd2gcal
-from api.models import SpacetimeVolume
+from api.models import SpacetimeVolume, HistoricalSpacetimeVolume
 
 
-def stv_downloader(request, primary_key):
-    """
-    Download stvs as geojson.
-    """
 
-    stv = SpacetimeVolume.objects.filter(pk=primary_key)
-    if len(stv) == 0:
-        return HttpResponse(status=404)
-
+def stv_to_geojson_response(stv):
     geojson = serialize(
         "geojson",
         stv,
@@ -66,10 +59,39 @@ def stv_downloader(request, primary_key):
 
     end_date = jd2gcal(stv[0].end_date, 0)
     end_string = "{}-{}-{}".format(end_date[0], end_date[1], end_date[2])
+
     response = JsonResponse(geojson)
 
     response["Content-Disposition"] = "attachment;filename={}_{}_{}.json;".format(
         stv[0].entity.label, start_string, end_string
     )
-
     return response
+
+def stv_downloader(request, primary_key):
+    """
+    Download stvs as geojson.
+    """
+
+    stv = SpacetimeVolume.objects.filter(pk=primary_key)
+    if len(stv) == 0:
+        return HttpResponse(status=404)
+
+    return stv_to_geojson_response(stv)
+
+
+def historical_stv_downloader(request, primary_key):
+    """
+    Download historical stvs as geojson.
+    """
+
+    try:
+        history = HistoricalSpacetimeVolume.objects.get(history_id=primary_key)
+    except HistoricalSpacetimeVolume.DoesNotExist:
+        return HttpResponse(status=404)
+
+    stv = SpacetimeVolume.objects.filter(id=history.id)
+
+    if len(stv) == 0:
+        return HttpResponse(status=404)
+
+    return stv_to_geojson_response(stv)
