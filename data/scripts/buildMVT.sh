@@ -39,12 +39,14 @@ for r in $@ ; do
 done
 
 if [[ "$#" -eq 0 ]]; then
-  tippecanoe -o $OUT $PARAMS $IN
+  # shellcheck disable=SC2086
+  tippecanoe -o "${OUT}" ${PARAMS} "${IN}"
 else
-  tippecanoe -o $UPDATES $PARAMS $IN
+  # shellcheck disable=SC2086
+  tippecanoe -o "${UPDATES}" ${PARAMS} "${IN}"
   tile-join -pk -j '{"*":["!in","id",'"${REMOVE_STRING}"']}' -f -o ${CLEAN} ${ORIG}
-  tile-join -pk -f -o ${OUT} ${CLEAN} ${UPDATES}
-  rm -f $UPDATES $CLEAN
+  tile-join -pk -f -o "${OUT}" "${CLEAN}" "${UPDATES}"
+  rm -f "$UPDATES" "$CLEAN"
 fi
 
 echo "$(date): Finished building mbtiles"

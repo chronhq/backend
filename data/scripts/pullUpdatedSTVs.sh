@@ -53,7 +53,7 @@ else
 fi
 
 if [ ${status} -eq 0 ]; then
-	echo -n ${CUR} > ${PREV_RUN};
+	echo -n "${CUR}" > "${PREV_RUN}";
 	if [ -f /data/stv.mbtiles ]; then
 		/bin/mv /data/stv.mbtiles /root/mbtiles/stv.mbtiles;
 	fi
