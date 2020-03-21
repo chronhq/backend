@@ -27,5 +27,5 @@ WHERE history_date >= to_timestamp(${PREV})
 # shellcheck disable=SC2086
 updates=$(eval $psql "\"$query\"" | sed 's/^\s//' | grep -v -e '^$')
 
-[ "${updates}" != "" ] && echo $updates;
+[ "${updates}" != "" ] && echo "${updates}";
 exit 0;

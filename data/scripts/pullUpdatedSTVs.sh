@@ -35,7 +35,7 @@ else
     PREV=0
 fi
 
-updates=$(eval sh ${DIR}/selectUpdatedSTVs.sh)
+updates=$(eval sh "${DIR}/selectUpdatedSTVs.sh")
 
 if [[ -f "${ORIG}" && "${FULL}" == "" ]]; then
     if [[ ${#updates[@]} -eq 0 ]]; then

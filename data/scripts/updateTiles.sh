@@ -37,8 +37,8 @@ CUR=$(date "+%s")
 PREV=$(cat $PREV_RUN)
 
 # Change dir to project's root
-cd $DIR/../../
+cd "$DIR/../../"
 
-time docker-compose exec web python manage.py generate_mvt --update --timestamp $PREV
+time docker-compose exec web python manage.py generate_mvt --update --timestamp "$PREV"
 
 [ $? -eq 0 ] && echo -n ${CUR} > ${PREV_RUN}
