@@ -22,7 +22,7 @@ const { exec } = require('child_process');
 
 const PORT = process.env.NOTIPSTA_PORT || 5001;
 const INTERVAL = process.env.NOTIPSTA_WATCH_INTERVAL || 10000;
-const APPS = 'tippecanoe,tile-join,pullUpdatedSTVs.sh'.split(',').join('\\|')
+const APPS = 'tippecanoe,tile-join,pullUpdatedSTVs.sh'.split(',').join('\\|');
 const FILE = '/data/PREV_RUN';
 const COMMAND = '/scripts/pullUpdatedSTVs.sh';
 const UPDATES = '/scripts/selectUpdatedSTVs.sh';
@@ -50,7 +50,7 @@ function updateStatus() {
   if (!status.running) {
     runCommand(`${UPDATES} ${status.last}`, (stdout) => {
       status.updates = stdout.split(/\s/).filter((f) => f).map(Number);
-    })
+    });
   }
   if (FILE) {
     runCommand(`cat ${FILE} 2>/dev/null|| echo -n 0`, (stdout) => {
@@ -70,7 +70,7 @@ function updateStatus() {
       });
       status.duration = Math.max(...time);
     }
-    setTimeout(updateStatus, INTERVAL)
+    setTimeout(updateStatus, INTERVAL);
   });
 }
 
