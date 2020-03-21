@@ -1,3 +1,5 @@
+#!/bin/sh
+
 PREV=$1
 [ "${PREV}" == "" ] && PREV=0;
 

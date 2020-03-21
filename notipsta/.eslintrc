@@ -1,0 +1,21 @@
+{
+  "extends": ["plugin:jsx-a11y/recommended", "node"],
+  "env": {
+    "node": true,
+    "jest": true
+  },
+  "rules": {
+    "import/no-commonjs": 0,
+    "import/no-nodejs-modules": ["error", {"allow": ["fs", "child_process"]}],
+    "new-cap": [2, { "capIsNewExceptions": ["List", "Map", "Set"] }],
+    "import/no-named-as-default": 2,
+    "comma-dangle": 0,
+    "indent": [2, 2, {"SwitchCase": 1}],
+    "no-console": 0,
+    "no-alert": 0,
+    "linebreak-style": "off",
+  
+    "jsx-quotes": "off",
+    "no-param-reassign": "warn"
+  }
+}

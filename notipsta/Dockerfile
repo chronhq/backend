@@ -1,8 +1,8 @@
-FROM morlov/mbtiles-psql
+FROM morlov/mbtiles-psql:latest
 
 LABEL maintainer="Mikhail Orlov <miklergm@gmail.com>"
 
-ADD notipsta.js /src
+COPY notipsta.js /src
 
 ENV NOTIPSTA_PORT=5001
 ENV NOTIPSTA_WATCH_INTERVAL=10000

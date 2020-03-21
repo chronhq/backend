@@ -7,6 +7,8 @@
   "license": "GPLv3",
   "scripts": {
     "start": "node notipsta.js",
+    "lint": "eslint .",
+    "lint-fix": "eslint . --fix",
     "dev": "nodemon notipsta.js"
   },
   "repository": {
@@ -17,6 +19,10 @@
     "express": "^4.17.1"
   },
   "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb": "^18.1.0",
+    "eslint-config-node": "^4.0.0",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
     "nodemon": "^2.0.2"
   }
 }

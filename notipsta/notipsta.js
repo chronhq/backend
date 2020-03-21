@@ -18,8 +18,7 @@
  */
 
 const express = require('express');
-const { exec } = require("child_process");
-const fs = require('fs');
+const { exec } = require('child_process');
 
 const PORT = process.env.NOTIPSTA_PORT || 5001;
 const INTERVAL = process.env.NOTIPSTA_WATCH_INTERVAL || 10000;
@@ -34,8 +33,8 @@ const psFilter = 'grep -v grep | sed -e "s%\\s*root\\s*%,%g" -e "s%^\\s*%%"';
 const psCommand = `ps -eo etime,user,pid,user,args | grep "\\(${APPS}\\)" | ${psFilter}`;
 const app = express();
 const status = {
-    last: 0, running: false, duration: 0, updates: []
-}
+  last: 0, running: false, duration: 0, updates: []
+};
 
 function runCommand(toExecute, success) {
   exec(toExecute, (error, stdout, stderr) => {
@@ -64,7 +63,7 @@ function updateStatus() {
       const arr = stdout.split('\n');
       const time = arr.map((c) => {
         if (c === '') return 0;
-        const [s, m, h] = c.split(',')[0].split(':').reverse().map(Number)
+        const [s, m, h] = c.split(',')[0].split(':').reverse().map(Number);
         let t = m * 60 + s;
         if (h) t += 3600 * h;
         return t;
@@ -91,24 +90,24 @@ const printableDate = () => {
   const date = [d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()];
   const time = [d.getUTCHours(), d.getUTCMinutes()];
   date[1] += 1;
-  if (date[1] < 10) date[1] = `0${date[1]}`
-  if (time[1] < 10) time[1] = `0${time[1]}`
+  if (date[1] < 10) date[1] = `0${date[1]}`;
+  if (time[1] < 10) time[1] = `0${time[1]}`;
   return `${date.join('-')} ${time.join(':')}`;
-}
+};
 
 function update (req, res, force = false) {
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   const fromPrev = Math.round(Number(new Date())/1000) - status.last;
   console.log(`${ip} ${printableDate()} ${req.method} PREV_RUN was ${fromPrev}s ago ${JSON.stringify(status)}`);
   if (status.running) {
-      res.status(208).send(status);
+    res.status(208).send(status);
   } else {
     status.running = true;
     status.duration = 0;
     startProcess(force);
     res.send(status);
   }
-};
+}
 
 
 // GET to retrieve current status.
@@ -119,13 +118,13 @@ app.put('/', (req, res) => update(req, res, true));
 app.patch('/', (req, res) => update(req, res, false));
 
 
-app.listen(PORT, function () {
+app.listen(PORT, () => {
   updateStatus();
   console.log([
     'Notipsta: Notification for tippecanoe status',
     `\tListening ${PORT}`,
     `\tRunning checks every ${INTERVAL}ms`,
-    `\tFlagged processes: "\(${APPS}\)"`,
+    `\tFlagged processes: "\\(${APPS}\\)"`,
     `\tTimestamp file ${FILE}`,
     `\tUpdate command ${COMMAND}`,
     String(new Date())
