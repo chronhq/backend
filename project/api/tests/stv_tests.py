@@ -41,7 +41,7 @@ class STVTests(APITest):
         area = calculate_area(
             GEOSGeometry("SRID=4326;POLYGON((-1 -1,-1 1,1 1, 1 -1, -1 -1))")
         )
-        self.assertEqual(area, 49238887518.5544)
+        self.assertEqual(round(area), round(49238887518.5544))
 
     @override_settings(CACHEOPS_ENABLED=False)
     @authorized

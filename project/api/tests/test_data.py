@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from math import ceil
 from unittest.mock import patch
 from jdcal import gcal2jd
-from api.factories import TerritorialEntityFactory
+from api.factories import TerritorialEntityFactory, MapColorSchemeFactory
 
 # Response from wikidata
 RANK = {
@@ -56,11 +56,16 @@ def set_up_data(cls):
     cls.JD_0004 = ceil(sum(gcal2jd(4, 1, 1))) + 0.0
     cls.JD_0005 = ceil(sum(gcal2jd(5, 1, 1))) + 0.0
 
+    # MapColorScheme
+    cls.color_red = MapColorSchemeFactory(color="#BB3F3F", palette="red", main=True)
+    cls.color_blue = MapColorSchemeFactory(color="#3b7e9a", palette="blue", main=True)
+    cls.color_grey = MapColorSchemeFactory(color="#2E516F", palette="blue", main=False)
+
     # TerritorialEntities
     cls.european_union = TerritorialEntityFactory(
         wikidata_id=10,
         label="European Union",
-        color=1,
+        color=cls.color_red,
         admin_level=1,
         inception_date=0,
         dissolution_date=1,
@@ -68,7 +73,7 @@ def set_up_data(cls):
     cls.nato = TerritorialEntityFactory(
         wikidata_id=11,
         label="NATO",
-        color=1,
+        color=cls.color_red,
         admin_level=1,
         inception_date=0,
         dissolution_date=1,
@@ -77,7 +82,7 @@ def set_up_data(cls):
     cls.germany = TerritorialEntityFactory(
         wikidata_id=20,
         label="Germany",
-        color=1,
+        color=cls.color_red,
         admin_level=2,
         inception_date=0,
         dissolution_date=1,
@@ -85,7 +90,7 @@ def set_up_data(cls):
     cls.france = TerritorialEntityFactory(
         wikidata_id=21,
         label="France",
-        color=1,
+        color=cls.color_red,
         admin_level=2,
         inception_date=0,
         dissolution_date=1,
@@ -93,7 +98,7 @@ def set_up_data(cls):
     cls.spain = TerritorialEntityFactory(
         wikidata_id=22,
         label="Spain",
-        color=1,
+        color=cls.color_red,
         admin_level=2,
         inception_date=0,
         dissolution_date=1,
@@ -101,7 +106,7 @@ def set_up_data(cls):
     cls.italy = TerritorialEntityFactory(
         wikidata_id=23,
         label="Italy",
-        color=1,
+        color=cls.color_red,
         admin_level=2,
         inception_date=0,
         dissolution_date=1,
@@ -109,7 +114,7 @@ def set_up_data(cls):
     cls.british_empire = TerritorialEntityFactory(
         wikidata_id=24,
         label="British Empire",
-        color=1,
+        color=cls.color_red,
         admin_level=2,
         inception_date=0,
         dissolution_date=1,
@@ -117,7 +122,7 @@ def set_up_data(cls):
     cls.british_hk = TerritorialEntityFactory(
         wikidata_id=25,
         label="British HK",
-        color=1,
+        color=cls.color_red,
         admin_level=2,
         inception_date=0,
         dissolution_date=1,
@@ -126,7 +131,7 @@ def set_up_data(cls):
     cls.alsace = TerritorialEntityFactory(
         wikidata_id=30,
         label="Alsace",
-        color=1,
+        color=cls.color_grey,
         admin_level=3,
         inception_date=0,
         dissolution_date=1,
@@ -134,7 +139,7 @@ def set_up_data(cls):
     cls.lorraine = TerritorialEntityFactory(
         wikidata_id=31,
         label="Lorraine",
-        color=1,
+        color=cls.color_blue,
         admin_level=3,
         inception_date=0,
         dissolution_date=1,
