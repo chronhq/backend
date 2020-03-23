@@ -41,4 +41,4 @@ cd "$DIR/../../"
 
 time docker-compose exec web python manage.py generate_mvt --update --timestamp "$PREV"
 
-[ $? -eq 0 ] && echo -n ${CUR} > ${PREV_RUN}
+[ $? -eq 0 ] && echo -n "${CUR}" > "${PREV_RUN}"

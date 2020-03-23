@@ -53,6 +53,7 @@ def fix_antimeridian(timestamp=None):
     options = {
         "antimeridian_positive": "SRID=4326;LINESTRING(180 90,180 -90)",
         "antimeridian_negative": "SRID=4326;LINESTRING(-180 90,-180 -90)",
+        "timestamp": timestamp,
     }
 
     initial = (
@@ -61,13 +62,11 @@ def fix_antimeridian(timestamp=None):
         else """
         (SELECT api_spacetimevolume.* FROM (
                 SELECT DISTINCT id
-                FROM api_historicalspacetimevolume WHERE history_date >= to_timestamp({})
+                FROM api_historicalspacetimevolume WHERE history_date >= to_timestamp(%(timestamp)s)
             ) AS foo
             JOIN api_spacetimevolume ON foo.id = api_spacetimevolume.id
         ) AS foo
-    """.format(
-            timestamp
-        )
+    """
     )
 
     ids_req = """
@@ -76,7 +75,7 @@ def fix_antimeridian(timestamp=None):
         WHERE
             ST_Intersects(territory, ST_GeomFromEWKT(%(antimeridian_positive)s))
         OR	ST_Intersects(territory, ST_GeomFromEWKT(%(antimeridian_negative)s))
-    """.format(
+    """.format(  # nosec
         initial
     )
 

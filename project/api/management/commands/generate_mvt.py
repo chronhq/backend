@@ -79,7 +79,7 @@ def create_mvt_stv(zoom, x_coor, y_coor):
                 , ST_AsMVT(a, 'stv') AS tile
             FROM ({}) AS a
             ON CONFLICT (zoom, x_coor, y_coor, layer) DO UPDATE SET tile = EXCLUDED.tile
-            """.format(
+            """.format(  # nosec
                 stv_mvt_geom_query(zoom)
             ),
             {"zoom": zoom, "x_coor": x_coor, "y_coor": y_coor,},

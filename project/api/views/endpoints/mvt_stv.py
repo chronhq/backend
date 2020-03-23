@@ -86,7 +86,7 @@ def mvt_stv(request, zoom, x_coor, y_coor):
                 """
                 SELECT ST_AsMVT(a, 'stv_admin') AS tile
                 FROM ({} AND ({})) AS a
-                """.format(
+                """.format(  # nosec
                     MVT_STV_QUERY, " OR ".join(where)
                 ),
                 {
