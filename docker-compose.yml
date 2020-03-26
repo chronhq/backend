@@ -59,3 +59,7 @@ services:
       - ./data/mbtiles:/root/mbtiles
       - ./data/scripts:/scripts
       - ./data/data:/data
+  frontend:
+    depends_on:
+      - nginx
+    image: chronmaps/frontend:release-prod

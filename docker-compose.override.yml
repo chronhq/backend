@@ -6,6 +6,10 @@ services:
   web:
     environment:
       - ENV=dev
+  frontend:
+    depends_on:
+      - nginx
+    image: chronmaps/frontend:release-dev
   pgadmin:
     image: dpage/pgadmin4
     ports:
