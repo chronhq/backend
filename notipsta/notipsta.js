@@ -20,7 +20,7 @@
 const express = require('express');
 const { exec } = require('child_process');
 
-const PORT = process.env.NOTIPSTA_PORT || 5001;
+const PORT = process.env.NOTIPSTA_PORT || 5000;
 const INTERVAL = process.env.NOTIPSTA_WATCH_INTERVAL || 10000;
 const APPS = 'tippecanoe,tile-join,pullUpdatedSTVs.sh'.split(',').join('\\|');
 const FILE = '/data/PREV_RUN';
