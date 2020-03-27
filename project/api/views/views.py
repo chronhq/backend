@@ -23,6 +23,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from api.models import (
+    MapColorScheme,
     TerritorialEntity,
     PoliticalRelation,
     CachedData,
@@ -36,6 +37,7 @@ from api.models import (
     SymbolFeature,
 )
 from api.serializers import (
+    MapColorSchemeSerializer,
     TerritorialEntitySerializer,
     PoliticalRelationSerializer,
     CachedDataSerializer,
@@ -49,6 +51,15 @@ from api.serializers import (
     SymbolFeatureSerializer,
 )
 from api.permissions import IsUserOrReadOnly
+
+
+class MapColorSchemeViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for MapColorScheme
+    """
+
+    queryset = MapColorScheme.objects.all()
+    serializer_class = MapColorSchemeSerializer
 
 
 class TerritorialEntityViewSet(viewsets.ModelViewSet):

@@ -23,6 +23,7 @@ from rest_framework.routers import DefaultRouter
 from . import views
 
 ROUTER = DefaultRouter()
+ROUTER.register(r"mapcolorscheme", views.MapColorSchemeViewSet)
 ROUTER.register(r"territorial-entities", views.TerritorialEntityViewSet)
 ROUTER.register(r"political-relations", views.PoliticalRelationViewSet)
 ROUTER.register(r"cached-data", views.CachedDataViewSet)
@@ -52,7 +53,8 @@ urlpatterns = [
         views.mvt_narratives,
         name="mvt-narratives",
     ),
-    path("mvt/stv/<int:zoom>/<int:x_cor>/<int:y_cor>", views.mvt_stv, name="mvt-stv"),
+    path("mvt/stv/<int:zoom>/<int:x_coor>/<int:y_coor>", views.mvt_stv, name="mvt-stv"),
     path("spacetime-volumes/<int:primary_key>/download", views.stv_downloader),
+    path("territorial-entities/list", views.te_list),
     path("", include(ROUTER.urls)),
 ]

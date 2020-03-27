@@ -45,20 +45,8 @@ function feature() {
       'geometry',   ST_AsGeoJSON(territory)::json,
       'properties', to_jsonb(row) - 'territory'
     ) FROM (
-      SELECT
-        api_spacetimevolume.id,
-        api_spacetimevolume.start_date,
-        api_spacetimevolume.end_date,
-        api_spacetimevolume.references,
-        ST_AsGeoJSON(api_spacetimevolume.visual_center)::json as visual_center,
-        api_spacetimevolume.territory,
-        api_spacetimevolume.entity_id,
-        api_territorialentity.wikidata_id, api_territorialentity.color,
-        api_territorialentity.admin_level
-        FROM api_spacetimevolume
-        JOIN api_territorialentity ON api_spacetimevolume.entity_id = api_territorialentity.id
-        WHERE api_spacetimevolume.id = $target
-      ) row;
+      SELECT * FROM view_stvmap WHERE id = $target
+    ) row;
   "
 }
 

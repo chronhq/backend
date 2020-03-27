@@ -73,15 +73,17 @@ admin: ## Creates a super user based on the values supplied in the configuration
 	docker-compose exec web ./manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('$(ADMIN_USER)', '$(ADMIN_EMAIL)', '$(ADMIN_PASS)')"
 
 # Geometry
-mvt-build: ## Generates mbtiles for STVs
-	docker-compose exec mbtiles sh /scripts/getSTVGeoJSON.sh && /bin/rm -f /root/mbtiles/stv.mbtiles
-	docker-compose restart mbtiles
-	docker-compose exec mbtiles /bin/mv /tmp/stv.mbtiles /root/mbtiles/stv.mbtiles
-
+mvt-build: ## Generates mbtiles for STVs 
+	docker-compose exec -T notipsta sh /scripts/pullUpdatedSTVs.sh full
 mvt-update: ## Update mbtiles for STVs
-	docker-compose exec mbtiles sh /scripts/pullUpdatedSTVs.sh && /bin/rm -f /root/mbtiles/stv.mbtiles
-	docker-compose restart mbtiles
-	docker-compose exec mbtiles /bin/mv /tmp/stv.mbtiles /root/mbtiles/stv.mbtiles
+	docker-compose exec -T nitipsta sh /scripts/pullUpdatedSTVs.sh
+
+mvt-pg-build: ## Populate api_mvtlayers with mbtiles
+	docker-compose exec web python manage.py clean_stvs --antimeridian --make-valid
+	docker-compose exec web python manage.py generate_mvt
+
+mvt-pg-update:
+	bash ./data/scripts/updateTiles.sh
 
 # Docker images
 image: ## Build backend:latest image
@@ -107,6 +109,12 @@ push-system: ## Push alpine with dependencies
 	docker push chronmaps/backend:deps-base
 	docker push chronmaps/backend:deps-build
 
+notipsta-image:
+	docker build -t chronmaps/backend:notipsta -f notipsta/Dockerfile notipsta/
+
+push-notipsta:
+	docker push chronmaps/backend:notipsta
+
 pull-images: ## Pull all images from docker.hub
 	docker pull --all-tags chronmaps/backend
 
@@ -131,3 +139,14 @@ loaddata: ## Restore data from previous dump
 	else \
 		echo Error: No file to load; \
 	fi;
+
+dumpsql: ## dump all data using pg_dumpall
+	docker-compose exec -T db sh -c '\
+		echo localhost:5432:$$POSTGRES_DB:$$POSTGRES_USER:$$POSTGRES_PASSWORD > ~/.pgpass; \
+		chmod 600 ~/.pgpass; cd /docker-entrypoint-initdb.d/; \
+		NAME=$$(echo $$(date "+%Y-%m-%d").dump); echo Dumping database to $${NAME}; \
+		pg_dumpall -U $$POSTGRES_USER -f $${NAME}; \
+		sed -e "s/^CREATE ROLE/-- CREATE ROLE/" -e "s/^ALTER ROLE/-- ALTER ROLE/" -i $${NAME}; \
+		if [[ -f latest.sql ]]; then /bin/rm -f latest.sql; fi; \
+		/bin/ln -s $${NAME} latest.sql \
+	'

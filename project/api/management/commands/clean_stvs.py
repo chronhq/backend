@@ -19,13 +19,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from itertools import tee
 
-from django.db import transaction
+from django.db import transaction, connection
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.management.base import BaseCommand
 from django.contrib.gis.db.models.functions import MakeValid
 
 from api.models import TerritorialEntity, SpacetimeVolume
-from api.views.stv_view import _find_difference, _calculate_area
+from api.views.stv_view import find_difference, calculate_area
 
 
 def pairwise(iterable):
@@ -46,6 +46,68 @@ def make_stvs_valid(entity):
                 )
             )
             stvs.filter(id=stv.id).update(territory=MakeValid("territory"))
+
+
+def fix_antimeridian(timestamp=None):
+    """ Fix polygons along 180th meridian """
+    options = {
+        "antimeridian_positive": "SRID=4326;LINESTRING(180 90,180 -90)",
+        "antimeridian_negative": "SRID=4326;LINESTRING(-180 90,-180 -90)",
+        "timestamp": timestamp,
+    }
+
+    initial = (
+        "api_spacetimevolume"
+        if timestamp is None
+        else """
+        (SELECT api_spacetimevolume.* FROM (
+                SELECT DISTINCT id
+                FROM api_historicalspacetimevolume WHERE history_date >= to_timestamp(%(timestamp)s)
+            ) AS foo
+            JOIN api_spacetimevolume ON foo.id = api_spacetimevolume.id
+        ) AS foo
+    """
+    )
+
+    ids_req = """
+        SELECT array_agg(id)
+        FROM {}
+        WHERE
+            ST_Intersects(territory, ST_GeomFromEWKT(%(antimeridian_positive)s))
+        OR	ST_Intersects(territory, ST_GeomFromEWKT(%(antimeridian_negative)s))
+    """.format(  # nosec
+        initial
+    )
+
+    with connection.cursor() as cursor:
+        cursor.execute(ids_req, options)
+        ids = cursor.fetchone()[0]
+        if ids is not None:
+            options["ids"] = ids
+            print(
+                "Fixing issues around antimeridian. Total polygons {}".format(len(ids))
+            )
+            cursor.execute(
+                """
+                UPDATE api_spacetimevolume
+                SET territory=foo.territory
+                FROM (
+                    SELECT id,
+                        ST_Split(ST_Split(
+                            territory, ST_GeomFromEWKT(%(antimeridian_positive)s)
+                            ), ST_GeomFromEWKT(%(antimeridian_negative)s)
+                        ) AS territory
+                    FROM (
+                        SELECT * FROM api_spacetimevolume WHERE id=ANY(%(ids)s)
+                    ) AS foo
+                    WHERE ST_IsValid(ST_Transform(territory, 3857)) is not True
+                ) AS foo
+                WHERE api_spacetimevolume.id = foo.id
+                """,
+                options,
+            )
+            affected = cursor.rowcount
+            print("{} rows affected".format(affected))
 
 
 @transaction.atomic
@@ -130,16 +192,16 @@ def handle_stv_duplicates(entity):
     for prev, cur in pairwise(stvs):
         if cur.start_date - prev.end_date > 1:
             continue
-        areas = [_calculate_area(prev.territory), _calculate_area(cur.territory)]
+        areas = [calculate_area(prev.territory), calculate_area(cur.territory)]
         # Skip big difference
         if abs(areas[0] - areas[1]) > 100:
             continue
         if areas[0] == areas[1]:
             diff = None
         else:
-            diff = _find_difference(cur.territory, prev.territory)
+            diff = find_difference(cur.territory, prev.territory)
             if diff is None:
-                diff = _find_difference(prev.territory, cur.territory)
+                diff = find_difference(prev.territory, cur.territory)
 
         if diff is None:
             print(
@@ -167,10 +229,38 @@ class Command(BaseCommand):
 
     help = "Clean time overlaps for STVs"
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--time-overlaps", action="store_true", help="Fix STVs time overlaps"
+        )
+        parser.add_argument(
+            "--duplicates", action="store_true", help="Merge identical STVs"
+        )
+        parser.add_argument(
+            "--make-valid", action="store_true", help="Fix polygons to be valid"
+        )
+        parser.add_argument(
+            "--antimeridian", action="store_true", help="Fix polygons on antimeridian",
+        )
+        parser.add_argument(
+            "--all", action="store_true", help="Use all methods to fix STVs"
+        )
+
     def handle(self, *args, **options):
+        options_list = ["time_overlaps", "duplicates", "make_valid", "antimeridian"]
+        if options["all"]:
+            for opt in options_list:
+                options[opt] = True
+
         entities = TerritorialEntity.objects.all()
 
         for entity in entities:
+            if not (
+                options["time_overlaps"]
+                or options["duplicates"]
+                or options["make_valid"]
+            ):
+                break
             print(
                 "Processing Territorial Entity: {}, id {}".format(
                     entity.label, entity.id
@@ -180,6 +270,11 @@ class Command(BaseCommand):
                 print("* Removing empty entity")
                 entity.delete()
                 continue
-            make_stvs_valid(entity)
-            handle_te_time(entity)
-            handle_stv_duplicates(entity)
+            if options["make_valid"]:
+                make_stvs_valid(entity)
+            if options["time_overlaps"]:
+                handle_te_time(entity)
+            if options["duplicates"]:
+                handle_stv_duplicates(entity)
+        if options["antimeridian"]:
+            fix_antimeridian()

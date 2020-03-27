@@ -20,6 +20,7 @@ install:
   - make pull-images
   - 'if ! make check-python-image; then make python-image; fi'
   - make image
+  - make notipsta-image
   - docker-compose build
 
 jobs:
@@ -33,8 +34,7 @@ jobs:
           python manage.py test --debug-mode
         - 'if [[ "$TRAVIS_PULL_REQUEST" = "false" && "$TRAVIS_BRANCH" = "staging" ]];then
         echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin;
-        make push-python;
-        make push-image; fi'
+        make push-python; make push-image; make push-notipsta; fi'
 
 branches:
   only:

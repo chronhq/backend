@@ -1,17 +1,21 @@
 version: "3"
 services:
   db:
-    image: mdillon/postgis:11-alpine
+    image: postgis/postgis:12-3.0-alpine
     ports:
       - "5432"
     env_file:
       - postgres.env
       - mbtiles.env
     volumes:
-      - ./data:/docker-entrypoint-initdb.d
+      - ./data/initdb:/docker-entrypoint-initdb.d
+      - ./data/db:/var/lib/postgresql/data
   nginx:
     image: nginx:stable-alpine
+    ports:
+      - '3080:80'
     volumes:
+      - ./config/nginx:/etc/nginx/conf.d
       - ./project:/src
     depends_on:
       - web
@@ -36,9 +40,20 @@ services:
     env_file:
       - mbtiles.env
       - postgres.env
-    ports:
-      - "5000:5000"
+    volumes:
+      - ./data/mbtiles:/root/mbtiles
+  notipsta:
+    depends_on:
+      - db
+    image: chronmaps/backend:notipsta
+    env_file:
+      - mbtiles.env
+      - postgres.env
     volumes:
       - ./data/mbtiles:/root/mbtiles
       - ./data/scripts:/scripts
       - ./data/data:/data
+  frontend:
+    depends_on:
+      - nginx
+    image: chronmaps/frontend:release-prod

@@ -3,11 +3,23 @@ services:
   db:
     ports:
       - '25432:5432'
-  nginx:
-    ports:
-      - '3080:80'
-    volumes:
-      - ./config/nginx.dev:/etc/nginx/conf.d
   web:
     environment:
       - ENV=dev
+  mbtiles:
+    ports:
+      - "5000:5000"
+  notipsta:
+    ports:
+      - "5001:5000"
+  frontend:
+    depends_on:
+      - nginx
+    image: chronmaps/frontend:release-dev
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "25555:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin
+      - PGADMIN_DEFAULT_PASSWORD=admin

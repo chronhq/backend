@@ -28,6 +28,7 @@ from rest_framework.serializers import (
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from .models import (
+    MapColorScheme,
     TerritorialEntity,
     PoliticalRelation,
     Symbol,
@@ -41,6 +42,16 @@ from .models import (
     NarrativeVote,
     Profile,
 )
+
+
+class MapColorSchemeSerializer(ModelSerializer):
+    """
+    Serializes the MapColorScheme model
+    """
+
+    class Meta:
+        model = MapColorScheme
+        fields = "__all__"
 
 
 class NarrativeVoteSerializer(ModelSerializer):

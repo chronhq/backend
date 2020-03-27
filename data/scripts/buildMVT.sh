@@ -19,16 +19,16 @@
 
 LAYER="stv"
 
-mkdir -p /tmp
-
 ORIG="/root/mbtiles/stv.mbtiles"
 
 IN="/data/${LAYER}.json"
-TMP="/tmp/${LAYER}"
+TMP="/data/${LAYER}"
 OUT="${TMP}.mbtiles"
 CLEAN="${TMP}-CLEAN.mbtiles"
 UPDATES="${TMP}-UPDATES.mbtiles"
 
+DATE=$(date "+%s")
+PARAMS="-f -z${ZOOM} -s EPSG:4326 --name=${DATE} --description=Chronmaps"
 
 # ash-compatible array join implementation
 REMOVE_STRING=""
@@ -39,12 +39,14 @@ for r in $@ ; do
 done
 
 if [[ "$#" -eq 0 ]]; then
-  tippecanoe -o $TMP -f -z${ZOOM} -s EPSG:4326 $IN
+  # shellcheck disable=SC2086
+  tippecanoe -o "${OUT}" ${PARAMS} "${IN}"
 else
-  tippecanoe -f -o ${UPDATES} -z${ZOOM} -s EPSG:4326 $IN
-  tile-join -j '{"*":["!in","id",'"${REMOVE_STRING}"']}' -f -o ${CLEAN} ${ORIG}
-  tile-join -f -o ${OUT} ${CLEAN} ${UPDATES}
-  rm -f $UPDATES $CLEAN
+  # shellcheck disable=SC2086
+  tippecanoe -o "${UPDATES}" ${PARAMS} "${IN}"
+  tile-join -pk -j '{"*":["!in","id",'"${REMOVE_STRING}"']}' -f -o ${CLEAN} ${ORIG}
+  tile-join -pk -f -o "${OUT}" "${CLEAN}" "${UPDATES}"
+  rm -f "$UPDATES" "$CLEAN"
 fi
 
 echo "$(date): Finished building mbtiles"
