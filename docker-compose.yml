@@ -57,3 +57,7 @@ services:
     depends_on:
       - nginx
     image: chronmaps/frontend:release-prod
+  celery:
+    depends_on:
+      - redis
+    image: chronmaps/backend:celery

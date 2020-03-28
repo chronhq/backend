@@ -1,0 +1,7 @@
+FROM chronmaps/backend:latest
+
+LABEL maintainer="Mikhail Orlov <miklergm@gmail.com>"
+
+WORKDIR /src
+
+ENTRYPOINT ["/bin/ash", "./celery.sh"]

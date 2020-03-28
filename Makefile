@@ -88,9 +88,11 @@ mvt-pg-update:
 # Docker images
 image: ## Build backend:latest image
 	docker build -t chronmaps/backend:latest .
+	docker build -t chronmaps/backend:celery -f Dockerfile.celery .
 
 push-image: ## Push backend:latest image
 	docker push chronmaps/backend:latest
+	docker push chronmaps/backend:celery
 
 python-image: ## Build image with python dependencies
 	docker build -t chronmaps/backend:deps-python -f Dockerfile.python .
