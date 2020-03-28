@@ -58,7 +58,7 @@ class ModelTest(TestCase):
         test_te = TerritorialEntity.objects.create(
             wikidata_id=9,
             label="test TE",
-            color=2,
+            color=self.color_blue,
             admin_level=4,
             inception_date=0,
             dissolution_date=1,

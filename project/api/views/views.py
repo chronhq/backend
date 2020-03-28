@@ -25,6 +25,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.pagination import LimitOffsetPagination
 
 from api.models import (
+    MapColorScheme,
     TerritorialEntity,
     PoliticalRelation,
     CachedData,
@@ -40,6 +41,7 @@ from api.models import (
     HistoricalTerritorialEntity,
 )  # pylint: disable=E0611
 from api.serializers import (
+    MapColorSchemeSerializer,
     TerritorialEntitySerializer,
     PoliticalRelationSerializer,
     CachedDataSerializer,
@@ -56,6 +58,15 @@ from api.serializers import (
     TeHistorySerializer,
 )
 from api.permissions import IsUserOrReadOnly
+
+
+class MapColorSchemeViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for MapColorScheme
+    """
+
+    queryset = MapColorScheme.objects.all()
+    serializer_class = MapColorSchemeSerializer
 
 
 class TerritorialEntityViewSet(viewsets.ModelViewSet):

@@ -40,7 +40,7 @@ class TETests(APITest):
         data = {
             "wikidata_id": 9,
             "label": "Test TE",
-            "color": "#fff",
+            "color": self.color_grey.pk,
             "admin_level": 4,
             "inception_date": 0,
             "dissolution_date": 1,
@@ -60,7 +60,7 @@ class TETests(APITest):
         data = {
             "wikidata_id": 10,
             "label": "Update",
-            "color": "#fff",
+            "color": self.color_grey.pk,
             "admin_level": 5,
             "inception_date": 0,
             "dissolution_date": 1,

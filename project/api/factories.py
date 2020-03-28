@@ -29,7 +29,15 @@ from .models import (
     MapSettings,
     Narration,
     City,
+    MapColorScheme,
 )
+
+
+class MapColorSchemeFactory(factory.django.DjangoModelFactory):
+    """ Factory for the MapColorScheme model """
+
+    class Meta:  # pylint: disable=C0111
+        model = MapColorScheme
 
 
 class TerritorialEntityFactory(factory.django.DjangoModelFactory):

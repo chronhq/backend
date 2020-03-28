@@ -18,45 +18,27 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
-ORIG="/root/mbtiles/stv.mbtiles"
+TMP="/tmp/updateTiles";
+mkdir -p $TMP
+LOCK="${TMP}/.updateTiles.lock"
 
-FULL=$1
+if [ -e ${LOCK} ] && kill -0 $(cat ${LOCK}) 2>/dev/null; then
+  echo "Lock file exists... exiting"
+  exit 1
+fi
 
-PREV_RUN=/data/PREV_RUN
+trap "rm -f ${LOCK}; exit" INT TERM EXIT
+echo $$ > ${LOCK}
+
+PREV_RUN="${TMP}/PREV_RUN"
 [ ! -f ${PREV_RUN} ] && echo -n 0 > ${PREV_RUN}
 
 CUR=$(date "+%s")
 PREV=$(cat $PREV_RUN)
 
-if [[ "$PREV" -eq "$PREV" ]] 2>/dev/null; then
-    echo "$(date): Previous run was $((CUR - PREV)) seconds ago"
-else
-    echo "$(date): Previous run was not detected"
-    PREV=0
-fi
+# Change dir to project's root
+cd "$DIR/../../"
 
-updates=$(eval sh "${DIR}/selectUpdatedSTVs.sh")
+time docker-compose exec web python manage.py generate_mvt --update --timestamp "$PREV"
 
-if [[ -f "${ORIG}" && "${FULL}" == "" ]]; then
-    if [[ ${#updates[@]} -eq 0 ]]; then
-        echo "$(date): Updated STVs: none"
-		status=0
-    else
-        echo "$(date): Updated STVs: ${updates}"
-        sh ${DIR}/getSTVGeoJSON.sh $updates
-		status=$?
-    fi
-else
-    echo "$(date): Buiding STVs from scratch"
-    sh ${DIR}/getSTVGeoJSON.sh
-	status=$?
-fi
-
-if [ ${status} -eq 0 ]; then
-	echo -n "${CUR}" > "${PREV_RUN}";
-	if [ -f /data/stv.mbtiles ]; then
-		/bin/mv /data/stv.mbtiles /root/mbtiles/stv.mbtiles;
-	fi
-fi
-
-exit ${status}
+[ $? -eq 0 ] && echo -n "${CUR}" > "${PREV_RUN}"

@@ -41,10 +41,10 @@ from api.serializers import SpacetimeVolumeSerializer
 AREA_TOLERANCE = 100.0
 
 
-def _find_difference(geom_a, geom_b):
+def find_difference(geom_a, geom_b):
     """
     Calculate difference between two polygons
-    null if no difference
+    None if no difference
     """
     with connection.cursor() as cursor:
         cursor.execute(
@@ -64,7 +64,16 @@ def _find_difference(geom_a, geom_b):
     return row
 
 
-def _calculate_area(geom):
+def geom_difference(geom_a, geom_b):
+    """ Return a GEOS object from SQL query """
+    diff = find_difference(geom_a, geom_b)
+    if diff is None:
+        return GEOSGeometry("MULTIPOLYGON EMPTY", srid=4326)
+    # Might raise GDALException
+    return GEOSGeometry(diff)
+
+
+def calculate_area(geom):
     """
     Calculates area of the provided geometry using geography
     Result would be in square meters
@@ -77,7 +86,7 @@ def _calculate_area(geom):
     return row
 
 
-def _validate_geometry(request):
+def _parse_geometry(request):
     content = request.data["territory"].read().decode("utf-8")
     try:
         try:
@@ -96,6 +105,10 @@ def _validate_geometry(request):
             geom = GEOSGeometry(content)
     except GDALException:
         raise ValidationError("Geometry is not recognized")
+    return geom
+
+
+def _validate_geometry(geom):
     if geom.srid != 4326:
         try:
             geom.transform(4326)
@@ -105,12 +118,21 @@ def _validate_geometry(request):
         # TODO find a better way to convert Geometry Collection to MultiPolygon
         tmp_geom = GEOSGeometry("POINT EMPTY", srid=4326)
         for i in geom:
-            tmp_geom = tmp_geom.union(i)
+            try:
+                tmp_geom = tmp_geom.union(i.buffer(0))
+            except GEOSException:
+                raise ValidationError("Invalid geometry")
         geom = tmp_geom
     if geom.geom_type not in ["Polygon", "MultiPolygon"]:
         raise ValidationError("Invalid geometry type")
     if not geom.valid:
         geom = geom.buffer(0)
+    if not geom.within(
+        GEOSGeometry("POLYGON ((-180 -90, -180 90, 180 90, 180 -90, -180 -90))")
+    ):
+        raise ValidationError(
+            "Not bounded by EPSG:4326 coordinates, check file projection"
+        )
     return geom
 
 
@@ -129,7 +151,7 @@ def _stv_form_validate(request):
     except (ValueError, MultiValueDictKeyError):
         raise ValidationError("Use JDN for start_date and end_date")
 
-    geom = _validate_geometry(request)
+    geom = _validate_geometry(_parse_geometry(request))
 
     try:
         request.data["visual_center"] = GEOSGeometry(request.data["visual_center"])
@@ -185,15 +207,15 @@ def _subtract_geometry(request, overlaps, geom, gid):
 
     # Important to subtract from staging geometry first
     for overlap in overlaps["keep"]:
-        geom = geom.difference(overlap.territory)
+        geom = geom_difference(geom, overlap.territory)
 
-    if _calculate_area(geom) < AREA_TOLERANCE:
+    if calculate_area(geom) < AREA_TOLERANCE:
         raise ValidationError("Polygon is too small")
 
     for overlap in overlaps["modify"]:
-        overlap.territory = overlap.territory.difference(geom)
+        overlap.territory = geom_difference(overlap.territory, geom)
         overlap.group = gid
-        if _calculate_area(overlap.territory) < AREA_TOLERANCE:
+        if calculate_area(overlap.territory) < AREA_TOLERANCE:
             overlap.delete()
         else:
             overlap.save()
