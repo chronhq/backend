@@ -35,8 +35,10 @@ def te_list(request):
                 SELECT
                     id, wikidata_id, color_id AS color, admin_level,
                     dissolution_date, inception_date, label,
-                    stvs,
-                    json_array_length(stvs) AS stv_count
+                    (CASE WHEN stvs IS NOT null THEN stvs ELSE '[]'::json END) AS stvs,
+                    (
+                        CASE WHEN stvs IS NOT null THEN json_array_length(stvs) ELSE 0 END
+                    ) AS stv_count
                     FROM (
                     SELECT entity, json_agg(row_to_json(foo)) AS stvs FROM (
                         SELECT
@@ -50,7 +52,7 @@ def te_list(request):
                         ) as foo
                     GROUP BY entity
                 ) as stvs
-                JOIN api_territorialentity ON api_territorialentity.id = entity
+                FULL OUTER JOIN api_territorialentity ON api_territorialentity.id = entity
             ) as foo
             """
         )
