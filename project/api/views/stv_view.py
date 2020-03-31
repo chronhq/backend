@@ -139,13 +139,10 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         empty_territory_data["start_date"] = start_date
         empty_territory_data["end_date"] = end_date
 
-        print("adding new task")
         task = add_new_stv.delay(
             geom.ewkt, empty_territory_data, request.POST.getlist("overlaps")
         )
-        print(task.id)
-        return JsonResponse({"task_id": task.id}, 200)
-        # return super().create(request, *args, **kwargs)
+        return JsonResponse({"task_status": task.status, "task_id": task.id})
 
     def update(self, request, *args, **kwargs):
         """

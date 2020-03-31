@@ -19,4 +19,4 @@
 
 set -e
 
-celery -A tasks_queue worker -l info
+celery -A chron.tasks_queue worker -l info

@@ -9,7 +9,8 @@ from django.db import transaction
 from django.http import JsonResponse
 from django.contrib.gis.geos import GEOSGeometry
 
-from api.models import SpacetimeVolume
+from api.models import TerritorialEntity, SpacetimeVolume
+from api.serializers import SpacetimeVolumeSerializer
 from api.helpers.overlaps import subtract_geometry, overlaps_queryset
 
 
@@ -24,7 +25,7 @@ def add_new_stv(geom, data, req_overlaps):
     def _overlaps():
         # Note that we are using list for queryset here,
         # it's because we don't want to cache queryset object but results.
-        return list(overlaps_queryset(geom, data.start_date, data.end_date))
+        return list(overlaps_queryset(geom, data["start_date"], data["end_date"]))
 
     if "cacheops" in settings.INSTALLED_APPS:
         # Cache overlaps query in production
@@ -32,10 +33,10 @@ def add_new_stv(geom, data, req_overlaps):
             cached_as(
                 SpacetimeVolume.objects.filter(
                     territory__overlaps=geom,
-                    start_date__lte=data.end_date,
-                    end_date__gte=data.start_date,
+                    start_date__lte=data["end_date"],
+                    end_date__gte=data["start_date"],
                 ),
-                extra=(data.start_date, data.end_date),
+                extra=(data["start_date"], data["end_date"]),
             )
         )(_overlaps)
 
@@ -54,7 +55,7 @@ def add_new_stv(geom, data, req_overlaps):
         return JsonResponse({"overlaps": overlaps["db"]}, status=409)
     data["territory"] = subtract_geometry(req_overlaps, overlaps, geom)
 
-    print("Creating new STV")
+    data["entity"] = TerritorialEntity.objects.get(id=data["entity"])
+
     stv = SpacetimeVolume.objects.create(**data)
-    print(stv)
-    return JsonResponse(stv, status=200)
+    return SpacetimeVolumeSerializer(stv).data
