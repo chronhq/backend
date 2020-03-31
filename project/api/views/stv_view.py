@@ -21,67 +21,18 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
 from json.decoder import JSONDecodeError
-from cacheops import cached_as
-from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry, GEOSException
 from django.contrib.gis.gdal.error import GDALException
 from django.utils.datastructures import MultiValueDictKeyError
 from django.core.files.uploadedfile import UploadedFile
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db import transaction, connection
+from django.db import transaction
 from django.http import JsonResponse
 from rest_framework import viewsets
 
 from api.models import SpacetimeVolume
 from api.serializers import SpacetimeVolumeSerializer
-
-
-AREA_TOLERANCE = 100.0
-
-
-def find_difference(geom_a, geom_b):
-    """
-    Calculate difference between two polygons
-    None if no difference
-    """
-    with connection.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT ST_Union(geom) as geom FROM (
-                SELECT (ST_Dump(ST_Difference(p1, p2))).geom FROM (
-                    SELECT
-                        ST_MakeValid(%(geom_a)s::geometry) as p1,
-                        ST_MakeValid(%(geom_b)s::geometry) as p2
-                    ) as foo
-                ) as foo
-                WHERE ST_Dimension(geom) = 2 AND ST_Area(geom::geography) > %(tolerance)s
-            """,
-            {"geom_a": geom_a.ewkt, "geom_b": geom_b.ewkt, "tolerance": AREA_TOLERANCE},
-        )
-        row = cursor.fetchone()[0]
-    return row
-
-
-def geom_difference(geom_a, geom_b):
-    """ Return a GEOS object from SQL query """
-    diff = find_difference(geom_a, geom_b)
-    if diff is None:
-        return GEOSGeometry("MULTIPOLYGON EMPTY", srid=4326)
-    # Might raise GDALException
-    return GEOSGeometry(diff)
-
-
-def calculate_area(geom):
-    """
-    Calculates area of the provided geometry using geography
-    Result would be in square meters
-    """
-    with connection.cursor() as cursor:
-        cursor.execute(
-            "SELECT ST_Area(%(geom)s::geography) AS area", {"geom": geom.ewkt}
-        )
-        row = cursor.fetchone()[0]
-    return row
+from api.tasks.add_new_stv import add_new_stv
 
 
 def _parse_geometry(request):
@@ -159,66 +110,6 @@ def _stv_form_validate(request):
     return geom, start_date, end_date
 
 
-def _overlaps_queryset(geom, start_date, end_date):
-    """
-    Return overlapping STVs
-    """
-    return SpacetimeVolume.objects.raw(
-        """
-        SELECT id, entity_id, end_date, start_date, ST_Union(xing) FROM (
-            SELECT *,
-                (ST_Dump(ST_Intersection(territory, diff))).geom as xing
-            FROM (
-                SELECT *,
-                    ST_Difference(
-                        territory,
-                        ST_MakeValid(%(geom)s::geometry)
-                    ) as diff
-                FROM (
-                    SELECT *
-                    FROM api_spacetimevolume as stv
-                    WHERE stv.end_date >= %(start_date)s::numeric(10,1)
-                        AND stv.start_date <= %(end_date)s::numeric(10,1)
-                        AND ST_Intersects(
-                            territory,
-                        ST_MakeValid(%(geom)s::geometry))
-                ) as foo
-            ) as foo
-        ) as foo
-        WHERE ST_Dimension(xing) = 2 AND ST_Area(xing::geography) > %(tolerance)s
-        GROUP BY id, entity_id, start_date, end_date
-        """,
-        {
-            "geom": geom.ewkt,
-            "start_date": start_date,
-            "end_date": end_date,
-            "tolerance": AREA_TOLERANCE,
-        },
-    )
-
-
-def _subtract_geometry(request, overlaps, geom):
-    for entity, stvs in overlaps["db"].items():
-        overlaps[
-            "keep" if str(entity) not in request.POST.getlist("overlaps") else "modify"
-        ].extend(SpacetimeVolume.objects.filter(pk__in=stvs))
-
-    # Important to subtract from staging geometry first
-    for overlap in overlaps["keep"]:
-        geom = geom_difference(geom, overlap.territory)
-
-    if calculate_area(geom) < AREA_TOLERANCE:
-        raise ValidationError("Polygon is too small")
-
-    for overlap in overlaps["modify"]:
-        overlap.territory = geom_difference(overlap.territory, geom)
-        if calculate_area(overlap.territory) < AREA_TOLERANCE:
-            overlap.delete()
-        else:
-            overlap.save()
-    return geom
-
-
 class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
     """
     ViewSet for SpacetimeVolumes
@@ -245,41 +136,14 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         geom, start_date, end_date = _stv_form_validate(request)
+        empty_territory_data["start_date"] = start_date
+        empty_territory_data["end_date"] = end_date
 
-        def _overlaps():
-            # Note that we are using list for queryset here,
-            # it's because we don't want to cache queryset object but results.
-            return list(_overlaps_queryset(geom, start_date, end_date))
-
-        if "cacheops" in settings.INSTALLED_APPS:
-            # Cache overlaps query in production
-            _overlaps = (
-                cached_as(
-                    SpacetimeVolume.objects.filter(
-                        territory__overlaps=geom,
-                        start_date__lte=end_date,
-                        end_date__gte=start_date,
-                    ),
-                    extra=(start_date, end_date),
-                )
-            )(_overlaps)
-
-        # keep or modify STVs on server
-        # "keep|modify": ["stv_id", "stv_id" ...]
-        overlaps = {"keep": [], "modify": []}
-        # Generate list of overlaps grouped by entities
-        # { "entity_id": ["stv_id", "stv_id"], ...}
-        overlaps["db"] = {}
-        for i in _overlaps():
-            if i.entity.pk not in overlaps["db"]:
-                overlaps["db"][i.entity.pk] = []
-            overlaps["db"][i.entity.pk].append(i.pk)
-
-        if "overlaps" not in request.data and len(overlaps["db"]) > 0:
-            return JsonResponse({"overlaps": overlaps["db"]}, status=409)
-        request.data["territory"] = _subtract_geometry(request, overlaps, geom)
-
-        return super().create(request, *args, **kwargs)
+        print("adding new task")
+        task = add_new_stv.delay(geom.ewkt, empty_territory_data, request.POST.getlist("overlaps"))
+        print(task.id)
+        return JsonResponse({ "task_id": task.id }, 200)
+        # return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
         """

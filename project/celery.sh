@@ -19,4 +19,4 @@
 
 set -e
 
-python -c "import celery; print('Celery is present in the system');"
+celery -A tasks_queue worker -l info

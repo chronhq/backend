@@ -61,3 +61,10 @@ services:
     depends_on:
       - redis
     image: chronmaps/backend:celery
+    volumes:
+      - ./project:/src
+      - ./config:/config
+    env_file:
+      - django.env
+      - postgres.env
+      - auth.env

@@ -26,7 +26,7 @@ from django.contrib.gis.geos import GEOSGeometry
 from django.urls import reverse
 from django.test import override_settings
 from api.models import SpacetimeVolume
-from api.views.stv_view import calculate_area
+from api.helpers.geometry import calculate_area
 from .api_tests import APITest, authorized
 
 
