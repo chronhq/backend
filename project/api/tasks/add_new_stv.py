@@ -12,6 +12,7 @@ from django.contrib.gis.geos import GEOSGeometry
 from api.models import SpacetimeVolume
 from api.helpers.overlaps import subtract_geometry, overlaps_queryset
 
+
 @shared_task
 @transaction.atomic
 def add_new_stv(geom, data, req_overlaps):

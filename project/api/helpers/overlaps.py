@@ -20,9 +20,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from api.models import SpacetimeVolume
-from django.core.exceptions import ValidationError
 
 from .geometry import geom_difference, calculate_area, AREA_TOLERANCE
+
 
 def overlaps_queryset(geom, start_date, end_date):
     """
@@ -63,10 +63,11 @@ def overlaps_queryset(geom, start_date, end_date):
 
 
 def subtract_geometry(req_overlaps, overlaps, geom):
+    """ Perform actions on db """
     for entity, stvs in overlaps["db"].items():
-        overlaps[
-            "keep" if str(entity) not in req_overlaps else "modify"
-        ].extend(SpacetimeVolume.objects.filter(pk__in=stvs))
+        overlaps["keep" if str(entity) not in req_overlaps else "modify"].extend(
+            SpacetimeVolume.objects.filter(pk__in=stvs)
+        )
 
     # Important to subtract from staging geometry first
     for overlap in overlaps["keep"]:

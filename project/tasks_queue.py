@@ -14,12 +14,14 @@ APP = Celery()
 
 APP.conf.result_backend = APP.conf.broker_url = settings.CACHEOPS_REDIS
 
+
 @APP.task
 def debug_success(message, delay=0):
     """ Return message """
     print(message)
     time.sleep(delay)
     return message
+
 
 @APP.task
 def debug_failure(message, delay=0):
