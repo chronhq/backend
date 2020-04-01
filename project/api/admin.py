@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.contrib import admin
+from simple_history.admin import SimpleHistoryAdmin
 
 from .models import (
     TerritorialEntity,
@@ -35,15 +36,15 @@ from .models import (
 )
 
 # Register your models here.
-admin.site.register(TerritorialEntity)
-admin.site.register(PoliticalRelation)
-admin.site.register(SpacetimeVolume)
-admin.site.register(CachedData)
-admin.site.register(Narration)
-admin.site.register(Narrative)
-admin.site.register(MapSettings)
-admin.site.register(City)
-admin.site.register(Profile)
-admin.site.register(NarrativeVote)
-admin.site.register(Symbol)
-admin.site.register(SymbolFeature)
+admin.site.register(TerritorialEntity, SimpleHistoryAdmin)
+admin.site.register(PoliticalRelation, SimpleHistoryAdmin)
+admin.site.register(SpacetimeVolume, SimpleHistoryAdmin)
+admin.site.register(CachedData, SimpleHistoryAdmin)
+admin.site.register(Narration, SimpleHistoryAdmin)
+admin.site.register(Narrative, SimpleHistoryAdmin)
+admin.site.register(MapSettings, SimpleHistoryAdmin)
+admin.site.register(City, SimpleHistoryAdmin)
+admin.site.register(Profile, SimpleHistoryAdmin)
+admin.site.register(NarrativeVote, SimpleHistoryAdmin)
+admin.site.register(Symbol, SimpleHistoryAdmin)
+admin.site.register(SymbolFeature, SimpleHistoryAdmin)

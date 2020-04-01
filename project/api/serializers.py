@@ -41,6 +41,8 @@ from .models import (
     Narration,
     NarrativeVote,
     Profile,
+    HistoricalSpacetimeVolume,
+    HistoricalTerritorialEntity,
 )
 
 
@@ -263,3 +265,95 @@ class NarrativeSerializer(ModelSerializer):
         """
 
         return obj.narration_set.count()
+
+
+class StvHistoryListSerializer(ModelSerializer):
+    """
+    Serializes the HistoricalSpacetimeVolume model
+    """
+
+    history_user = SerializerMethodField()
+    history_user_id = SerializerMethodField()
+
+    def get_history_user(self, obj):  # pylint: disable=R0201
+        """
+        Returns the username of the user who made the change.
+        """
+
+        if obj.history_user is not None:
+            return obj.history_user.username
+        return None
+
+    def get_history_user_id(self, obj):  # pylint: disable=R0201
+        """
+        Returns the id of the user who made the change.
+        """
+
+        if obj.history_user is not None:
+            return obj.history_user.id
+        return None
+
+    class Meta:
+        model = HistoricalSpacetimeVolume
+        exclude = ["territory"]
+
+
+class StvHistoryRetrieveSerializer(ModelSerializer):
+    """
+    Serializes the HistoricalSpacetimeVolume model
+    """
+
+    history_user = SerializerMethodField()
+    history_user_id = SerializerMethodField()
+
+    def get_history_user(self, obj):  # pylint: disable=R0201
+        """
+        Returns the username of the user who made the change.
+        """
+
+        if obj.history_user is not None:
+            return obj.history_user.username
+        return None
+
+    def get_history_user_id(self, obj):  # pylint: disable=R0201
+        """
+        Returns the id of the user who made the change.
+        """
+
+        if obj.history_user is not None:
+            return obj.history_user.id
+        return None
+
+    class Meta:
+        model = HistoricalSpacetimeVolume
+        fields = "__all__"
+
+
+class TeHistorySerializer(ModelSerializer):
+    """
+    Serializes the HistoricalTerritorialEntity model
+    """
+
+    history_user = SerializerMethodField()
+    history_user_id = SerializerMethodField()
+
+    def get_history_user(self, obj):  # pylint: disable=R0201
+        """
+        Returns the username of the user who made the change.
+        """
+
+        if obj.history_user is not None:
+            return obj.history_user.username
+        return None
+
+    def get_history_user_id(self, obj):  # pylint: disable=R0201
+        """
+        Returns the id of the user who made the change.
+        """
+        if obj.history_user is not None:
+            return obj.history_user.id
+        return None
+
+    class Meta:
+        model = HistoricalTerritorialEntity
+        fields = "__all__"

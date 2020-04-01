@@ -36,6 +36,9 @@ ROUTER.register(r"narrative-votes", views.NarrativeVoteViewSet)
 ROUTER.register(r"profiles", views.ProfileViewSet)
 ROUTER.register(r"symbols", views.SymbolViewSet)
 ROUTER.register(r"symbol-features", views.SymbolFeatureViewSet)
+ROUTER.register(r"stv-history", views.StvHistoryViewSet, basename="stv-history")
+ROUTER.register(r"te-history", views.TeHistoryViewSet, basename="te-history")
+
 
 urlpatterns = [
     path(
@@ -55,6 +58,7 @@ urlpatterns = [
     ),
     path("mvt/stv/<int:zoom>/<int:x_coor>/<int:y_coor>", views.mvt_stv, name="mvt-stv"),
     path("spacetime-volumes/<int:primary_key>/download", views.stv_downloader),
+    path("stv-history/<int:primary_key>/download", views.historical_stv_downloader),
     path("territorial-entities/list", views.te_list),
     path("", include(ROUTER.urls)),
 ]

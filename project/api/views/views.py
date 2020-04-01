@@ -18,9 +18,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.db.models import Count
+from django.http import JsonResponse
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.pagination import LimitOffsetPagination
 
 from api.models import (
     MapColorScheme,
@@ -35,7 +37,9 @@ from api.models import (
     Profile,
     Symbol,
     SymbolFeature,
-)
+    HistoricalSpacetimeVolume,
+    HistoricalTerritorialEntity,
+)  # pylint: disable=E0611
 from api.serializers import (
     MapColorSchemeSerializer,
     TerritorialEntitySerializer,
@@ -49,6 +53,9 @@ from api.serializers import (
     ProfileSerializer,
     SymbolSerializer,
     SymbolFeatureSerializer,
+    StvHistoryListSerializer,
+    StvHistoryRetrieveSerializer,
+    TeHistorySerializer,
 )
 from api.permissions import IsUserOrReadOnly
 
@@ -214,3 +221,85 @@ class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, IsUserOrReadOnly)
+
+
+class HistoryPagination(LimitOffsetPagination):
+    """
+    Pagination for history items
+    """
+
+    page_size_query_param = "limit"
+    max_page_size = 1000
+
+
+class StvHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for SpacetimeVolume History
+    """
+
+    queryset = HistoricalSpacetimeVolume.objects.all()
+    pagination_class = HistoryPagination
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if self.action == "list":
+            stv = self.request.query_params.get("stv", None)
+            if stv is not None:
+                queryset = queryset.filter(id=stv)
+            entity = self.request.query_params.get("entity", None)
+            if entity is not None:
+                queryset = queryset.filter(entity=entity)
+            user = self.request.query_params.get("user", None)
+            if user is not None:
+                queryset = queryset.filter(history_user=user)
+
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return StvHistoryListSerializer
+        if self.action == "retrieve":
+            return StvHistoryRetrieveSerializer
+        return StvHistoryListSerializer
+
+    def update(self, request, pk=None):  # pylint: disable=R0201
+        """
+        Reverts model to a certain HistoricalRecord on PUT
+        """
+        HistoricalSpacetimeVolume.objects.get(history_id=pk).instance.save()
+        return JsonResponse({"status": "Model reverted successfully"})
+
+
+class TeHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for SpacetimeVolume History
+    """
+
+    queryset = HistoricalTerritorialEntity.objects.all()
+    pagination_class = HistoryPagination
+    serializer_class = TeHistorySerializer
+
+    def get_queryset(self):
+
+        queryset = self.queryset
+
+        if self.action == "list":
+
+            entity = self.request.query_params.get("entity", None)
+
+            if entity is not None:
+                queryset = queryset.filter(id=entity)
+
+            user = self.request.query_params.get("user", None)
+
+            if user is not None:
+                queryset = queryset.filter(history_user=user)
+
+        return queryset
+
+    def update(self, request, pk=None):  # pylint: disable=R0201
+        """
+        Reverts model to a certain HistoricalRecord on PUT
+        """
+        HistoricalTerritorialEntity.objects.get(history_id=pk).instance.save()
+        return JsonResponse({"status": "Model reverted successfully"})

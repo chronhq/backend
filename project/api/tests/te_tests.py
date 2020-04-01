@@ -91,3 +91,31 @@ class TETests(APITest):
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["admin_level"], 1)
+
+    @authorized
+    def test_api_can_query_te_history(self):
+        """
+        Ensure we can query for all Cities
+        """
+
+        url = reverse("te-history-list")
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]["label"], "France")
+
+        params = {"entity": "105"}
+        response = self.client.get(url, params, format="json")
+
+        for record in response.data:
+            self.assertEqual(record["id"], 105)
+
+    @authorized
+    def test_api_can_query_te_history_detail(self):
+        """
+        Ensure we can query for all Cities
+        """
+
+        url = reverse("te-history-detail", args=[126])
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["label"], "France")
