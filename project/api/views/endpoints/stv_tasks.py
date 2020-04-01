@@ -28,9 +28,12 @@ def stv_tasks(request, task_id):
     """ Return result from task """
     task = current_app.AsyncResult(task_id)
     response_data = {"task_status": task.status, "task_id": task.id}
-
+    status = 200
     if task.ready():
-        response_data = task.get()
-        # TODO: Make sure that this task would be removed by GC
+        result = task.get()
+        response_data = result["response"]
+        status = result["status"]
+        # Remove this task
+        task.forget()
 
-    return JsonResponse(response_data)
+    return JsonResponse(response_data, status=status)

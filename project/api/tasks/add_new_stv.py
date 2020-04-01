@@ -6,7 +6,6 @@ from celery import shared_task
 from cacheops import cached_as
 from django.conf import settings
 from django.db import transaction
-from django.http import JsonResponse
 from django.contrib.gis.geos import GEOSGeometry
 
 from api.models import TerritorialEntity, SpacetimeVolume
@@ -52,12 +51,15 @@ def add_new_stv(geom, data, req_overlaps):
         overlaps["db"][i.entity.pk].append(i.pk)
 
     if "overlaps" not in data and len(overlaps["db"]) > 0:
-        return JsonResponse({"overlaps": overlaps["db"]}, status=409)
+        return {"response": {"overlaps": overlaps["db"]}, "status": 409}
     data["territory"] = subtract_geometry(req_overlaps, overlaps, geom)
 
     data["entity"] = TerritorialEntity.objects.get(id=data["entity"])
 
+    # remove overlaps from data
+    data.pop("overlaps", None)
     stv = SpacetimeVolume.objects.create(**data)
 
     # objects.get() will return entity with computed visual_center
-    return SpacetimeVolumeSerializer(SpacetimeVolume.objects.get(pk=stv.id)).data
+    response = SpacetimeVolumeSerializer(SpacetimeVolume.objects.get(pk=stv.id)).data
+    return {"response": response, "status": 200}
