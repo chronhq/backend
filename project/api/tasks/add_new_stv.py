@@ -58,4 +58,6 @@ def add_new_stv(geom, data, req_overlaps):
     data["entity"] = TerritorialEntity.objects.get(id=data["entity"])
 
     stv = SpacetimeVolume.objects.create(**data)
-    return SpacetimeVolumeSerializer(stv).data
+
+    # objects.get() will return entity with computed visual_center
+    return SpacetimeVolumeSerializer(SpacetimeVolume.objects.get(pk=stv.id)).data

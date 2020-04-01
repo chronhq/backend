@@ -55,6 +55,7 @@ urlpatterns = [
     ),
     path("mvt/stv/<int:zoom>/<int:x_coor>/<int:y_coor>", views.mvt_stv, name="mvt-stv"),
     path("spacetime-volumes/<int:primary_key>/download", views.stv_downloader),
+    path("spacetime-volumes/tasks/<str:task_id>", views.stv_tasks),
     path("territorial-entities/list", views.te_list),
     path("", include(ROUTER.urls)),
 ]
