@@ -60,7 +60,8 @@ services:
   celery:
     depends_on:
       - redis
-    image: chronmaps/backend:celery
+    image: chronmaps/backend:latest
+    entrypoint: ["/bin/ash", "./celery.sh"]
     volumes:
       - ./project:/src
       - ./config:/config
