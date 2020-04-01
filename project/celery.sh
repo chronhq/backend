@@ -19,4 +19,7 @@
 
 set -e
 
-celery -A chron.tasks_queue worker -l info
+[ "${ENV}" = 'dev' ] && LOG='info' || LOG='warning'
+[ "${CELERY_THREADS}" != ""] && THREADS="${CELERY_THREADS}" || THREADS=2
+
+celery -A chron.tasks_queue worker -l ${LOG} --concurrency=${THREADS}
