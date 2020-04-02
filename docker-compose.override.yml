@@ -6,6 +6,9 @@ services:
   web:
     environment:
       - ENV=dev
+  celery:
+    environment:
+      - ENV=dev
   mbtiles:
     ports:
       - "5000:5000"

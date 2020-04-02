@@ -57,3 +57,15 @@ services:
     depends_on:
       - nginx
     image: chronmaps/frontend:release-prod
+  celery:
+    depends_on:
+      - redis
+    image: chronmaps/backend:latest
+    entrypoint: ["/bin/ash", "./celery.sh"]
+    volumes:
+      - ./project:/src
+      - ./config:/config
+    env_file:
+      - django.env
+      - postgres.env
+      - auth.env

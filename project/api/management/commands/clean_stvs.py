@@ -25,7 +25,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.gis.db.models.functions import MakeValid
 
 from api.models import TerritorialEntity, SpacetimeVolume
-from api.views.stv_view import find_difference, calculate_area
+from api.helpers.geometry import find_difference, calculate_area
 
 
 def pairwise(iterable):
