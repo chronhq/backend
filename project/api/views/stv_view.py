@@ -136,13 +136,20 @@ class SpacetimeVolumeViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         geom, start_date, end_date = _stv_form_validate(request)
-        empty_territory_data["start_date"] = start_date
-        empty_territory_data["end_date"] = end_date
 
         task = add_new_stv.delay(
-            geom.ewkt, empty_territory_data, request.POST.getlist("overlaps")
+            geom=geom.ewkt,
+            overlaps_are_missing="overlaps" not in request.data,
+            start_date=start_date,
+            end_date=end_date,
+            entity=request.data["entity"],
+            visual_center=request.POST.get("visual_center", None),
+            references=request.POST.getlist("references"),
+            overlaps=request.POST.getlist("overlaps"),
         )
-        return JsonResponse({"task_status": task.status, "task_id": task.id})
+        return JsonResponse(
+            {"task_status": task.status, "task_id": task.id}, status=201
+        )
 
     def update(self, request, *args, **kwargs):
         """

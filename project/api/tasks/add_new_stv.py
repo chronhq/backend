@@ -15,7 +15,7 @@ from api.helpers.overlaps import subtract_geometry, overlaps_queryset
 
 @shared_task
 @transaction.atomic
-def add_new_stv(geom, data, req_overlaps):
+def add_new_stv(geom, overlaps_are_missing, **data):
     """
     Solve overlaps if included in request body
     """
@@ -50,9 +50,9 @@ def add_new_stv(geom, data, req_overlaps):
             overlaps["db"][i.entity.pk] = []
         overlaps["db"][i.entity.pk].append(i.pk)
 
-    if "overlaps" not in data and len(overlaps["db"]) > 0:
+    if overlaps_are_missing and len(overlaps["db"]) > 0:
         return {"response": {"overlaps": overlaps["db"]}, "status": 409}
-    data["territory"] = subtract_geometry(req_overlaps, overlaps, geom)
+    data["territory"] = subtract_geometry(data["overlaps"], overlaps, geom)
 
     data["entity"] = TerritorialEntity.objects.get(id=data["entity"])
 
@@ -62,4 +62,4 @@ def add_new_stv(geom, data, req_overlaps):
 
     # objects.get() will return entity with computed visual_center
     response = SpacetimeVolumeSerializer(SpacetimeVolume.objects.get(pk=stv.id)).data
-    return {"response": response, "status": 200}
+    return {"response": response, "status": 201}
