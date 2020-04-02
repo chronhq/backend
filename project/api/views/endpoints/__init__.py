@@ -6,3 +6,4 @@ from .mvt_narratives import *
 from .mvt_stv import *
 from .stv_downloader import *
 from .te_list import *
+from .stv_tasks import *

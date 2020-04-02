@@ -6,7 +6,13 @@ services:
     environment:
       - ENV=prod
     restart: always
+  celery:
+    environment:
+      - ENV=prod
+    restart: always
   redis:
     restart: always
   mbtiles:
     restart: always
+  notipsta:
+      restart: always

@@ -20,14 +20,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import json
+from unittest.mock import patch, MagicMock
 from rest_framework import status
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.gis.geos import GEOSGeometry
 from django.urls import reverse
 from django.test import override_settings
 from api.models import SpacetimeVolume
-from api.views.stv_view import calculate_area
+from api.helpers.geometry import calculate_area
+from api.tasks.add_new_stv import add_new_stv
 from .api_tests import APITest, authorized
+
+DELAYED = MagicMock()
+DELAYED.status = "PENDING"
+DELAYED.id = "mocked-task-id"
 
 
 class STVTests(APITest):
@@ -51,18 +57,26 @@ class STVTests(APITest):
         """
 
         url = reverse("spacetimevolume-list")
+        polygon = b"SRID=4326;POLYGON((3 3, 3 4, 4 4, 3 3))"
         data = {
             "start_date": self.JD_0001,
             "end_date": self.JD_0002,
             "entity": self.germany.pk,
             "references": ["ref"],
-            "territory": SimpleUploadedFile(
-                "polygon.plain", b"SRID=4326;POLYGON((3 3, 3 4, 4 4, 3 3))"
-            ),
+            "territory": SimpleUploadedFile("polygon.plain", polygon),
             "visual_center": "SRID=4326;POINT(1.2 1.8)",
         }
-        response = self.client.post(url, data)
+        with patch("api.tasks.add_new_stv.add_new_stv.delay") as task:
+            task.return_value = DELAYED
+            response = self.client.post(url, data)
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.json()["task_id"], DELAYED.id)
+
+        args, kwargs = task.call_args
+        res = add_new_stv(*args, **kwargs)
+        self.assertEqual(res["status"], status.HTTP_201_CREATED)
+
         self.assertEqual(SpacetimeVolume.objects.count(), 2)
         self.assertEqual(SpacetimeVolume.objects.last().references, ["ref"])
 
@@ -161,8 +175,19 @@ class STVTests(APITest):
             ),
             "visual_center": "SRID=4326;POINT(1.2 1.8)",
         }
-        response = self.client.post(url, data)
+        with patch("api.tasks.add_new_stv.add_new_stv.delay") as task:
+            task.return_value = DELAYED
+            response = self.client.post(url, data)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        response = self.client.post(url, data_overlapping)
-        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        args, kwargs = task.call_args
+        res = add_new_stv(*args, **kwargs)
+        self.assertEqual(res["status"], status.HTTP_201_CREATED)
+
+        with patch("api.tasks.add_new_stv.add_new_stv.delay") as task:
+            task.return_value = DELAYED
+            response = self.client.post(url, data_overlapping)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            args, kwargs = task.call_args
+            res = add_new_stv(*args, **kwargs)
+            self.assertEqual(res["status"], status.HTTP_409_CONFLICT)
