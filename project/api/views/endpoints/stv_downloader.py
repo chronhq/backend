@@ -25,8 +25,11 @@ from jdcal import jd2gcal
 from api.models import SpacetimeVolume, HistoricalSpacetimeVolume
 
 
-
 def stv_to_geojson_response(stv):
+    """
+    Function for serializing stv queryset with one member to geojson.
+    """
+
     geojson = serialize(
         "geojson",
         stv,
@@ -68,6 +71,7 @@ def stv_to_geojson_response(stv):
     )
     return response
 
+
 def stv_downloader(request, primary_key):
     """
     Download stvs as geojson.
@@ -85,9 +89,8 @@ def historical_stv_downloader(request, primary_key):
     Download historical stvs as geojson.
     """
 
-    try:
-        history = HistoricalSpacetimeVolume.objects.filter(history_id=primary_key)
-    except len(history) == 0:
+    history = HistoricalSpacetimeVolume.objects.filter(history_id=primary_key)
+    if len(history) == 0:
         return HttpResponse(status=404)
 
     return stv_to_geojson_response(history)
