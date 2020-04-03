@@ -44,11 +44,12 @@ def stv_to_geojson_response(stv):
     geojson = json.loads(geojson)
 
     for features in geojson["features"]:
-        features["properties"]["visual_center"] = {
-            "type": "Feature",
-            "properties": None,
-            "geometry": json.loads(stv[0].visual_center.json),
-        }
+        if not stv[0].visual_center is None:
+            features["properties"]["visual_center"] = {
+                "type": "Feature",
+                "properties": None,
+                "geometry": json.loads(stv[0].visual_center.json),
+            }
         features["properties"]["entity"] = {
             "label": stv[0].entity.label,
             "pk": stv[0].entity.pk,
@@ -85,13 +86,8 @@ def historical_stv_downloader(request, primary_key):
     """
 
     try:
-        history = HistoricalSpacetimeVolume.objects.get(history_id=primary_key)
-    except HistoricalSpacetimeVolume.DoesNotExist:
+        history = HistoricalSpacetimeVolume.objects.filter(history_id=primary_key)
+    except len(history) == 0:
         return HttpResponse(status=404)
 
-    stv = SpacetimeVolume.objects.filter(id=history.id)
-
-    if len(stv) == 0:
-        return HttpResponse(status=404)
-
-    return stv_to_geojson_response(stv)
+    return stv_to_geojson_response(history)
