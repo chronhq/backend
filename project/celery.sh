@@ -20,6 +20,6 @@
 set -e
 
 [ "${ENV}" = 'dev' ] && LOG='info' || LOG='warning'
-[ "${CELERY_THREADS}" != ""] && THREADS="${CELERY_THREADS}" || THREADS=2
+[ "${CELERY_THREADS}" != "" ] && THREADS="${CELERY_THREADS}" || THREADS=2
 
 celery -A chron.tasks_queue worker -l ${LOG} --concurrency=${THREADS}
