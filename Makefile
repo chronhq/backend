@@ -117,6 +117,8 @@ push-notipsta:
 
 pull-images: ## Pull all images from docker.hub
 	docker pull --all-tags chronmaps/backend
+	docker pull --all-tags chronmaps/frontend
+	docker pull morlov/mbtiles-psql:latest
 
 dumpdata: ## Dump data from the database
 	docker-compose exec web python manage.py dumpdata -e contenttypes -e auth.Permission -e sessions --indent=2 | \
