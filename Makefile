@@ -120,6 +120,12 @@ pull-images: ## Pull all images from docker.hub
 	docker pull --all-tags chronmaps/frontend
 	docker pull morlov/mbtiles-psql:latest
 
+update_cache: # Update or Create elements in cached data
+	docker-compose exec -T web python manage.py fetch_battles
+	docker-compose exec -T web python manage.py fetch_treaties
+	docker-compose exec -T web python manage.py fetch_cities
+	docker-compose exec -T web python manage.py fetch_actors
+
 dumpdata: ## Dump data from the database
 	docker-compose exec web python manage.py dumpdata -e contenttypes -e auth.Permission -e sessions --indent=2 | \
 	xz -z -T 0 > project/$$(date +%Y-%m-%d).dump.json.xz
