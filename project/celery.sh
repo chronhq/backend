@@ -23,4 +23,3 @@ set -e
 [ "${CELERY_THREADS}" != "" ] && THREADS="${CELERY_THREADS}" || THREADS=2
 
 celery -A chron.tasks_queue worker -l ${LOG} --concurrency=${THREADS} -B
-# celery -A chron.tasks_queue beat -s /home/celery/var/run/celerybeat-schedule
