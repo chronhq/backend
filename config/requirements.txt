@@ -22,4 +22,4 @@ drf-firebase-auth~=0.0.6
 django-silk~=4.0.1
 jdcal~=1.4
 openpyxl~=3.0.3
-celery~=4.4.2
+celery~=5.0.0
