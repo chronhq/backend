@@ -4,8 +4,8 @@ FROM chronmaps/backend:deps-base as base
 LABEL maintainer="Mikhail Orlov <miklergm@gmail.com>"
 
 RUN set -ex \
-    && apk add --no-cache \ 
-      alpine-sdk libressl postgresql-dev linux-headers pcre-dev \
+    && apk add --no-cache \
+      postgresql-dev linux-headers pcre-dev gcc musl-dev libffi-dev alpine-sdk libressl zlib-dev jpeg-dev \
     && apk add --no-cache --repository ${ALPINE_MIRROR}/edge/community \
       proj-dev
 
