@@ -87,13 +87,13 @@ mvt-pg-update:
 
 # Docker images
 image: ## Build backend:latest image
-	docker build -t chronmaps/backend:latest .
+	docker build -t chronmaps/backend:latest -f docker/Dockerfile .
 
 push-image: ## Push backend:latest image
 	docker push chronmaps/backend:latest
 
 python-image: ## Build image with python dependencies
-	docker build -t chronmaps/backend:deps-python -f Dockerfile.python .
+	docker build -t chronmaps/backend:deps-python -f docker/Dockerfile.python .
 
 push-python: ## Push python image
 	docker push chronmaps/backend:deps-python
@@ -102,8 +102,8 @@ check-python-image:
 	docker run --entrypoint md5sum chronmaps/backend:deps-python /requirements.txt| sed 's%/%config/%' | md5sum --check -
 
 system-image: ## Build alpine with dependencies
-	docker build -t chronmaps/backend:deps-base -f Dockerfile.base .
-	docker build -t chronmaps/backend:deps-build -f Dockerfile.build .
+	docker build -t chronmaps/backend:deps-base -f docker/Dockerfile.base .
+	docker build -t chronmaps/backend:deps-build -f docker/Dockerfile.build .
 
 push-system: ## Push alpine with dependencies
 	docker push chronmaps/backend:deps-base

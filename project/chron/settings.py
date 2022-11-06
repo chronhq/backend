@@ -177,6 +177,9 @@ CACHEOPS_REDIS = "redis://redis:6379/0"
 CACHEOPS_DEFAULTS = {"timeout": 60 * 60 * 24}
 CACHEOPS = {"api.*": {"ops": "all"}}
 
+# DB Settings
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Rest Framework
 
