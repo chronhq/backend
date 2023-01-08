@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from django.contrib.gis.geos import GEOSGeometry
 from django.db import connection
 
-AREA_TOLERANCE = 100.0
+AREA_TOLERANCE = 20.0
 
 
 def find_difference(geom_a, geom_b):
