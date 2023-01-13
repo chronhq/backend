@@ -1,7 +1,7 @@
-name: build-test
+name: CI-CD
 on: [push, pull_request]
 jobs:
-  build:
+  test-deploy:
     runs-on: ubuntu-latest
     steps:
       # build
@@ -31,3 +31,12 @@ jobs:
         env:
           CLIENT_API_KEY: ${{ secrets.CLIENT_API_KEY }}
         run: docker-compose run -e ENV=dev -e CLIENT_API_KEY web python manage.py test --debug-mode
+      # deploy
+      - name: Docker Hub login
+        uses: docker/login-action@v2
+        if: github.ref == 'refs/head/master'
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Docker push
+        run: make push-python && make push-image && make push-notipsta
