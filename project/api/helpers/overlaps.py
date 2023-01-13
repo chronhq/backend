@@ -64,7 +64,7 @@ def overlaps_queryset(geom, start_date, end_date):
 
 
 def subtract_geometry(req_overlaps, overlaps, geom):
-    """ Perform actions on db """
+    """Perform actions on db"""
     for entity, stvs in overlaps["db"].items():
         overlaps["keep" if str(entity) not in req_overlaps else "modify"].extend(
             SpacetimeVolume.objects.filter(pk__in=stvs)

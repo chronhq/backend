@@ -36,7 +36,7 @@ def pairwise(iterable):
 
 
 def make_stvs_valid(entity):
-    """ Update STVs with invalid geometry """
+    """Update STVs with invalid geometry"""
     stvs = SpacetimeVolume.objects.filter(entity=entity)
     for stv in stvs:
         if not stv.territory.valid:
@@ -49,7 +49,7 @@ def make_stvs_valid(entity):
 
 
 def fix_antimeridian(timestamp=None):
-    """ Fix polygons along 180th meridian """
+    """Fix polygons along 180th meridian"""
     options = {
         "antimeridian_positive": "SRID=4326;LINESTRING(180 90,180 -90)",
         "antimeridian_negative": "SRID=4326;LINESTRING(-180 90,-180 -90)",
@@ -112,14 +112,14 @@ def fix_antimeridian(timestamp=None):
 
 @transaction.atomic
 def recreate_stvs(to_create, to_remove):
-    """ Update STVs in database """
+    """Update STVs in database"""
     SpacetimeVolume.objects.filter(pk__in=to_remove).delete()
     for stv in to_create:
         SpacetimeVolume.objects.create(**stv)
 
 
 def handle_te_time(entity):
-    """ Prepare changes in list of Spacetimve Volumes for provided Territorial Entity """
+    """Prepare changes in list of Spacetimve Volumes for provided Territorial Entity"""
     stvs = SpacetimeVolume.objects.filter(entity=entity)
     dates = []
     to_remove = []
@@ -187,7 +187,7 @@ def handle_te_time(entity):
 
 @transaction.atomic
 def handle_stv_duplicates(entity):
-    """ Join STVs with identical geometry """
+    """Join STVs with identical geometry"""
     stvs = SpacetimeVolume.objects.filter(entity=entity).order_by("start_date")
     for prev, cur in pairwise(stvs):
         if cur.start_date - prev.end_date > 1:
@@ -240,7 +240,9 @@ class Command(BaseCommand):
             "--make-valid", action="store_true", help="Fix polygons to be valid"
         )
         parser.add_argument(
-            "--antimeridian", action="store_true", help="Fix polygons on antimeridian",
+            "--antimeridian",
+            action="store_true",
+            help="Fix polygons on antimeridian",
         )
         parser.add_argument(
             "--all", action="store_true", help="Use all methods to fix STVs"

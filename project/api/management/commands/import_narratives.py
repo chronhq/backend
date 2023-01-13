@@ -33,9 +33,9 @@ class Command(BaseCommand):
     help = "For importing narratives from excel files. Not generalized."
 
     def handle(self, *args, **options):
-        """ Import narrations from xlsx sheet.
-            The columns are:
-            date	date_label	title	description	x	y	persons	battles	treaties
+        """Import narrations from xlsx sheet.
+        The columns are:
+        date	date_label	title	description	x	y	persons	battles	treaties
         """
 
     excel_document = openpyxl.load_workbook("data.xlsx")

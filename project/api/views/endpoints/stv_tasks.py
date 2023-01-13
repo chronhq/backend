@@ -25,7 +25,7 @@ from django.http import JsonResponse
 
 
 def stv_tasks(request, task_id):
-    """ Return result from task """
+    """Return result from task"""
     task = current_app.AsyncResult(task_id)
     response_data = {"task_status": task.status, "task_id": task.id}
     status = 200

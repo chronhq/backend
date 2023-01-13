@@ -31,7 +31,7 @@ from colorfield.fields import ColorField
 
 
 class TileLayout(models.Model):
-    """ TileBBox to polygon mapping """
+    """TileBBox to polygon mapping"""
 
     zoom = models.PositiveIntegerField()
     x_coor = models.PositiveIntegerField()
@@ -43,7 +43,7 @@ class TileLayout(models.Model):
 
 
 class MVTLayers(models.Model):
-    """ Store generated MVT layers """
+    """Store generated MVT layers"""
 
     zoom = models.PositiveIntegerField()
     x_coor = models.PositiveIntegerField()
@@ -56,7 +56,7 @@ class MVTLayers(models.Model):
 
 
 class MapColorScheme(models.Model):
-    """ Available Color Palette for STVs """
+    """Available Color Palette for STVs"""
 
     color = ColorField(default="#F7F7F7", unique=True)
     palette = models.TextField(max_length=64, blank=True, null=True)

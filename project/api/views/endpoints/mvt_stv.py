@@ -35,7 +35,7 @@ MVT_STV_QUERY = """
 
 
 def mvt_geom_simplification(zoom):
-    """ Simplification for territory field """
+    """Simplification for territory field"""
     # For WebMercator (3857) X coordinate bounds are ±20037508.3427892 meters
     # For SRID 4326 X coordinated bounds are ±180 degrees
     # resolution = (xmax - xmin) or (xmax * 2)
@@ -47,7 +47,7 @@ def mvt_geom_simplification(zoom):
     extent = 4096
 
     # Find safe tolerance for ST_Simplfy
-    tolerance = (float(resolution) / 2 ** zoom) / float(extent)
+    tolerance = (float(resolution) / 2**zoom) / float(extent)
     # Apply additional simplification for distant zoom levels
     tolerance_multiplier = 1 if zoom > 5 else 2.2 - 0.2 * zoom
     simplification = tolerance * tolerance_multiplier
@@ -55,7 +55,7 @@ def mvt_geom_simplification(zoom):
 
 
 def parse_ints(arr):
-    """ keep only integers in array """
+    """keep only integers in array"""
     res = []
     for i in arr:
         try:

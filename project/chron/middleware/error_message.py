@@ -9,10 +9,10 @@ from rest_framework.request import WrappedAttributeError
 
 
 class ErrorMessageFormatter(MiddlewareMixin):  # pylint: disable=too-few-public-methods
-    """ Format exceptions as a JSON errors """
+    """Format exceptions as a JSON errors"""
 
     def process_exception(self, request, exception):
-        """ Handle various exceptions """
+        """Handle various exceptions"""
         if isinstance(exception, ValidationError):
             return JsonResponse({"error": exception.messages}, status=400)
         if isinstance(exception, WrappedAttributeError):
