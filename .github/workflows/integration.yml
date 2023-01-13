@@ -30,6 +30,4 @@ jobs:
       - name: Unit tests
         env:
           CLIENT_API_KEY: ${{ secrets.CLIENT_API_KEY }}
-        run: >
-          docker-compose run --entrypoint sh -e ENV=dev -e CLIENT_API_KEY web 
-          init.sh python manage.py test --debug-mode
+        run: docker-compose run -e ENV=dev -e CLIENT_API_KEY web python manage.py test --debug-mode
