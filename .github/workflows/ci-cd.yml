@@ -39,4 +39,5 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Docker push
+        if: github.ref == 'refs/head/master'
         run: make push-python && make push-image && make push-notipsta
