@@ -99,7 +99,7 @@ push-python: ## Push python image
 	docker push chronmaps/backend:deps-python
 
 check-python-image:
-	docker run --entrypoint md5sum chronmaps/backend:deps-python /requirements.txt| sed 's%/%config/%' | md5sum --check -
+	docker run --entrypoint md5sum chronmaps/backend:deps-python /pyproject.toml| sed 's%/%./%' | md5sum --check -
 
 system-image: ## Build alpine with dependencies
 	docker build -t chronmaps/backend:deps-base -f docker/Dockerfile.base .
