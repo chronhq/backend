@@ -1,4 +1,5 @@
-name: System-Image
+name: System Image
+on: workflow_dispatch
 jobs:
   build:
     runs-on: ubuntu-latest
