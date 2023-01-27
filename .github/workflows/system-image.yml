@@ -22,4 +22,4 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Docker push
-        run: make push-python && make push-image && make push-notipsta
+        run: make make push-image
