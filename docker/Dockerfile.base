@@ -1,8 +1,6 @@
 FROM python:3.9.10-alpine3.15 as base
 # chronmaps/backend:deps-base
 
-LABEL maintainer="Mikhail Orlov <miklergm@gmail.com>"
-
 ENV PYTHONUNBUFFERED=1 \
   PYTHONDONTWRITEBYTECODE=1 \
   PYTHONFAULTHANDLER=1 \

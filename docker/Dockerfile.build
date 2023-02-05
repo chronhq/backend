@@ -1,8 +1,6 @@
 FROM chronmaps/backend:deps-base as base
 # chronmaps/backend:deps-build
 
-LABEL maintainer="Mikhail Orlov <miklergm@gmail.com>"
-
 RUN set -ex \
     && apk add --no-cache \
       postgresql-dev linux-headers pcre-dev gcc musl-dev libffi-dev alpine-sdk libressl zlib-dev jpeg-dev \

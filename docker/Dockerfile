@@ -1,7 +1,5 @@
 FROM chronmaps/backend:deps-python as python
 
-LABEL maintainer="Mikhail Orlov <miklergm@gmail.com>"
-
 RUN mkdir /config /src
 
 COPY ./project /src

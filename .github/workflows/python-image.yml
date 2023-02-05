@@ -1,4 +1,4 @@
-name: System Image
+name: Python Image
 on: workflow_dispatch
 jobs:
   build:
@@ -6,7 +6,7 @@ jobs:
     steps:
       # build
       - uses: actions/checkout@v3
-      - run: make system-image
+      - run: make python-image
       # deploy
       - name: Docker Hub login
         uses: docker/login-action@v2
@@ -14,4 +14,4 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Docker push
-        run: make push-system
+        run: make push-python

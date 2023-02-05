@@ -1,19 +1,10 @@
 FROM chronmaps/backend:deps-build as build
 # chronmaps/backend:deps-python
 
-LABEL maintainer="Mikhail Orlov <miklergm@gmail.com>"
-
 RUN pip install "poetry==$POETRY_VERSION" 
 
 WORKDIR $PYSETUP_PATH
 COPY pyproject.toml poetry.lock ./
 RUN poetry install
-
-# TODO: create dev stage that runs linting etc, --no-dev in production
-
-FROM chronmaps/backend:deps-base as prod 
-
-COPY --from=build $VENV_PATH $VENV_PATH
-COPY --from=build $PYSETUP_PATH/pyproject.toml $PYSETUP_PATH/poetry.lock ./
 
 ENTRYPOINT /bin/sh
