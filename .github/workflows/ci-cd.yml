@@ -1,0 +1,42 @@
+name: CI-CD
+on: [push, pull_request]
+jobs:
+  test-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # build
+      - uses: actions/checkout@v3
+      - run: >
+          mv django.env.sample django.env &&
+          mv postgres.env.sample postgres.env &&
+          mv mbtiles.env.sample mbtiles.env &&
+          touch auth.env
+      - env:
+          SERVICE_KEY_BASE64: ${{ secrets.SERVICE_KEY_BASE64 }}
+        run: echo "${SERVICE_KEY_BASE64// /}" | base64 --decode > config/firebase.json
+      - run: make pull-images
+      - run: if ! make check-python-image; then make python-image; fi
+      - run: make image
+      - run: make notipsta-image
+      - run: docker-compose build
+      # test
+      - name: Code style
+        run: docker-compose run --entrypoint black web . --exclude /migrations/ --diff --check
+      - name: Lint app
+        run: docker-compose run --entrypoint pylint web --ignore=tests ./api/ || true
+      - name: Lint tests
+        run: docker-compose run --entrypoint pylint web --rcfile=api/tests/pylintrc ./api/tests || true
+      - name: Unit tests
+        env:
+          CLIENT_API_KEY: ${{ secrets.CLIENT_API_KEY }}
+        run: docker-compose run -e ENV=dev -e CLIENT_API_KEY web python manage.py test --debug-mode
+      # deploy
+      - name: Docker Hub login
+        uses: docker/login-action@v2
+        if: github.ref == 'refs/head/master'
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Docker push
+        if: github.ref == 'refs/head/master'
+        run: make push-python && make push-image && make push-notipsta

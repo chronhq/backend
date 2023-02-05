@@ -49,7 +49,7 @@ def find_difference(geom_a, geom_b):
 
 
 def geom_difference(geom_a, geom_b):
-    """ Return a GEOS object from SQL query """
+    """Return a GEOS object from SQL query"""
     diff = find_difference(geom_a, geom_b)
     if diff is None:
         return GEOSGeometry("MULTIPOLYGON EMPTY", srid=4326)

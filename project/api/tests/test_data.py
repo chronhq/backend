@@ -47,8 +47,8 @@ def wiki_cd(function):
 
 def set_up_data(cls):
     """
-  Create basic model instances
-  """
+    Create basic model instances
+    """
     # Constants
     cls.JD_0001 = ceil(sum(gcal2jd(1, 1, 1))) + 0.0
     cls.JD_0002 = ceil(sum(gcal2jd(2, 1, 1))) + 0.0

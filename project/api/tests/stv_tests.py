@@ -42,7 +42,7 @@ class STVTests(APITest):
     """
 
     def test_stv_area_is_correct(self):
-        """ Check Area computations """
+        """Check Area computations"""
         self.assertEqual(calculate_area(GEOSGeometry("POLYGON(EMPTY)", srid=4326)), 0.0)
         area = calculate_area(
             GEOSGeometry("SRID=4326;POLYGON((-1 -1,-1 1,1 1, 1 -1, -1 -1))")

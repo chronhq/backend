@@ -19,7 +19,7 @@ APP.conf.result_backend = APP.conf.broker_url = settings.CACHEOPS_REDIS
 
 @APP.task
 def debug_success(message, delay=0):
-    """ Return message """
+    """Return message"""
     print(message)
     time.sleep(delay)
     return message
@@ -27,7 +27,7 @@ def debug_success(message, delay=0):
 
 @APP.task
 def debug_failure(message, delay=0):
-    """ Return message """
+    """Return message"""
     print(message)
     time.sleep(delay)
     raise ValidationError("AAAA")
@@ -43,7 +43,8 @@ def setup_periodic_tasks(sender, **kwargs):
         ["fetch_actors", "fetch_battles", "fetch_cities", "fetch_treaties"]
     ):
         sender.add_periodic_task(
-            crontab(hour=i, minute=0), call_command.s(cmd),
+            crontab(hour=i, minute=0),
+            call_command.s(cmd),
         )
 
 

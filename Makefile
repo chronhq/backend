@@ -36,7 +36,7 @@ clean: ## Stop and remove containers, networks, volmes, and images
 
 # Debug tools
 run_debug: ## Builds, starts, and runs containers, running the built-in Django web server
-	docker-compose run --entrypoint sh --service-ports web init.sh python manage.py runserver 0.0.0.0:81
+	docker-compose run --service-ports web python manage.py runserver 0.0.0.0:81
 
 exec_debug: ## Runs built-in Django web server
 	docker-compose exec web python manage.py runserver 0.0.0.0:81
@@ -47,7 +47,7 @@ graph: ## Builds a UML class diagram of the models
 
 # Misc
 test: ## Builds, starts, and runs containers, running the django tests
-	docker-compose run --entrypoint sh --service-ports web init.sh python manage.py test --debug-mode
+	docker-compose run --service-ports web python manage.py test --debug-mode
 
 exec_test: ## Executes django tests in a running container
 	docker-compose exec web python manage.py test --debug-mode
@@ -99,7 +99,7 @@ push-python: ## Push python image
 	docker push chronmaps/backend:deps-python
 
 check-python-image:
-	docker run --entrypoint md5sum chronmaps/backend:deps-python /requirements.txt| sed 's%/%config/%' | md5sum --check -
+	docker run --entrypoint md5sum chronmaps/backend:deps-python /pyproject.toml| sed 's%/%./%' | md5sum --check -
 
 system-image: ## Build alpine with dependencies
 	docker build -t chronmaps/backend:deps-base -f docker/Dockerfile.base .

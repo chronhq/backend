@@ -49,7 +49,16 @@ def get_date(date_string):
 
         date = datetime.fromisoformat(date_string[:-1])
         jd_date = (
-            ceil(sum(gcal2jd(int(date.year), int(date.month), int(date.day),))) + 0.0
+            ceil(
+                sum(
+                    gcal2jd(
+                        int(date.year),
+                        int(date.month),
+                        int(date.day),
+                    )
+                )
+            )
+            + 0.0
         )
     # Negative date
     else:

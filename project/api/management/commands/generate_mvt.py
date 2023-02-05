@@ -34,7 +34,7 @@ ZOOM = int(os.environ.get("ZOOM", 8))
 
 
 def split_list(alist, wanted_parts=1):
-    """ Split array into smaller arrays """
+    """Split array into smaller arrays"""
     length = len(alist)
     return [
         alist[i * length // wanted_parts : (i + 1) * length // wanted_parts]
@@ -43,7 +43,7 @@ def split_list(alist, wanted_parts=1):
 
 
 def create_tile_layout(zoom, x_coor, y_coor):
-    """ Add one TileLayout entity with plain SQL query """
+    """Add one TileLayout entity with plain SQL query"""
     with db.connection.cursor() as cursor:
         cursor.execute(
             """
@@ -56,7 +56,7 @@ def create_tile_layout(zoom, x_coor, y_coor):
 
 
 def populate_tile_layout(zoom, tiles):
-    """ Populate TileLayout table """
+    """Populate TileLayout table"""
     if len(TileLayout.objects.filter(zoom=zoom)) != 0:
         return False
     for y_coor in range(0, tiles):
@@ -66,7 +66,7 @@ def populate_tile_layout(zoom, tiles):
 
 
 def create_mvt_stv(zoom, x_coor, y_coor):
-    """ Mapbox Vector Tiles for Political Borders """
+    """Mapbox Vector Tiles for Political Borders"""
     with db.connection.cursor() as cursor:
         cursor.execute(
             """
@@ -82,12 +82,16 @@ def create_mvt_stv(zoom, x_coor, y_coor):
             """.format(  # nosec
                 stv_mvt_geom_query(zoom)
             ),
-            {"zoom": zoom, "x_coor": x_coor, "y_coor": y_coor,},
+            {
+                "zoom": zoom,
+                "x_coor": x_coor,
+                "y_coor": y_coor,
+            },
         )
 
 
 def mvt_worker(zoom, tiles, total, update, t_id):
-    """ Start MVT updating process """
+    """Start MVT updating process"""
     db.connections.close_all()
     if not update:
         print("Thread #{}, Tiles {}".format(t_id, tiles))
@@ -102,7 +106,7 @@ def mvt_worker(zoom, tiles, total, update, t_id):
 
 
 def populate_mvt_stv_layer(zoom, tile_set, update=False):
-    """ Populate MVTLayer table with STV """
+    """Populate MVTLayer table with STV"""
     tiles = (
         split_list(tile_set, THREADS)
         if update
@@ -121,7 +125,7 @@ def populate_mvt_stv_layer(zoom, tile_set, update=False):
 
 
 def update_affected_mvts(timestamp):
-    """ Update tiles based on history """
+    """Update tiles based on history"""
     tiles = TileLayout.objects.raw(
         """
         SELECT DISTINCT id, zoom, x_coor, y_coor FROM (
@@ -155,11 +159,13 @@ def update_affected_mvts(timestamp):
 
 
 class Command(BaseCommand):
-    """ Populate database with MVT for STVs """
+    """Populate database with MVT for STVs"""
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--update", action="store_true", help="Update STVs",
+            "--update",
+            action="store_true",
+            help="Update STVs",
         )
         parser.add_argument("--timestamp", type=int, help="Previous run", default=0)
 

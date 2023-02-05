@@ -179,7 +179,7 @@ CACHEOPS = {"api.*": {"ops": "all"}}
 
 # DB Settings
 
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 # Rest Framework
 

@@ -14,5 +14,6 @@ RUN poetry install
 FROM chronmaps/backend:deps-base as prod 
 
 COPY --from=build $VENV_PATH $VENV_PATH
+COPY --from=build $PYSETUP_PATH/pyproject.toml $PYSETUP_PATH/poetry.lock ./
 
 ENTRYPOINT /bin/sh
