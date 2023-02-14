@@ -10,6 +10,7 @@ jobs:
           mv django.env.sample django.env &&
           mv postgres.env.sample postgres.env &&
           mv mbtiles.env.sample mbtiles.env &&
+          mv frontend.env.sample frontend.env &&
           touch auth.env
       - env:
           SERVICE_KEY_BASE64: ${{ secrets.SERVICE_KEY_BASE64 }}

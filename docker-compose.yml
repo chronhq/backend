@@ -57,6 +57,9 @@ services:
     depends_on:
       - nginx
     image: chronmaps/frontend:release-prod
+    env_file:
+      - frontend.env
+
   celery:
     depends_on:
       - redis
