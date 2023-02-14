@@ -138,10 +138,8 @@ venv.bak/
 !.vscode/extensions.json
 
 # env
-django.env
-postgres.env
-mbtiles.env
-auth.env
+*.env
+!*.env.sample
 
 # docs
 project/graph.svg
